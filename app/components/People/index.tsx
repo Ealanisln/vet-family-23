@@ -4,7 +4,7 @@ import Link from 'next/link';
 const People = () => {
 
     return (
-        <div id="product">
+        <div id="services">
             <div className="mx-auto max-w-7xl px-6">
 
                 <div className='grid grid-cols-1 lg:grid-cols-12 space-x-1 pt-10 lg:pt-32 lg:mt-20'>

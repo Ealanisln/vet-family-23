@@ -3,7 +3,7 @@ import People from './components/People/index';
 import Features from './components/Features/index';
 import Business from './components/Business/index';
 import Payment from './components/Payment/index';
-import Pricing from './components/Pricing/index';
+import Location from './components/Location/index';
 
 
 export default function Home() {
@@ -14,7 +14,7 @@ export default function Home() {
       <Features />
       <Business />
       <Payment />
-      <Pricing />
+      <Location />
     </main>
   )
 }

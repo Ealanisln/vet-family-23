@@ -25,15 +25,15 @@ html:not([data-scroll="0"]) .navbar {
 }
 
 html:not([data-scroll="0"]) .ttty {
-    background-color: #0057FF !important;
+    background-color: #88BBD3 !important;
     color: white !important;
 }
 
 .bg-header {
-    background: linear-gradient(120.3deg, #D5F2FF 31.56%, rgba(255, 255, 255, 0) 94.83%);
+    background: linear-gradient(120.3deg, #91D8D9 31.56%, rgba(255, 255, 255, 0) 94.83%);
 }
 .bg-navbar {
-    background: linear-gradient(120.3deg, #D5F2FF 36.56%, rgba(255, 255, 255, 0) 122.83%);
+    background: linear-gradient(120.3deg, #91D8D9 36.56%, rgba(255, 255, 255, 0) 122.83%);
 }
 
 .w-270px {

@@ -1,5 +1,5 @@
 import Banner from './components/Banner/index';
-import Construction from './components/Construction/index';
+// import Construction from './components/Construction/index';
 import People from './components/People/index';
 import Features from './components/Features/index';
 import Business from './components/Business/index';
@@ -10,12 +10,13 @@ import Location from './components/Location/index';
 export default function Home() {
   return (
     <main>
-      <Construction />
-      {/* <People />
+      {/* <Construction /> */}
+      <Banner />
+      <People />
       <Features />
       <Business />
       <Payment />
-      <Location /> */}
+      <Location />
     </main>
   )
 }

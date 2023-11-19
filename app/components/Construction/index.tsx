@@ -19,14 +19,27 @@ const Construction = () => {
             Próximamente.
           </h2>
           <h3 className="text-black text-lg font-normal text-center lg:text-start lh-173 opacity-75 pt-3">
-          EL MEJOR SERVICIO VETERINARIO PARA TU MEJOR AMIGO, LO ENCONTRARÁS EN VET FAMILY LLÁMANOS 4772605743
-
+            EL MEJOR SERVICIO VETERINARIO PARA TU MEJOR AMIGO, LO ENCONTRARÁS EN
+            VET FAMILY LLÁMANOS 4772605743
           </h3>
+          <br />
+          <Link
+            href={"mailto:vet.family.23@gmail.com"}
+            className="text-green text-lg font-medium flex gap-2 pt-4 mx-auto lg:mx-0"
+          >
+            Escribenos por Correo
+            <Image
+              src="/assets/people/arrow-right.svg"
+              alt="arrow-right"
+              width={24}
+              height={24}
+            />
+          </Link>
           <Link
             href={"https://wa.link/u5njd1"}
-            className="text-electricblue text-lg font-medium flex gap-2 pt-4 mx-auto lg:mx-0"
+            className="text-green text-lg font-medium flex gap-2 pt-4 mx-auto lg:mx-0"
           >
-            Contactanos!
+            Escribenos por Whatsapp
             <Image
               src="/assets/people/arrow-right.svg"
               alt="arrow-right"

@@ -9,7 +9,7 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   { name: 'Servicios', href: '#services', current: true },
-  { name: 'Pricing', href: '#pricing', current: false },
+  { name: 'Blog', href: '#blog', current: false },
   { name: 'Features', href: '#features', current: false },
 ]
 
@@ -36,13 +36,13 @@ const Data = () => {
                 {item.name}
               </Link>
             ))}
-            <div className="mt-4"></div>
+            {/* <div className="mt-4"></div>
             <button className="bg-white w-full text-midnightblue border border-midnightblue font-medium py-2 px-4 rounded">
               Log In
             </button>
             <button className="bg-midnightblue w-full hover:bg-blue hover:text-white text-white font-medium my-2 py-2 px-4 rounded">
               Sign up
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

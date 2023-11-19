@@ -23,10 +23,10 @@ const Construction = () => {
 
           </h3>
           <Link
-            href={"https://www.facebook.com/Dogtor.Pet.Vet"}
+            href={"https://wa.link/u5njd1"}
             className="text-electricblue text-lg font-medium flex gap-2 pt-4 mx-auto lg:mx-0"
           >
-            Visita nuestro Facebook
+            Contactanos!
             <Image
               src="/assets/people/arrow-right.svg"
               alt="arrow-right"

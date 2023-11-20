@@ -26,7 +26,7 @@ export default function Posts({ posts = [] }: { posts: SanityDocument[] }) {
                 href={post.slug.current}
                 className="p-4 hover:bg-blue-50"
               >
-                <h2>{post.title}</h2>
+                <h2 className="text-xl font-semibold text-black mt-5">{post.title}</h2>
               </Link>
             </div>
           ))}

@@ -2,12 +2,12 @@
 
 import { SanityDocument } from "@sanity/client";
 import { draftMode } from "next/headers";
-import Post from "../Post";
+import Post from "../components/Blog/Post";
 import { postPathsQuery, postQuery } from "@/sanity/lib/queries";
 import { sanityFetch, token } from "@/sanity/lib/sanityFetch";
 import { client } from "@/sanity/lib/client";
-import PreviewProvider from "../PreviewProvider";
-import PreviewPost from "../PreviewPost";
+import PreviewProvider from "../components/Blog/PreviewProvider";
+import PreviewPost from "../components/Blog/PreviewPost";
 
 // Prepare Next.js to know which routes already exist
 export async function generateStaticParams() {

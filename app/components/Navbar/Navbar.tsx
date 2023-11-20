@@ -4,6 +4,8 @@ import Link from "next/link";
 import React from "react";
 import Drawer from "./Drawer";
 import Drawerdata from "./Drawerdata";
+import Image from "next/image";
+
 // import Signdialog from "./Signdialog";
 // import Registerdialog from "./Registerdialog";
 
@@ -14,9 +16,10 @@ interface NavigationItem {
 }
 
 const navigation: NavigationItem[] = [
-  { name: "Servicios", href: "#services", current: true },
-  { name: "Pricing", href: "#pricing", current: false },
-  { name: "Features", href: "#features", current: false },
+  { name: "Testimonios", href: "#Testimonios", current: true },
+  { name: "Servicios", href: "#servicios", current: false },
+  { name: "Blog", href: "#blog", current: false },
+  { name: "Ubicación", href: "#ubicacion", current: false },
 ];
 
 function classNames(...classes: string[]) {
@@ -33,19 +36,24 @@ const Navbar = () => {
           <div className="relative flex h-20 items-center justify-between">
             <div className="flex flex-1 items-center sm:items-stretch sm:justify-start">
               {/* LOGO */}
-
-              <div className="flex flex-shrink-0 items-center">
-                <img
-                  className="block h-12 w-40 lg:hidden"
-                  src={"/assets/logo/logo.png"}
-                  alt="paidin-logo"
-                />
-                <img
-                  className="hidden h-full w-full lg:block"
-                  src={"/assets/logo/logo.png"}
-                  alt="paidin-logo"
-                />
-              </div>
+              <Link href="/">
+                <div className="flex flex-shrink-0 items-center">
+                  <Image
+                    height={800}
+                    width={200}
+                    className="block h-12 w-40 lg:hidden"
+                    src={"/assets/logo/logo.png"}
+                    alt="paidin-logo"
+                  />
+                  <Image
+                    height={600}
+                    width={200}
+                    className="hidden lg:block"
+                    src={"/assets/logo/logo.png"}
+                    alt="paidin-logo"
+                  />
+                </div>
+              </Link>
 
               {/* LINKS */}
 

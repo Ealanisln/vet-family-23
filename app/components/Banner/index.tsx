@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const Banner = () => {
   return (
@@ -23,9 +24,11 @@ const Banner = () => {
               y amorosa para garantizar la salud y felicidad de tus peludos.
             </h3>
             <div className="pt-8 mx-auto lg:mx-0">
+              <Link href="#servicios">
               <button className="text-white text-xl font-medium py-6 px-12 rounded-full transition duration-150 ease-in-out bg-black hover:text-white hover:bg-teal-800">
                 Nuestros servicios
               </button>
+              </Link>
             </div>
           </div>
 

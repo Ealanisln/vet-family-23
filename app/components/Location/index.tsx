@@ -2,6 +2,7 @@
 
 import React from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import Link from "next/link";
 
 const containerStyle = {
   width: "w-full",
@@ -25,10 +26,14 @@ function GoogleMaps() {
         <h3 className="text-4xl sm:text-5xl font-semibold text-black text-center my-10">
           Nuesta ubicación:
         </h3>
-        <h5 className="text-black opacity-60 text-lg font-normal text-center pb-10">
+        <Link href="https://maps.app.goo.gl/XiLPjx4ZuchBSnMs6" >
+        <h4 className="text-black opacity-90 text-2xl sm:text-3xl font-normal text-center pb-10">
           Calle Poetas No. 144 • Col. Panorama. <br />
           León Guanajuato. 
-        </h5>
+        </h4>
+        </Link>
+        <br />
+        
         
       <GoogleMap
         mapContainerStyle={containerStyle}

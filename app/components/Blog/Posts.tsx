@@ -1,7 +1,13 @@
 import Link from "next/link";
 import type { SanityDocument } from "@sanity/client";
+import Image from "next/image";
+import imageUrlBuilder from "@sanity/image-url";
+import { client } from "@/sanity/lib/client";
+
+const builder = imageUrlBuilder(client);
 
 export default function Posts({ posts = [] }: { posts: SanityDocument[] }) {
+
   return (
     <div className="bg-babyblue" id="blog">
       <div className="mx-auto max-w-2xl py-20 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
@@ -26,8 +32,23 @@ export default function Posts({ posts = [] }: { posts: SanityDocument[] }) {
                 href={post.slug.current}
                 className="p-4 hover:bg-blue-50"
               >
-                <h2 className="text-xl font-semibold text-black mt-5">{post.title}</h2>
+                <h2 className="text-xl font-semibold text-black mt-5">
+                  {post.title}
+                </h2>
               </Link>
+              {post?.mainImage ? (
+                <Image
+                  className="float-left m-0 w-1/3 mr-4 rounded-lg"
+                  src={builder
+                    .image(post.mainImage)
+                    .width(300)
+                    .height(300)
+                    .url()}
+                  width={300}
+                  height={300}
+                  alt={post?.mainImage?.alt || ""}
+                />
+              ) : null}
             </div>
           ))}
         </div>

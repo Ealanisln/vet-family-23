@@ -26,15 +26,15 @@ const Form: React.FC<FormProps> = () => {
       const formData = new FormData();
 
       if (!name.trim()) {
-        throw new Error("Please provide a valid name.");
+        throw new Error("Por favor ingresa un nombre válido.");
       }
 
       if (!email.trim()) {
-        throw new Error("Please provide a valid email address.");
+        throw new Error("Por favor ingresa un correo válido.");
       }
 
       if (!message.trim()) {
-        throw new Error("Please provide a valid message.");
+        throw new Error("Por favor ingresa un mensaje válido.");
       }
 
       formData.append("name", name);
@@ -50,14 +50,13 @@ const Form: React.FC<FormProps> = () => {
       });
 
       const responseData = await response.json();
-      console.log(responseData);
 
 
       if (responseData.error) {
         throw new Error(responseData.error);
       }
 
-      toast.success("Thanks, we will be in touch soon!");
+      toast.success("Hemos recibido tu mensaje, nos pondremos en contacto pronto.");
 
       setName("");
       setEmail("");

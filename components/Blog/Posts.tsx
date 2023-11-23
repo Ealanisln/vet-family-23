@@ -7,7 +7,6 @@ import { client } from "@/sanity/lib/client";
 const builder = imageUrlBuilder(client);
 
 export default function Posts({ posts = [] }: { posts: SanityDocument[] }) {
-
   return (
     <div className="bg-babyblue" id="blog">
       <div className="mx-auto max-w-2xl py-20 px-4 sm:px-6 lg:max-w-7xl lg:px-8">

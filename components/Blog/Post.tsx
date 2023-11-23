@@ -18,8 +18,8 @@ export default function Post({ post }: { post: SanityDocument }) {
   }
 
   return (
-    <main className="container mx-auto prose prose-lg py-24">
-      <h1>{post.title || "Untitled"}</h1>
+    <main className="container mx-auto prose prose-lg py-16 px-12 md:px-2">
+      <h1 style={{ fontSize: '2rem' }}>{post.title || "Untitled"}</h1>
       {post?.mainImage ? (
         <Image
           className="float-left m-0 w-1/3 mr-4 rounded-lg"

@@ -51,12 +51,13 @@ const Form: React.FC<FormProps> = () => {
 
       const responseData = await response.json();
 
-
       if (responseData.error) {
         throw new Error(responseData.error);
       }
 
-      toast.success("Hemos recibido tu mensaje, nos pondremos en contacto pronto.");
+      toast.success(
+        "Hemos recibido tu mensaje, nos pondremos en contacto pronto."
+      );
 
       setName("");
       setEmail("");
@@ -146,7 +147,7 @@ const Form: React.FC<FormProps> = () => {
                     </div>
                     <div className="w-full px-4">
                       <input
-                        className="rounded-md bg-[#99d5d6] py-4 px-9 text-base font-medium text-slate-50 transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp"
+                        className="rounded-md bg-[#99d5d6] py-4 px-9 text-gray-600 font-medium transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp transform hover:scale-105"
                         type="submit"
                         value="Enviar"
                       />

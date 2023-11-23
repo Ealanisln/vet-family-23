@@ -24,10 +24,12 @@
     "eslint-config-next": "13.4.2",
     "next": "^14.0.3",
     "next-sanity": "^5.5.10",
+    "nodemailer": "^6.9.7",
     "postcss": "8.4.23",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-google-maps": "^9.4.5",
+    "react-hot-toast": "^2.4.1",
     "react-share": "^5.0.2",
     "sanity": "^3.20.0",
     "server-only": "^0.0.1",
@@ -37,6 +39,7 @@
     "typescript": "5.0.4"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.10"
+    "@tailwindcss/typography": "^0.5.10",
+    "@types/nodemailer": "^6.4.14"
   }
 }

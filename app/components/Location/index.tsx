@@ -4,6 +4,14 @@ import React from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import Link from "next/link";
 
+export interface FormProps {
+  result: boolean;
+  isChecked: boolean;
+  callTime: { time: string; isChecked: boolean }[];
+
+  loading: boolean;
+}
+
 const containerStyle = {
   width: "w-full",
   height: "500px",
@@ -22,7 +30,7 @@ function GoogleMaps() {
 
   return isLoaded ? (
     <div className="bg-babyblue" id="ubicacion">
-       <div className="mx-auto max-w-2xl py-20 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
+       <div className="mx-auto max-w-2xl py-8 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
         <h3 className="text-4xl sm:text-5xl font-semibold text-black text-center my-10">
           Nuesta ubicación:
         </h3>

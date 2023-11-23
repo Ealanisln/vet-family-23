@@ -19,6 +19,7 @@ const navigation: NavigationItem[] = [
   { name: "Testimonios", href: "#Testimonios", current: true },
   { name: "Servicios", href: "#servicios", current: false },
   { name: "Blog", href: "#blog", current: false },
+  { name: "Contacto", href: "#contacto", current: false },
   { name: "Ubicación", href: "#ubicacion", current: false },
 ];
 

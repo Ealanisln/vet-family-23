@@ -10,6 +10,7 @@ import { SanityDocument } from "next-sanity";
 import { sanityFetch } from "@/sanity/lib/sanityFetch";
 import { postPathsQuery, postsQuery } from "@/sanity/lib/queries";
 import { client } from "@/sanity/lib/client";
+import Contact, { FormProps } from "./components/Contact";
 
 // Prepare Next.js to know which routes already exist
 export async function generateStaticParams() {
@@ -20,6 +21,12 @@ export async function generateStaticParams() {
 
 export default async function Home() {
   const posts = await sanityFetch<SanityDocument[]>({ query: postsQuery });
+  const formProps: FormProps = {
+    result: false,
+    isChecked: false,
+    callTime: [],
+    loading: false
+  };
 
   return (
     <main>
@@ -30,6 +37,7 @@ export default async function Home() {
       <Posts posts={posts} />
       <Business />
       <HomeDelivery />
+      <Contact {...formProps}/>
       <Location />
     </main>
   );

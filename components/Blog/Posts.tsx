@@ -29,7 +29,7 @@ export default function Posts({ posts = [] }: { posts: SanityDocument[] }) {
             >
               <Link
                 key={post._id}
-                href={post.slug.current}
+                href={`/blog/${post.slug.current}`}
                 className="p-4 hover:bg-blue-50"
               >
                 <h2 className="text-xl font-semibold text-black mt-5">

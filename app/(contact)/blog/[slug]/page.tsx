@@ -1,7 +1,7 @@
 // ./nextjs-app/app/[slug]/page.tsx
 
 import { SanityDocument } from "@sanity/client";
-import Post from "../components/Blog/Post";
+import Post from "../../../../components/Blog/Post";
 import { postPathsQuery, postQuery } from "@/sanity/lib/queries";
 import { sanityFetch } from "@/sanity/lib/sanityFetch";
 import { client } from "@/sanity/lib/client";

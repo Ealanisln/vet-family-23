@@ -3,6 +3,7 @@ import Image from "next/image";
 
 interface links {
   link: string;
+  url: string;
 }
 
 interface socialLinks {
@@ -14,17 +15,12 @@ interface socialLinks {
 const socialLinks: socialLinks[] = [
   {
     imgSrc: "/assets/footer/facebook.svg",
-    link: "www.facebook.com",
+    link: "https://www.facebook.com/people/Family-Vet-23/100067098365828/",
     width: 10,
   },
   {
     imgSrc: "/assets/footer/instagram.svg",
-    link: "www.instagram.com",
-    width: 14,
-  },
-  {
-    imgSrc: "/assets/footer/twitter.svg",
-    link: "www.twitter.com",
+    link: "https://www.instagram.com/vet.family.23/",
     width: 14,
   },
 ];
@@ -32,15 +28,23 @@ const socialLinks: socialLinks[] = [
 const links: links[] = [
   {
     link: "Testimonios",
+    url: "#testimonios",
   },
   {
     link: "Servicios",
+    url: "#servicios"
   },
   {
     link: "Blog",
+    url: "/blog"
+  },
+  {
+    link: "Contacto",
+    url: "#contacto"
   },
   {
     link: "Ubicación",
+    url: "#ubicacion"
   },
 ];
 
@@ -69,7 +73,7 @@ const footer = () => {
               {links.map((items, i) => (
                 <div key={i}>
                   <Link
-                    href="/"
+                    href={items.url}
                     className="text-lg font-normal text-white flex items-center justify-center"
                   >
                     {items.link}
@@ -102,7 +106,7 @@ const footer = () => {
 
         <div className="pt-12 pb-10 lg:flex items-center justify-between border-t border-t-white border-opacity-30">
           <h4 className="text-lg text-center md:text-start font-normal text-white opacity-60">
-            {currentYear} Family Vet - Todos los derechos reservados.
+            {currentYear} Vet Family - Todos los derechos reservados.
           </h4>
           <div className="flex gap-5 mt-6 md:mt-0 justify-center md:justify-start">
             {/* <h4 className="opacity-60 text-lg font-normal text-white">

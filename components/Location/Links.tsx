@@ -50,7 +50,7 @@ const Medios: datatype[] = [
     imgSrc: "/assets/location/maps.svg",
     heading: "Dirección",
     paragraph:
-      "Visítanos calle Poetas No. 144. Col. Panorama, León, Guanajuato",
+      "Visítanos calle Poetas No. 144. Col. Panorama. León, Guanajuato",
     link: "https://maps.app.goo.gl/XiLPjx4ZuchBSnMs6",
   },
 ];
@@ -68,7 +68,7 @@ const Links = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-16 gap-y-4 lg:gap-x-8 mt-10">
           {Medios.map((item, i) => (
-            <div key={i} className="bg-white rounded-2xl p-5 featureShadow">
+            <div key={i} className="bg-white rounded-2xl p-5 featureShadow flex flex-col items-center">
               <Image
                 src={item.imgSrc}
                 alt={item.imgSrc}

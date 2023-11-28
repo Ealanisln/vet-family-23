@@ -15,7 +15,7 @@ const Banner = () => {
               className="absolute top-[-74px] right-[51px]"
             />
             <h1 className="text-midnightblue text-3xl md:text-5xl text-center lg:text-start font-semibold lh-133 pt-5">
-              Bienvenido a Family Vet
+              Bienvenido a Vet Family
             </h1>
             <h3 className="text-black opacity-75 text-lg font-normal text-center lg:text-start pt-8">
               Porque entendemos que tu mascota no es solo un animal, sino parte
@@ -26,7 +26,7 @@ const Banner = () => {
             <div className="pt-8 mx-auto lg:mx-0">
               <Link href="#servicios">
               <button className="text-white text-xl font-medium py-6 px-12 rounded-full transition duration-150 ease-in-out bg-black hover:text-white hover:bg-teal-800">
-                Nuestros servicios
+                Conoce nuestros servicios
               </button>
               </Link>
             </div>

@@ -86,7 +86,7 @@ const Links = () => {
                 href={item.link}
                 className="text-electricblue text-xl font-medium flex gap-2 pt-10 pb-2"
               >
-              Click aquí:
+              Click aquí
                 <Image
                   src="/assets/people/arrow-right.svg"
                   alt="arrow-right"

@@ -12,6 +12,12 @@ import {
   TwitterShareButton,
   WhatsappShareButton,
   XIcon,
+  EmailIcon,
+  LinkedinIcon,
+  TelegramIcon,
+  WhatsappIcon,
+  FacebookMessengerIcon,
+  FacebookMessengerShareButton,
 } from "react-share";
 import { usePathname } from "next/navigation";
 
@@ -48,6 +54,42 @@ const Share = ({ post }: { post: SanityDocument }) => {
         >
           <FacebookIcon size={32} round />
         </FacebookShareButton>
+        <FacebookMessengerShareButton
+          url={shareUrl}
+          appId="521270401588372"
+          className="Demo__some-network__share-button"
+        >
+          <FacebookMessengerIcon size={32} round />
+        </FacebookMessengerShareButton>
+        <TelegramShareButton
+          url={shareUrl}
+          title={title}
+          className="Demo__some-network__share-button"
+        >
+          <TelegramIcon size={32} round />
+        </TelegramShareButton>
+        <WhatsappShareButton
+          url={shareUrl}
+          title={title}
+          separator=":: "
+          className="Demo__some-network__share-button"
+        >
+          <WhatsappIcon size={32} round />
+        </WhatsappShareButton>
+        <EmailShareButton
+          url={shareUrl}
+          subject={title}
+          body="Mira este articulo, me pareció interesante:"
+          className="Demo__some-network__share-button"
+        >
+          <EmailIcon size={32} round />
+        </EmailShareButton>
+        <LinkedinShareButton
+          url={shareUrl}
+          className="Demo__some-network__share-button"
+        >
+          <LinkedinIcon size={32} round />
+        </LinkedinShareButton>
       </div>
     </>
   );

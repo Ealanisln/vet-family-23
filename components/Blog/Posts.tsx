@@ -8,7 +8,14 @@ const builder = imageUrlBuilder(client);
 
 export default function Posts({ posts = [] }: { posts: SanityDocument[] }) {
   return (
-    <div className="bg-babyblue" id="blog">
+    <div className="max-w-screen-lg mx-auto bg-babyblue" id="blog">
+       <Image
+          src="/assets/banner/blog-header.png"
+          alt="Blog Header"
+          layout="responsive"
+          width={750}
+          height={250}
+        />
       <div className="mx-auto max-w-2xl py-20 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
         <h3 className="text-4xl sm:text-5xl font-semibold text-black text-center my-10">
           Artículos de interés

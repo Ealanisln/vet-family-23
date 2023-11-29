@@ -52,11 +52,10 @@ const footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className=" bg-midnightblue">
+    <div className="bg-midnightblue">
       <div className="mx-auto max-w-2xl pt-4 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
         <div className="my-12 grid grid-cols-1 gap-y-10 sm:grid-cols-6 lg:grid-cols-12">
           {/* COLUMN-1 */}
-
           <div className="sm:col-span-6 lg:col-span-3">
             <div className="flex flex-shrink-0 items-center border-right">
               <Image
@@ -68,23 +67,24 @@ const footer = () => {
             </div>
           </div>
 
+          {/* COLUMN-2 */}
           <div className="sm:col-span-6 lg:col-span-5 flex items-center">
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               {links.map((items, i) => (
-                <div key={i}>
-                  <Link
-                    href={items.url}
-                    className="text-lg font-normal text-white flex items-center justify-center"
-                  >
-                    {items.link}
+                <div key={i} className="mb-2 sm:mb-0">
+                  <Link href={items.url}>
+                    <div className="text-lg font-normal text-white hover:underline">
+                      {items.link}
+                    </div>
                   </Link>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="sm:col-span-6 lg:col-span-4">
-            <div className="flex gap-4 lg:justify-end">
+          {/* COLUMN-3 */}
+          <div className="sm:col-span-6 lg:col-span-4 mt-4 sm:mt-0">
+            <div className="flex gap-4 sm:justify-end">
               {socialLinks.map((items, i) => (
                 <Link href={items.link} key={i}>
                   <div className="socialBg h-12 w-12 shadow-xl text-base rounded-full flex items-center justify-center footer-icons hover:bg-white">
@@ -103,22 +103,16 @@ const footer = () => {
         </div>
 
         {/* All Rights Reserved */}
-
         <div className="pt-12 pb-10 lg:flex items-center justify-between border-t border-t-white border-opacity-30">
           <h4 className="text-lg text-center md:text-start font-normal text-white opacity-60">
             {currentYear} Vet Family - Todos los derechos reservados.
           </h4>
-          <div className="flex gap-5 mt-6 md:mt-0 justify-center md:justify-start">
-            {/* <h4 className="opacity-60 text-lg font-normal text-white">
-              <Link href="/" target="_blank">
-                Política de privacidad
-              </Link>
-            </h4> */}
-            <div className="h-5 bg-white opacity-60 w-0.5"></div>
+          <div className="flex flex-col items-center md:flex-row gap-2 mt-6 md:mt-0 justify-center md:justify-start">
+            <div className="h-5 bg-white opacity-60 w-0.5 md:block hidden"></div>
             <Link href="https://www.alanis.dev">
-              <h4 className="opacity-60 text-lg font-normal text-white">
+              <div className="opacity-60 text-lg font-normal text-white">
                 Creada con ❤️ por Alanis Web Dev.
-              </h4>
+              </div>
             </Link>
           </div>
         </div>
@@ -126,5 +120,4 @@ const footer = () => {
     </div>
   );
 };
-
 export default footer;

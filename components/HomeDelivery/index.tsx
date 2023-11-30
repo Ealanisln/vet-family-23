@@ -24,7 +24,7 @@ const HomeDelivery = () => {
             tu puerta.
           </h3>
           <Link
-            href={"/"}
+            href={"https://wa.link/n193eh"}
             className="text-electricblue text-lg font-medium flex gap-2 pt-4 mx-auto lg:mx-0"
           >
             Solicitalo ahora{" "}

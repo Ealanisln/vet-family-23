@@ -15,7 +15,7 @@ const Banner = () => {
               className="absolute top-[-74px] right-[51px]"
             />
             <h1 className="text-midnightblue text-3xl md:text-5xl text-center lg:text-start font-semibold lh-133 pt-5">
-              Bienvenido a Vet Family
+              Bienvenido a Vet For Family
             </h1>
             <h3 className="text-black opacity-75 text-lg font-normal text-center lg:text-start pt-8">
               Porque entendemos que tu mascota no es solo un animal, sino parte

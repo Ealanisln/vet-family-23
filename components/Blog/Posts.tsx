@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import type { SanityDocument } from "@sanity/client";
 import Image from "next/image";
@@ -9,13 +10,6 @@ const builder = imageUrlBuilder(client);
 export default function Posts({ posts = [] }: { posts: SanityDocument[] }) {
   return (
     <div className="max-w-screen-lg mx-auto bg-babyblue" id="blog">
-       <Image
-          src="/assets/banner/blog-header.png"
-          alt="Blog Header"
-          layout="responsive"
-          width={750}
-          height={250}
-        />
       <div className="mx-auto max-w-2xl py-20 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
         <h3 className="text-4xl sm:text-5xl font-semibold text-black text-center my-10">
           Artículos de interés
@@ -29,33 +23,34 @@ export default function Posts({ posts = [] }: { posts: SanityDocument[] }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-16 gap-y-4 lg:gap-x-8 mt-10">
           {posts.map((post) => (
-            <div
+            <Link
               key={post._id}
-              className="bg-white rounded-2xl p-5 featureShadow"
+              href={`/blog/${post.slug.current}`}
+              className="p-4 hover:bg-blue-50"
             >
-              <Link
+              <div
                 key={post._id}
-                href={`/blog/${post.slug.current}`}
-                className="p-4 hover:bg-blue-50"
+                className="bg-white rounded-2xl p-5 featureShadow flex flex-col items-center"
               >
+                {post?.mainImage ? (
+                  <Image
+                    className="w-full h-auto rounded-lg"
+                    src={builder
+                      .image(post.mainImage)
+                      .width(800) // Adjust the desired width
+                      .height(600) // Adjust the desired height
+                      .url()}
+                    width={800}
+                    height={600}
+                    alt={post?.mainImage?.alt || ""}
+                  />
+                ) : null}
+
                 <h2 className="text-xl font-semibold text-black mt-5">
                   {post.title}
                 </h2>
-              </Link>
-              {post?.mainImage ? (
-                <Image
-                  className="float-left m-0 w-1/3 mr-4 rounded-lg"
-                  src={builder
-                    .image(post.mainImage)
-                    .width(300)
-                    .height(300)
-                    .url()}
-                  width={300}
-                  height={300}
-                  alt={post?.mainImage?.alt || ""}
-                />
-              ) : null}
-            </div>
+              </div>
+            </Link>
           ))}
         </div>
       </div>

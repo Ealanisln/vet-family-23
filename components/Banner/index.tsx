@@ -34,9 +34,9 @@ const Banner = () => {
 
           <div className="col-span-5 flex justify-center xl:-mb-24 xl:-mr-32 pt-10 lg:pt-0">
             <Image
-              src="/assets/banner/banner.png"
+              src="/assets/banner/banner-navidad.png"
               alt="hero"
-              width={1000}
+              width={900}
               height={805}
             />
           </div>

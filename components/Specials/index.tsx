@@ -14,7 +14,7 @@ const Specials = () => {
           />
         </div>
 
-        <div className="col-span-6 flex flex-col justify-center mb-32">
+        <div className="col-span-6 flex flex-col justify-center mb-32 mt-8">
           <h2 className="text-midnightblue text-4xl sm:text-5xl font-semibold text-center lg:text-start lh-143">
             Promociones especiales: 1er aniversario
           </h2>

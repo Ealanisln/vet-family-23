@@ -25,7 +25,7 @@ export default function Post({ post }: { post: SanityDocument }) {
         {post?.mainImage ? (
            <div className="mx-auto max-w-[500px]"> 
             <Image
-              className="rounded-lg border pb-12"
+              className="rounded-lg border pb-8"
               src={builder.image(post.mainImage).url()}
               width={500}
               height={500}
@@ -35,7 +35,7 @@ export default function Post({ post }: { post: SanityDocument }) {
           ) : null}
           
           <h1>
-            <span className="mb-8 text-3xl font-bold leading-tight text-white dark:text-black sm:text-4xl sm:leading-tight">
+            <span className="mb-8 text-3xl font-bold leading-tight text-black sm:text-4xl sm:leading-tight">
               {post.title || "Untitled"}
             </span>
           </h1>

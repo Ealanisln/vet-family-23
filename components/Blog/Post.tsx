@@ -18,20 +18,37 @@ export default function Post({ post }: { post: SanityDocument }) {
   }
 
   return (
-    <main className="container mx-auto prose prose-lg py-16 px-12 md:px-2">
-      <h1 style={{ fontSize: '2rem' }}>{post.title || "Untitled"}</h1>
-      {post?.mainImage ? (
-        <Image
-          className="float-left m-0 w-1/3 mr-4 rounded-lg"
-          src={builder.image(post.mainImage).width(300).height(300).url()}
-          width={300}
-          height={300}
-          alt={post?.mainImage?.alt || ""}
-        />
-      ) : null}
-      {post?.body ? <PortableText value={post.body} /> : null}
-      <hr className="my-8 border-t border-gray-400" />
-      <Share post={post} />
+    <section className="mx-8">
+    <main className="container my-4 mx-auto">
+      <div className="-mx-4 flex flex-wrap justify-center">
+        <div className="w-full px-4 lg:w-8/12">
+        {post?.mainImage ? (
+           <div className="mx-auto max-w-[500px]"> 
+            <Image
+              className="rounded-lg border pb-12"
+              src={builder.image(post.mainImage).url()}
+              width={500}
+              height={500}
+              alt={post?.mainImage?.alt || ""}
+            />
+            </div>
+          ) : null}
+          
+          <h1>
+            <span className="mb-8 text-3xl font-bold leading-tight text-white dark:text-black sm:text-4xl sm:leading-tight">
+              {post.title || "Untitled"}
+            </span>
+          </h1>
+         
+          <div className="prose prose-xl prose-blue mt-16">
+          {post?.body ? <PortableText value={post.body} /> : null}
+          </div>
+          <hr className="my-8 border-t border-gray-400" />
+          <Share post={post} />
+          
+        </div>
+      </div>
     </main>
+    </section>
   );
 }

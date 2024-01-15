@@ -1,10 +1,11 @@
 import Banner from "../../components/Banner/index";
-import Reviews from "../../components/Reviews/index";
+// import Reviews from "../../components/Reviews/index";
 import Servicios from "../../components/Servicios/index";
 import Business from "../../components/Business/index";
 import HomeDelivery from "../../components/HomeDelivery/index";
 import Location from "../../components/Location/";
 import Contact, { FormProps } from "../../components/Contact";
+import Specials from "@/components/Specials";
 
 export default async function Home() {
   const formProps: FormProps = {
@@ -17,7 +18,8 @@ export default async function Home() {
   return (
     <main>
       <Banner />
-      <Reviews />
+      <Specials />
+      {/* <Reviews /> */}
       <Servicios />
       <Business />
       <HomeDelivery />

@@ -3,6 +3,9 @@ import "./globals.css";
 export const metadata = {
   title: "Bienvenido a Family Vet 23",
   description: "Cuidando a tus mascotas, amándolas como tú lo haces.",
+  icons: {
+    icon: '/icon.svg', // /public path
+  },
 };
 
 export default function RootLayout({

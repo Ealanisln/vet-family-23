@@ -8,6 +8,15 @@ const nextConfig = {
         },
       ],
     },
+    async redirects() {
+      return [
+        {
+          source: '/concurso',
+          destination: '/blog/concurso-especial-family-vet-1er-aniversario',
+          permanent: true,
+        },
+      ]
+    },
     // ...other config settings
   };
   

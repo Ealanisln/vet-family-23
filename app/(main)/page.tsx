@@ -1,4 +1,5 @@
 import Banner from "../../components/Banner/index";
+import { CarouselSpacing } from "../../components/Caroussel/index";
 import Reviews from "../../components/Reviews/index";
 import Servicios from "../../components/Servicios/index";
 import Business from "../../components/Business/index";
@@ -19,6 +20,7 @@ export default async function Home() {
     <main>
       <Banner />
       {/* <Specials /> */}
+      <CarouselSpacing />
       <Reviews />
       <Servicios />
       <Business />

@@ -22,22 +22,22 @@ export function CarouselSpacing() {
   );
 
   return (
-    <div className="" id="caroussel">
-      <div className="mx-auto max-w-2xl py-20 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
+    <div className="container" id="caroussel">
+      <div className="mx-auto max-w-2xl py-20 px-4 lg:max-w-7xl lg:px-8">
         <h3 className="text-3xl sm:text-4xl font-semibold text-black text-center my-10">
          Estamos estrenando nueva area de maternidad
         </h3>
         <h5 className="text-black opacity-60 text-lg font-normal text-center">
         Luna 🐶 ¡Explorando nuestra Nueva Área de Maternidad! 🎉🎉🎉 ¡Donde el cuidado es 24/7! 🌙✨
         </h5>
-        <Carousel className="pt-8">
-          <CarouselContent className="-ml-1">
+        <Carousel className="pt-8 ">
+          <CarouselContent className="-ml-1 flex items-center">
             {imagePaths.map((path, index) => (
               <CarouselItem
                 key={index}
                 className="pl-1 md:basis-1/2 lg:basis-1/3"
               >
-                <div className="p-1">
+                <div className="p-2">
                   <Card className="bg-white rounded-2xl p-2 featureShadow">
                     <CardContent className="flex aspect-square items-center justify-center p-4">
                         <CldImage

@@ -6,6 +6,7 @@ import Business from "../../components/Business/index";
 import HomeDelivery from "../../components/HomeDelivery/index";
 import Location from "../../components/Location/";
 import Contact, { FormProps } from "../../components/Contact";
+import GaleriaFotos from "@/components/GaleriaFotos/GaleriaFotos";
 // import Specials from "@/components/Specials";
 
 export default async function Home() {
@@ -20,9 +21,9 @@ export default async function Home() {
     <main>
       <Banner />
       {/* <Specials /> */}
-      <CarouselSpacing />
       <Reviews />
       <Servicios />
+      <GaleriaFotos />
       <Business />
       <HomeDelivery />
       <Contact {...formProps} />

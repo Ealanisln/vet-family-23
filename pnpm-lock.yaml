@@ -5,6 +5,12 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@cloudinary/react':
+    specifier: ^1.13.0
+    version: 1.13.0(react@18.2.0)
+  '@cloudinary/url-gen':
+    specifier: ^1.16.1
+    version: 1.16.1
   '@headlessui/react':
     specifier: ^1.7.14
     version: 1.7.17(react-dom@18.2.0)(react@18.2.0)
@@ -50,6 +56,9 @@ dependencies:
   class-variance-authority:
     specifier: ^0.7.0
     version: 0.7.0
+  cloudinary:
+    specifier: ^2.0.1
+    version: 2.0.1
   clsx:
     specifier: ^2.1.0
     version: 2.1.0
@@ -62,6 +71,9 @@ dependencies:
   eslint-config-next:
     specifier: 13.4.2
     version: 13.4.2(eslint@8.40.0)(typescript@5.0.4)
+  google-maps-react:
+    specifier: ^2.0.6
+    version: 2.0.6(react-dom@18.2.0)(react@18.2.0)
   lucide-react:
     specifier: ^0.331.0
     version: 0.331.0(react@18.2.0)
@@ -98,6 +110,9 @@ dependencies:
   react-hot-toast:
     specifier: ^2.4.1
     version: 2.4.1(csstype@3.1.2)(react-dom@18.2.0)(react@18.2.0)
+  react-photo-album:
+    specifier: ^2.3.1
+    version: 2.3.1(react@18.2.0)
   react-share:
     specifier: ^5.0.2
     version: 5.0.2(react@18.2.0)
@@ -128,6 +143,9 @@ dependencies:
   vaul:
     specifier: ^0.9.0
     version: 0.9.0(@types/react-dom@18.2.4)(@types/react@18.2.6)(react-dom@18.2.0)(react@18.2.0)
+  yet-another-react-lightbox:
+    specifier: ^3.17.0
+    version: 3.17.0(react-dom@18.2.0)(react@18.2.0)
 
 devDependencies:
   '@tailwindcss/typography':
@@ -395,14 +413,41 @@ packages:
     resolution: {integrity: sha512-o6cJsN49OIelLcSkqUf4WzgefpePDFsAaeQfJbpcKhVdtvmWv71K0oZwMXuX62IY1OolqIg0etMiHtWZPhvPNA==}
     dev: false
 
+  /@cloudinary/html@1.13.0:
+    resolution: {integrity: sha512-kOE54EbAyxSH4k3Z9HzYDSlsfpXSDxckAdyyNfxsnC23u+wfxY0Gt8yBG0s3tiqdTkL6IDd1Momsn/OlYStObg==}
+    dependencies:
+      '@types/lodash.clonedeep': 4.5.9
+      '@types/lodash.debounce': 4.0.9
+      '@types/node': 14.18.63
+      lodash.clonedeep: 4.5.0
+      lodash.debounce: 4.0.8
+      typescript: 4.9.5
+    dev: false
+
+  /@cloudinary/react@1.13.0(react@18.2.0):
+    resolution: {integrity: sha512-S+Wmdmg4+pjWWlRLUcaHlQ0d59njecja6wGGWGJwVsQioBF/E/KUxNl09Q6NemXuJJAVW/hSW9kT/diJmI7eQQ==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: ^16.3.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@cloudinary/html': 1.13.0
+      react: 18.2.0
+    dev: false
+
   /@cloudinary/transformation-builder-sdk@1.11.0:
     resolution: {integrity: sha512-BRHcjkMc0zSgyLnYtE+KQG1AyaC2EAHfuGzSJRGiLVsLD8UzLcC8S3GFzzKOPVzGQi0IPm21b1F7M6oqsF8FrQ==}
     dependencies:
-      '@cloudinary/url-gen': 1.15.0
+      '@cloudinary/url-gen': 1.16.1
     dev: false
 
   /@cloudinary/url-gen@1.15.0:
     resolution: {integrity: sha512-bjU67eZxLUgoRy/Plli4TQio7q6P31OYqnEgXxeN9TKXrzr6h0DeEdIUhKI9gy3HkEBWXWWJIPh7j7gkOJPnyA==}
+    dependencies:
+      '@cloudinary/transformation-builder-sdk': 1.11.0
+    dev: false
+
+  /@cloudinary/url-gen@1.16.1:
+    resolution: {integrity: sha512-lRg0LlRJKrHHhSAedwR7u4YDvPQ2zuyXH3FpmyD8Ki6+/pcRVEJmkokKYnnbRNsu40smXFNJa6IHqjxsfbMmQg==}
     dependencies:
       '@cloudinary/transformation-builder-sdk': 1.11.0
     dev: false
@@ -2064,15 +2109,11 @@ packages:
   /@types/google-maps@3.2.5:
     resolution: {integrity: sha512-Cy/nQ7WhYVEz6nnan6igZu8y4mCU4N9Ta25K94b7/XncGXY6S1avrmWjSJT4ST0IUeuD0q+oF6cilKrVQwxGUA==}
     dependencies:
-      '@types/google.maps': 3.54.8
+      '@types/google.maps': 3.55.3
     dev: false
 
   /@types/google.maps@3.53.5:
     resolution: {integrity: sha512-HoRq4Te8J6krH7hj+TfdYepqegoKZCj3kkaK5gf+ySFSHLvyqYkDvkrtbcVJXQ6QBphQ0h1TF7p4J6sOh4r/zg==}
-    dev: false
-
-  /@types/google.maps@3.54.8:
-    resolution: {integrity: sha512-xHdc9bzyMFJK4cyl3FIyXYQYrLES06apQ3TPRllVsLOcwqqCeCRB6o6OdZw8NoJPwmBPIHT+KBBb6e9bccwFkQ==}
     dev: false
 
   /@types/google.maps@3.55.3:
@@ -2098,6 +2139,18 @@ packages:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
     dev: false
 
+  /@types/lodash.clonedeep@4.5.9:
+    resolution: {integrity: sha512-19429mWC+FyaAhOLzsS8kZUsI+/GmBAQ0HFiCPsKGU+7pBXOQWhyrY6xNNDwUSX8SMZMJvuFVMF9O5dQOlQK9Q==}
+    dependencies:
+      '@types/lodash': 4.14.201
+    dev: false
+
+  /@types/lodash.debounce@4.0.9:
+    resolution: {integrity: sha512-Ma5JcgTREwpLRwMM+XwBR7DaWe96nC38uCBDFKZWbNKD+osjVzdpnUSwBcqCptrp16sSOLBAUb50Car5I0TCsQ==}
+    dependencies:
+      '@types/lodash': 4.14.201
+    dev: false
+
   /@types/lodash.isequal@4.5.8:
     resolution: {integrity: sha512-uput6pg4E/tj2LGxCZo9+y27JNyB2OZuuI/T5F+ylVDYuqICLG2/ktjxx0v6GvVntAf8TvEzeQLcV0ffRirXuA==}
     dependencies:
@@ -2116,6 +2169,10 @@ packages:
 
   /@types/minimatch@5.1.2:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
+    dev: false
+
+  /@types/node@14.18.63:
+    resolution: {integrity: sha512-fAtCfv4jJg+ExtXhvCkCqUKZ+4ok/JQk01qDKhL5BDDoS3AxKXhV5/MAVUZyQnSEd2GT92fkgZl0pz0Q0AzcIQ==}
     dev: false
 
   /@types/node@20.2.0:
@@ -2785,6 +2842,14 @@ packages:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
+    dev: false
+
+  /cloudinary@2.0.1:
+    resolution: {integrity: sha512-+j5GswtCwjAmLhjs/K26id4Zvh53zL/YWzgyenxgbdXdXmdFM8d5H1FV1sJCkpS77AqylJKBzyztySdILM+F+A==}
+    engines: {node: '>=9'}
+    dependencies:
+      lodash: 4.17.21
+      q: 1.5.1
     dev: false
 
   /clsx@2.0.0:
@@ -4175,6 +4240,16 @@ packages:
     resolution: {integrity: sha512-hTuWmWZZSOxf5D/z7l3/hTF1grgRvLG53BEKMdjiKOG+FcK/kH7vqseUeyIU9Zj2ZIqKTOaro0nknxpAuRq4Vw==}
     dev: false
 
+  /google-maps-react@2.0.6(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-M8Eo9WndfQEfxcmm6yRq03qdJgw1x6rQmJ9DN+a+xPQ3K7yNDGkVDbinrf4/8vcox7nELbeopbm4bpefKewWfQ==}
+    peerDependencies:
+      react: ~0.14.8 || ^15.0.0 || ^16.0.0
+      react-dom: ~0.14.8 || ^15.0.0 || ^16.0.0
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
   /gopd@1.0.1:
     resolution: {integrity: sha512-d65bNlIadxvpb/A2abVdlqKqV563juRnZ1Wtk6s1sIR8uNsXR70xqIzVqxVf1eTqDunwT2MkczEeaezCKTZhwA==}
     dependencies:
@@ -4862,6 +4937,14 @@ packages:
   /lodash.castarray@4.4.0:
     resolution: {integrity: sha512-aVx8ztPv7/2ULbArGJ2Y42bG1mEQ5mGjpdvrbJcJFU3TbYybe+QlLS4pst9zV52ymy2in1KpFPiZnAOATxD4+Q==}
     dev: true
+
+  /lodash.clonedeep@4.5.0:
+    resolution: {integrity: sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==}
+    dev: false
+
+  /lodash.debounce@4.0.8:
+    resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
+    dev: false
 
   /lodash.defaults@4.2.0:
     resolution: {integrity: sha512-qjxPLHd3r5DnsdGacqOMU6pb/avJzdh9tFX2ymgoZE27BmjXrNy/y4LoaiTeAb+O3gL8AfpJGtqfX/ae2leYYQ==}
@@ -5675,6 +5758,11 @@ packages:
     engines: {node: '>=6'}
     dev: false
 
+  /q@1.5.1:
+    resolution: {integrity: sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==}
+    engines: {node: '>=0.6.0', teleport: '>=0.2.0'}
+    dev: false
+
   /querystringify@2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
     dev: false
@@ -5804,6 +5892,15 @@ packages:
 
   /react-lifecycles-compat@3.0.4:
     resolution: {integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==}
+    dev: false
+
+  /react-photo-album@2.3.1(react@18.2.0):
+    resolution: {integrity: sha512-c7ofDx2DAbQa9AW9wUWOBX9zUKf/QjvdQK+fPNKEiKprks/n8t4c2viyBZ6EWpQLFLU0ad3yVBTgFvxEZ46/Iw==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /react-refractor@2.1.7(react@18.2.0):
@@ -6940,6 +7037,12 @@ packages:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
     dev: false
 
+  /typescript@4.9.5:
+    resolution: {integrity: sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==}
+    engines: {node: '>=4.2.0'}
+    hasBin: true
+    dev: false
+
   /typescript@5.0.4:
     resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
     engines: {node: '>=12.20'}
@@ -7332,6 +7435,17 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+    dev: false
+
+  /yet-another-react-lightbox@3.17.0(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-xtVFmYaMOsqEDitx0ju6wTLVjCIUdS1TLeY2bwwUHapj3coh1uQxEwDAGg8aZiKs+Qd5AcpLOoCfH/T3TKeLTA==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /yocto-queue@0.1.0:

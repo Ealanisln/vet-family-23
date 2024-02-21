@@ -14,7 +14,6 @@ import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 
-import { CloudinaryImage } from "./cloudinary-image";
 import { getCloudinaryPhotos } from "../../app/actions/get-photos";
 
 type CloudinaryPhoto = {

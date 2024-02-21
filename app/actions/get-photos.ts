@@ -1,10 +1,11 @@
 "use server";
 
-import cloudinary from "cloudinary";
+import cloudinary from "@/utils/cloudinary";
+
 
 type CloudinaryPhoto = {
   public_id: string;
-  src: string; 
+  src: string;
   width: number;
   height: number;
   srcSet: {

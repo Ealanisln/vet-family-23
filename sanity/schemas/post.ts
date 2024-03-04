@@ -20,6 +20,11 @@ export default defineType({
       },
     }),
     defineField({
+      name: 'smallDescription',
+      type: 'text',
+      title: 'Small Description'
+    }),
+    defineField({
       name: 'author',
       title: 'Author',
       type: 'reference',
@@ -63,6 +68,7 @@ export default defineType({
       title: 'title',
       author: 'author.name',
       media: 'mainImage',
+      description: 'smallDescription.name',
     },
     prepare(selection) {
       const {author} = selection

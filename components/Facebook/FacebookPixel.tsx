@@ -10,7 +10,7 @@ export const FacebookPixelEvents: React.FC = () => {
     import("react-facebook-pixel")
       .then((x) => x.default)
       .then((ReactPixel) => {
-        ReactPixel.init("635089600621969"); //don't forget to change this
+        ReactPixel.init("635089600621969"); 
         ReactPixel.pageView();
       });
   }, [pathname, searchParams]);

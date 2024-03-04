@@ -1,5 +1,6 @@
+import { Suspense } from "react";
 import "./globals.css";
-import {FacebookPixelEvents} from "@/components/Facebook/FacebookPixel";
+import { FacebookPixelEvents } from "@/components/Facebook/FacebookPixel";
 
 export const metadata = {
   title: "Bienvenido a Family Vet 23",
@@ -17,7 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>{children}</body>
+      <Suspense>
         <FacebookPixelEvents />
+      </Suspense>
     </html>
   );
 }

@@ -19,36 +19,40 @@ export default function Post({ post }: { post: SanityDocument }) {
 
   return (
     <section className="mx-8">
-    <main className="container my-4 mx-auto">
-      <div className="-mx-4 flex flex-wrap justify-center">
-        <div className="w-full px-4 lg:w-8/12">
-        {post?.mainImage ? (
-           <div className="mx-auto max-w-[500px]"> 
-            <Image
-              className="rounded-lg border pb-8"
-              src={builder.image(post.mainImage).url()}
-              width={500}
-              height={500}
-              alt={post?.mainImage?.alt || ""}
-            />
+      <main className="container my-4 mx-auto">
+        <div className="-mx-4 flex flex-wrap justify-center">
+          <div className="w-full px-4 lg:w-8/12">
+            {post?.mainImage ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <h1>
+                  <span className="mb-8 text-3xl font-bold leading-tight text-black sm:text-4xl sm:leading-tight">
+                    {post.title || "Sin titulo"}
+                  </span>
+                </h1>
+                <Image
+                  className="mt-8 rounded-xl"
+                  src={builder.image(post.mainImage).url()}
+                  width={500}
+                  height={500}
+                  alt={post?.mainImage?.alt || ""}
+                />
+              </div>
+            ) : null}
+
+            <div className="prose prose-xl prose-blue mt-12">
+              {post?.body ? <PortableText value={post.body} /> : null}
             </div>
-          ) : null}
-          
-          <h1>
-            <span className="mb-8 text-3xl font-bold leading-tight text-black sm:text-4xl sm:leading-tight">
-              {post.title || "Untitled"}
-            </span>
-          </h1>
-         
-          <div className="prose prose-xl prose-blue mt-16">
-          {post?.body ? <PortableText value={post.body} /> : null}
+            <hr className="my-8 border-t border-gray-400" />
+            <Share post={post} />
           </div>
-          <hr className="my-8 border-t border-gray-400" />
-          <Share post={post} />
-          
         </div>
-      </div>
-    </main>
+      </main>
     </section>
   );
 }

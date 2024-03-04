@@ -1,12 +1,10 @@
 import Posts from "@/components/Blog/Posts";
 import React from "react";
-import { SanityDocument } from "next-sanity";
-import { sanityFetch } from "@/sanity/lib/sanityFetch";
-import { postPathsQuery, postsQuery } from "@/sanity/lib/queries";
+import { postPathsQuery } from "@/sanity/lib/queries";
 import { client } from "@/sanity/lib/client";
+import { BlogPostTitle } from "@/interfaces/blogpost.interface";
 
-export const revalidate = 30; 
-
+export const revalidate = 30;
 
 // Prepare Next.js to know which routes already exist
 export async function generateStaticParams() {
@@ -15,10 +13,29 @@ export async function generateStaticParams() {
   return posts;
 }
 
-const page = async () => {
-  const posts = await sanityFetch<SanityDocument[]>({ query: postsQuery });
+async function getData() {
+  const query = `
+  *[_type == 'post'] {
+    _id,
+    _updatedAt,
+    title,
+    slug,
+    mainImage,
+    smallDescription,
+    author-> {
+      _id,
+      name
+    }
+  }  
+  `;
+  const data = await client.fetch(query);
+  return data;
+}
 
-  return <Posts posts={posts} />;
+const page = async () => {
+  const data: BlogPostTitle[] = await getData();
+
+  return <Posts data={data} />;
 };
 
 export default page;

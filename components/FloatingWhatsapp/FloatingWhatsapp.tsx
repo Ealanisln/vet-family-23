@@ -13,7 +13,7 @@ export default function FloatingWhatsapp() {
     <div>
       {isSSR ? null : (
         <FloatingSsr
-          phoneNumber="4772605743"
+          phoneNumber="524772605743"
           accountName="Vet for Family"
           allowEsc
           notification

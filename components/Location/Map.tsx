@@ -1,54 +1,50 @@
 "use client";
 
-import React from "react";
-import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
-import Link from "next/link";
-import Image from "next/image";
+import { useEffect, useRef } from "react";
+import { Loader } from "@googlemaps/js-api-loader";
 
-const containerStyle = {
-  width: "w-full",
-  height: "500px",
-};
+export function Map() {
+  const mapRef = useRef<HTMLDivElement>(null);
 
-function GoogleMaps() {
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
-  });
+  useEffect(() => {
+    const initMap = async () => {
+      const loader = new Loader({
+        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+        version: "weekly",
+      });
 
-  const onLoad = (map: google.maps.Map) => {
-    // Handle map load event here if needed
-    console.log("loaded");
-  };
+      const { Map } = await loader.importLibrary("maps");
 
-  return isLoaded ? (
-    <div className="bg-babyblue" id="ubicacion">
-      <div className="mx-auto max-w-2xl pt-8 pb-16 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
+      // init a marker
+      const { AdvancedMarkerElement } = (await google.maps.importLibrary(
+        "marker"
+      )) as google.maps.MarkerLibrary;
 
+      const position = {
+        lat: 21.149511162191708,
+        lng: -101.70312782990445,
+      };
 
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={{
-            lat: 21.149511162191708,
-            lng: -101.70312782990445,
-          }}
-          zoom={18}
-          onLoad={onLoad}
-        >
-          <Marker
-            position={{
-              lat: 21.149511162191708,
-              lng: -101.70312782990445,
-            }}
-            visible={true}
-            clickable={false}
-          />
-        </GoogleMap>
-      </div>
-    </div>
-  ) : (
-    <></>
-  );
+      // Map Options
+      const mapOptions: google.maps.MapOptions = {
+        center: position,
+        zoom: 17,
+        mapId: "MY_NEXTJS_MAP_ID",
+      };
+
+      // Setup the map
+      const map = new Map(mapRef.current as HTMLDivElement, mapOptions);
+
+      // Put up the marker
+      const marker = new AdvancedMarkerElement({
+        map: map,
+        position: position,
+        title: "Vet for Family",
+      });
+    };
+
+    initMap();
+  }, []);
+
+  return <div style={{ height: "600px" }} ref={mapRef} />;
 }
-
-export default GoogleMaps;

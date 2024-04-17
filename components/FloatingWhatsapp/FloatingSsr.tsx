@@ -116,17 +116,12 @@ export default function FloatingSsr({
   style,
   className = "floating-whatsapp",
 }: FloatingWhatsAppProps) {
-  const [isMounted, setIsMounted] = useState(false);
   const [timeNow, setTimeNow] = useState("");
   const [{ isOpen, isDelay, isNotification }, dispatch] = useReducer(reducer, {
     isOpen: false,
     isDelay: true,
     isNotification: false,
   });
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     setTimeNow(
@@ -168,8 +163,6 @@ export default function FloatingSsr({
 
   useEffect(() => {
 
-    if (!isMounted) return;
-
     const delayInSecond = notificationDelay * 1000;
     if (delayInSecond < 10)
       return console.error(
@@ -182,7 +175,7 @@ export default function FloatingSsr({
     );
 
     return () => clearInterval(notificationInterval.current);
-  }, [isMounted, handleNotification, notificationDelay]);
+  }, [handleNotification, notificationDelay]);
 
 
 
@@ -190,7 +183,7 @@ export default function FloatingSsr({
     (event: React.MouseEvent<HTMLDivElement>) => {
       event.stopPropagation();
 
-      if (isOpen && isMounted) return;
+      if (isOpen) return;
 
       clearInterval(notificationInterval.current);
       dispatch({ type: "open" });
@@ -239,8 +232,6 @@ export default function FloatingSsr({
 
     return () => document.removeEventListener("keydown", onEscKey);
   }, [allowEsc, isOpen, handleClose]);
-
-  if (!isMounted) return null;
 
 
   return (

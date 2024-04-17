@@ -38,6 +38,7 @@ const Banner = () => {
               alt="hero"
               width={900}
               height={805}
+              className="rounded-lg"
             />
           </div>
         </div>

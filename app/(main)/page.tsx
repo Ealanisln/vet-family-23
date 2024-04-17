@@ -5,22 +5,12 @@ import Servicios from "../../components/Servicios/index";
 import Business from "../../components/Business/index";
 import HomeDelivery from "../../components/HomeDelivery/index";
 import Location from "../../components/Location/";
-import Contact, { FormProps } from "../../components/Contact";
+import Contact from "../../components/Contact";
 import GaleriaFotos from "@/components/GaleriaFotos/GaleriaFotos";
 // import Specials from "@/components/Specials";
 import FloatingWhatsApp from "@/components/FloatingWhatsapp/FloatingWhatsapp";
-import { Suspense } from "react";
-import { LoadingSpinner } from "@/components/ui/";
-import FloatingSsr from "@/components/FloatingWhatsapp/FloatingSsr";
 
 export default async function Home() {
-  const formProps: FormProps = {
-    result: false,
-    isChecked: false,
-    callTime: [],
-    loading: false,
-  };
-
   return (
     <main>
       <FloatingWhatsApp />
@@ -31,7 +21,7 @@ export default async function Home() {
       <GaleriaFotos />
       <Business />
       <HomeDelivery />
-      <Contact {...formProps} />
+      <Contact />
       <Location />
     </main>
   );

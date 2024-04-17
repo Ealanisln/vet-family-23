@@ -15,8 +15,8 @@ const nextConfig = {
     async redirects() {
       return [
         {
-          source: '/concurso',
-          destination: '/blog/concurso-especial-family-vet-1er-aniversario',
+          source: '/resena-google-maps',
+          destination: '/blog/escribe-una-resena-en-google-maps',
           permanent: true,
         },
       ]

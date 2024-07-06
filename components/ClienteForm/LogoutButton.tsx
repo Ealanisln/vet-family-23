@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { Button } from '../ui/button';
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -10,5 +11,5 @@ export default function LogoutButton() {
     router.push('/login');
   };
 
-  return <button onClick={handleLogout}>Cerrar sesión</button>;
+  return <Button onClick={handleLogout}>Cerrar sesión</Button>;
 }

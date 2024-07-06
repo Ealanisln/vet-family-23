@@ -12,7 +12,7 @@ import FloatingWhatsApp from "@/components/FloatingWhatsapp/FloatingWhatsapp";
 
 export default async function Home() {
   return (
-    <main>
+    <>
       <FloatingWhatsApp />
       <Banner />
       {/* <Specials /> */}
@@ -23,6 +23,6 @@ export default async function Home() {
       <HomeDelivery />
       <Contact />
       <Location />
-    </main>
+    </>
   );
 }

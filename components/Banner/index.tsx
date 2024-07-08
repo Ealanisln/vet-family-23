@@ -25,21 +25,29 @@ const Banner = () => {
             </h3>
             <div className="pt-8 mx-auto lg:mx-0">
               <Link href="#servicios">
-              <button className="text-white text-xl font-medium py-6 px-12 rounded-full transition duration-150 ease-in-out bg-black hover:text-white hover:bg-teal-800">
-                Conoce nuestros servicios
-              </button>
+                <button className="text-white text-xl font-medium py-6 px-12 rounded-full transition duration-150 ease-in-out bg-black hover:text-white hover:bg-teal-800">
+                  Conoce nuestros servicios
+                </button>
               </Link>
             </div>
           </div>
 
           <div className="col-span-5 flex justify-center xl:-mb-24 xl:-mr-32 pt-10 lg:pt-0">
-            <Image
-              src="/assets/banner/pride.png"
-              alt="hero"
-              width={900}
-              height={805}
-              className="rounded-lg"
-            />
+            <picture>
+              <source srcSet="/assets/banner/julio.webp" type="image/webp" />
+              <source srcSet="/assets/banner/julio.png" type="image/png" />
+              <Image
+                src="/assets/banner/pride.png" // fallback
+                alt="hero"
+                width={900}
+                height={805}
+                className="rounded-lg"
+                quality={75} // Ajusta la calidad según sea necesario
+                placeholder="blur"
+                blurDataURL="/assets/banner/pride-blur.webp" // Una versión más pequeña y borrosa de la imagen
+                sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 900px"
+              />
+            </picture>
           </div>
         </div>
       </div>

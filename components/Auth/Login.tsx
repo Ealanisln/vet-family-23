@@ -54,7 +54,7 @@ export function LoginForm() {
     <div className="flex items-center justify-center bg-gray-100 py-8">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Admin</CardTitle>
+          <CardTitle className="text-2xl">Panel de administración</CardTitle>
           <CardDescription>Ingresa tu usuario y contraseña</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -75,6 +75,7 @@ export function LoginForm() {
               <Input
                 id="password"
                 type="password"
+                placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

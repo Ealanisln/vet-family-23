@@ -6,6 +6,6 @@ const ClienteSchema: Schema = new Schema({
   visitas: { type: Number, default: 0 },
   proximaVisitaGratis: { type: Boolean, default: false },
   ultimaVisita: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
 export default mongoose.models.Cliente || mongoose.model('Cliente', ClienteSchema);

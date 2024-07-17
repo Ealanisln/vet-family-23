@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import dbConnect from "@/lib/dbConnect";
 import Cliente from "@/models/Cliente";
+import mongoose from "mongoose";
 
 function convertToPlainObject(doc: any) {
   const plainObject = doc.toObject ? doc.toObject() : { ...doc };
@@ -31,7 +32,7 @@ function convertToPlainObject(doc: any) {
   return plainObject;
 }
 
-export async function getClientes() {
+export async function getClienteById(id: string) {
   const isLoggedIn = cookies().get("isLoggedIn")?.value === "true";
   if (!isLoggedIn) {
     throw new Error("No autorizado");
@@ -39,12 +40,24 @@ export async function getClientes() {
 
   try {
     await dbConnect();
-    const clientes = await Cliente.find({});
-    // Usamos map para convertir cada documento a un objeto plano
-    const clientesPlanos = clientes.map(convertToPlainObject);
-    return { success: true, data: clientesPlanos };
+    
+    // Ensure the id is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("ID de cliente inválido");
+    }
+
+    const cliente = await Cliente.findById(id);
+    
+    if (!cliente) {
+      throw new Error("Cliente no encontrado");
+    }
+
+    // Convert the document to a plain object
+    const clientePlano = convertToPlainObject(cliente);
+    
+    return { success: true, data: clientePlano };
   } catch (error) {
-    console.error("Error al obtener clientes:", error);
-    throw new Error("Error al obtener clientes");
+    console.error("Error al obtener cliente:", error);
+    throw new Error("Error al obtener cliente");
   }
 }

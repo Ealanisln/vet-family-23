@@ -1,9 +1,13 @@
-import { Document } from 'mongoose';
-
-export interface ICliente extends Document {
+export interface ICliente {
+  _id: string;
   nombre: string;
   mascota: string;
   visitas: number;
-  ultimaVisita: Date;
-  cuponDisponible: boolean;
+  visitasDesdeUltimaGratis: number;
+  ultimaVisita?: string;
+  historialVisitas: {
+    fecha: string;
+    costo: number;
+    esGratis: boolean;
+  }[];
 }

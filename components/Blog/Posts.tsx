@@ -9,11 +9,14 @@ interface PostsProps {
 }
 
 const Posts = ({ data }: PostsProps) => {
+  // Ordenar los posts por fecha de actualización, de más reciente a más antiguo
+  const sortedPosts = data.sort((a, b) => new Date(b._updatedAt).getTime() - new Date(a._updatedAt).getTime());
+
   return (
     <section className="max-w-screen-lg mx-auto bg-babyblue">
       <div className="-mx-4 flex flex-wrap justify-center">
         <div className="sm:p-4 md:p-12 mx-auto grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-          {data.map((post, idx) => (
+          {sortedPosts.map((post, idx) => (
             <Link key={post._id} href={`/blog/${post.slug.current}`}>
               <div key={idx}>
                 <Card>
@@ -26,7 +29,7 @@ const Posts = ({ data }: PostsProps) => {
                   />
                 </Card>
                 <CardContent className="mt-5">
-                  <h3 className="mb-4 block font-bold text-black hover:text-primary dark:text-white dark:hover:text-primary md:text-xl ">
+                  <h3 className="mb-4 block font-bold text-black hover:text-primary dark:text-white dark:hover:text-primary md:text-xl">
                     {post.title}
                   </h3>
                   <h2 className="mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
@@ -36,10 +39,6 @@ const Posts = ({ data }: PostsProps) => {
                     <div className="mr-5 flex items-center border-r border-body-color border-opacity-10 pr-5 dark:border-white dark:border-opacity-10 xl:mr-3 xl:pr-3 2xl:mr-5 2xl:pr-5">
                       <div className="mr-4">
                         <div className="w-full">
-                          {/* <h4 className="mb-1 text-sm font-medium text-dark dark:text-white">
-                        By {post.author}
-                      </h4> */}
-
                           <p>{post._updatedAt.substring(0, 10)}</p>
                         </div>
                       </div>
@@ -56,7 +55,6 @@ const Posts = ({ data }: PostsProps) => {
 };
 
 export default Posts;
-
 // export default function Posts( {data}: PostsProps[] ) {
 //   return (
 //     <div className="max-w-screen-lg mx-auto bg-babyblue" id="blog">

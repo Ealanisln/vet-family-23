@@ -9,13 +9,14 @@ import Contact from "../../components/Contact";
 import GaleriaFotos from "@/components/GaleriaFotos/GaleriaFotos";
 // import Specials from "@/components/Specials";
 import FloatingWhatsApp from "@/components/FloatingWhatsapp/FloatingWhatsapp";
+import { AlertBanner } from "@/components/AlertBanner";
 
 export default async function Home() {
   return (
     <>
       <FloatingWhatsApp />
       <Banner />
-      {/* <Specials /> */}
+      <AlertBanner />
       <Reviews />
       <Servicios />
       <GaleriaFotos />

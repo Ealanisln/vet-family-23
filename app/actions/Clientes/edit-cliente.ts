@@ -3,10 +3,13 @@
 
 import { cookies } from "next/headers";
 import dbConnect from "@/lib/dbConnect";
-import Cliente from "@/models/Cliente";
+import { Cliente } from "@/models/Cliente";
 import { ICliente } from "@/types/";
 
-export async function editCliente(clienteId: string, updatedData: Partial<ICliente>) {
+export async function editCliente(
+  clienteId: string,
+  updatedData: Partial<ICliente>
+) {
   const isLoggedIn = cookies().get("isLoggedIn")?.value === "true";
   if (!isLoggedIn) {
     throw new Error("No autorizado");

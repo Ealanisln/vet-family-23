@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import dbConnect from "@/lib/dbConnect";
-import Cliente from "@/models/Cliente";
+import {Cliente} from "@/models/Cliente";
 
 function convertToPlainObject(doc: any) {
   const plainObject = doc.toObject ? doc.toObject() : { ...doc };

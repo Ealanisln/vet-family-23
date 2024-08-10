@@ -39,8 +39,9 @@ import Header from "./Header";
 import { EditClienteModal } from "./EditClienteModal";
 import { addCliente } from "@/app/actions/Clientes/add-cliente";
 import { AddClienteModal } from "./AddClientModal";
-import { Badge } from "../ui/badge";
+import { COSTO_NORMAL } from "@/constants/prices";
 import { getClienteById } from "@/app/actions/Clientes/get-cliente";
+import Link from "next/link";
 
 export default function Dashboard() {
   const [clientes, setClientes] = useState<ICliente[]>([]);
@@ -48,8 +49,6 @@ export default function Dashboard() {
   const [editingCliente, setEditingCliente] = useState<ICliente | null>(null);
   const [isAddingCliente, setIsAddingCliente] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-
-  const COSTO_NORMAL = 100; // Replace with your actual cost
 
   const { toast } = useToast();
 
@@ -173,7 +172,7 @@ export default function Dashboard() {
         });
       }
     },
-    [toast, fetchClientes, COSTO_NORMAL]
+    [toast, fetchClientes]
   );
 
   const handleCloseEditModal = () => {
@@ -254,7 +253,12 @@ export default function Dashboard() {
                     {clientes.map((cliente) => (
                       <TableRow key={cliente._id}>
                         <TableCell className="font-medium">
-                          {cliente.nombre}
+                          <Link
+                            href={`/admin/cliente-frecuente/${cliente._id}`}
+                            className="hover:underline"
+                          >
+                            {cliente.nombre}
+                          </Link>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           {cliente.mascota}
@@ -296,6 +300,14 @@ export default function Dashboard() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onSelect={() => {
+                                  window.location.href = `/admin/cliente-frecuente/${cliente._id}`;
+                                  setOpenMenuId(null);
+                                }}
+                              >
+                                Ver Detalles
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => {
                                   handleOpenEditModal(cliente);

@@ -29,6 +29,6 @@ export default async function ClientePage({
         Última visita: {new Date(cliente.ultimaVisita).toLocaleDateString()}
       </p>
       <p>Cupón disponible: {cliente.cuponDisponible ? "Sí" : "No"}</p>
-    </div>
+    </div>  
   );
 }

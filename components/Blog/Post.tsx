@@ -45,7 +45,7 @@ export default function Post({ post }: { post: SanityDocument }) {
               </div>
             ) : null}
 
-            <div className="prose prose-xl prose-blue mt-12">
+            <div className="prose prose-xl prose-blue mt-12 space-y-4">
               {post?.body ? <PortableText value={post.body} /> : null}
             </div>
             <hr className="my-8 border-t border-gray-400" />

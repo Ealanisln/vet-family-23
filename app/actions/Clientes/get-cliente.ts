@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import dbConnect from "@/lib/dbConnect";
-import Cliente from "@/models/Cliente";
+import { Cliente } from "@/models/Cliente";
 import mongoose from "mongoose";
 
 function convertToPlainObject(doc: any) {
@@ -40,21 +40,21 @@ export async function getClienteById(id: string) {
 
   try {
     await dbConnect();
-    
+
     // Ensure the id is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new Error("ID de cliente inválido");
     }
 
     const cliente = await Cliente.findById(id);
-    
+
     if (!cliente) {
       throw new Error("Cliente no encontrado");
     }
 
     // Convert the document to a plain object
     const clientePlano = convertToPlainObject(cliente);
-    
+
     return { success: true, data: clientePlano };
   } catch (error) {
     console.error("Error al obtener cliente:", error);

@@ -5,10 +5,6 @@ import {
   FacebookShareButton,
   FacebookIcon,
   LinkedinShareButton,
-  PinterestShareButton,
-  RedditShareButton,
-  TelegramShareButton,
-  TumblrShareButton,
   TwitterShareButton,
   WhatsappShareButton,
   XIcon,
@@ -18,19 +14,18 @@ import {
   WhatsappIcon,
   FacebookMessengerIcon,
   FacebookMessengerShareButton,
+  TelegramShareButton,
 } from "react-share";
 import { usePathname } from "next/navigation";
 
 const Share = ({ post }: { post: SanityDocument }) => {
   const pathname = usePathname();
 
-  const pageUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  // Definimos la URL base correcta
+  const baseUrl = "https://www.vetforfamily.com";
 
-
-  const shareUrl =
-    typeof window !== "undefined"
-      ? pageUrl + pathname
-      : "http://www.familyvet23.com";
+  // Construimos la URL completa
+  const shareUrl = `${baseUrl}${pathname}`;
   const title = post.title;
 
   return (
@@ -54,6 +49,7 @@ const Share = ({ post }: { post: SanityDocument }) => {
         >
           <FacebookIcon size={32} round />
         </FacebookShareButton>
+
         <FacebookMessengerShareButton
           url={shareUrl}
           appId="521270401588372"
@@ -61,6 +57,7 @@ const Share = ({ post }: { post: SanityDocument }) => {
         >
           <FacebookMessengerIcon size={32} round />
         </FacebookMessengerShareButton>
+
         <TelegramShareButton
           url={shareUrl}
           title={title}
@@ -68,6 +65,7 @@ const Share = ({ post }: { post: SanityDocument }) => {
         >
           <TelegramIcon size={32} round />
         </TelegramShareButton>
+
         <WhatsappShareButton
           url={shareUrl}
           title={title}
@@ -76,6 +74,7 @@ const Share = ({ post }: { post: SanityDocument }) => {
         >
           <WhatsappIcon size={32} round />
         </WhatsappShareButton>
+
         <EmailShareButton
           url={shareUrl}
           subject={title}
@@ -84,6 +83,7 @@ const Share = ({ post }: { post: SanityDocument }) => {
         >
           <EmailIcon size={32} round />
         </EmailShareButton>
+
         <LinkedinShareButton
           url={shareUrl}
           className="Demo__some-network__share-button"

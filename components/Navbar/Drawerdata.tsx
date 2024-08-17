@@ -8,7 +8,7 @@ interface NavigationItem {
 }
 
 const navigation: NavigationItem[] = [
-  { name: "Testimonios", href: "#Testimonios", current: true },
+  { name: "Promociones", href: "/promociones", current: true },
   { name: "Servicios", href: "#servicios", current: false },
   { name: "Blog", href: "/blog", current: false },
   { name: "Contacto", href: "#contacto", current: false },

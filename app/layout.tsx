@@ -21,7 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-        <GoogleTagManager gtmId="GTM-WRS82MQB" />
+        <GoogleTagManager gtmId="AW-16513203690" />
         <Toaster />
         <Suspense fallback={null}>
           <FacebookPixelEvents />

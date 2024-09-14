@@ -1,94 +1,136 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import LoadingButton from "@/components/ui/loading-button";
+import ErrorMessage from "@/components/ui/error-message";
 
-export function LoginForm() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+const signInSchema = z.object({
+  username: z.string().min(1, "El usuario es requerido"),
+  password: z.string().min(1, "La contraseña es requerida"),
+});
+
+type SignInSchema = z.infer<typeof signInSchema>;
+
+export default function LoginForm() {
+  const [globalError, setGlobalError] = useState("");
   const router = useRouter();
+  const form = useForm<SignInSchema>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
+  const onSubmit = async (values: SignInSchema) => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       const data = await response.json();
-  
+
       if (data.success) {
-        // Inicio de sesión exitoso
         document.cookie = "isLoggedIn=true; path=/";
-        router.push("/admin/cliente-frecuente");
+        router.push("/admin/");
       } else {
-        // Inicio de sesión fallido
-        alert(data.message);
+        setGlobalError(data.message || "Error de inicio de sesión");
       }
     } catch (error) {
       console.error('Error durante el inicio de sesión:', error);
-      alert('Ocurrió un error durante el inicio de sesión. Por favor, intenta de nuevo.');
+      setGlobalError('Ocurrió un error durante el inicio de sesión. Por favor, intenta de nuevo.');
     }
   };
+
   return (
-    <div className="flex items-center justify-center bg-gray-100 py-8">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Panel de administración</CardTitle>
-          <CardDescription>Ingresa tu usuario y contraseña</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="user">Usuario</Label>
-              <Input
-                id="user"
-                type="text"
-                placeholder="Usuario"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
+    <div className="flex min-h-screen flex-col lg:flex-row">
+      <div className="flex flex-1 items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-[350px] space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold">Panel de administración</h1>
+            <p className="text-balance text-muted-foreground">
+              Ingresa tu usuario y contraseña para tener acceso al panel de administración.
+            </p>
+          </div>
+          {globalError && <ErrorMessage error={globalError} />}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Usuario</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="Usuario"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contraseña</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Contraseña" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full bg-cyan-600 hover:bg-cyan-700" type="submit">
-              Iniciar sesión
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+
+              <LoadingButton
+                pending={form.formState.isSubmitting}
+                className="w-full bg-cyan-600 hover:bg-cyan-700"
+              >
+                Iniciar sesión
+              </LoadingButton>
+            </form>
+          </Form>
+        </div>
+      </div>
+      <div className="relative flex-1">
+        <Image
+          src="/assets/login/new.png"
+          alt="Login cover"
+          layout="fill"
+          objectFit="cover"
+          className="dark:brightness-[0.2] dark:grayscale"
+          priority
+        />
+      </div>
     </div>
   );
 }

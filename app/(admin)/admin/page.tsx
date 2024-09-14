@@ -1,50 +1,50 @@
-import React from 'react';
-import { 
-  Bone, UserPlus, UserCog, Stethoscope, Dog, Building2, FileText, 
-  ClipboardList, AlertTriangle, Key, Cpu
-} from 'lucide-react';
+import { UserPlus, PawPrint, UserCog, PenTool, Calendar, FileText, Bell, Users, Syringe, Stethoscope, DollarSign } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
+import Link from "next/link";
 
-interface MenuItemProps {
-  icon: React.ElementType;
-  text: string;
-}
-
-const MenuItem: React.FC<MenuItemProps> = ({ icon: Icon, text }) => (
-  <div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors">
-    <Icon className="w-10 h-10 text-blue-500 mb-2" />
-    <span className="text-sm text-center">{text}</span>
-  </div>
-);
-
-const AdminDashboard: React.FC = () => {
-  const menuItems = [
-    { icon: Bone, text: 'Datos de la Clínica Veterinaria / Actualización de Datos' },
-    { icon: UserPlus, text: 'Alta de Propietarios' },
-    { icon: UserCog, text: 'Actualización de Datos de Propietarios' },
-    { icon: Stethoscope, text: 'Alta de Veterinarios Secundarios' },
-    { icon: Dog, text: 'Alta de Mascotas' },
-    { icon: Dog, text: 'Actualización de Datos de Mascotas' },
-    { icon: Stethoscope, text: 'Actualización de Datos de Veterinarios Secundarios' },
-    { icon: Building2, text: 'Alta de Sucursales' },
-    { icon: Building2, text: 'Actualización de Sucursales' },
-    { icon: FileText, text: 'Generación de Carta de Aplicación' },
-    { icon: ClipboardList, text: 'Reporte de Lectura' },
-    { icon: AlertTriangle, text: 'Reporte de Problema' },
-    { icon: Key, text: 'Cambio de Contraseña' },
-    { icon: Cpu, text: 'Consulta de Chips' },
+export default function Component() {
+  const username = "Administrador"; // This can be fetched or set dynamically using server-side methods
+  const options = [
+    { title: "Gestión de Clientes", icon: Users, href: "/admin/clientes" },
+    { title: "Gestión de Mascotas", icon: PawPrint, href: "/admin/mascotas" },
+    { title: "Historial Médico", icon: Stethoscope, href: "/admin/historial-medico" },
+    { title: "Vacunaciones", icon: Syringe, href: "/admin/vacunaciones" },
+    { title: "Citas", icon: Calendar, href: "/admin/citas" },
+    { title: "Facturación", icon: DollarSign, href: "/admin/facturacion" },
+    { title: "Recordatorios", icon: Bell, href: "/admin/recordatorios" },
+    { title: "Personal", icon: UserCog, href: "/admin/personal" },
+    { title: "Reportes", icon: FileText, href: "/admin/reportes" },
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-8 text-center">Bienvenido Mayra Montserrat Castillo Aboytes</h1>
-      <p className="text-center mb-8">Para comenzar, escoge la opción que necesites verificar</p>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {menuItems.map((item, index) => (
-          <MenuItem key={index} icon={item.icon} text={item.text} />
+    <div className="container mx-auto p-4">
+      <div className="mb-8">
+        <div className="relative w-full h-64 rounded-lg overflow-hidden mb-4">
+          <Image
+            src="/assets/admin/banner.png"
+            alt="Veterinary clinic"
+            layout="fill"
+            objectFit="cover"
+          />
+        </div>
+        <div className="text-center p-8">
+          <h1 className="text-4xl font-bold mb-2 text-primary">Panel de administración</h1>
+          <h2 className="text-xl text-muted-foreground">Bienvenido: {username}</h2>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {options.map((option, index) => (
+          <Link href={option.href} key={index} className="block">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="flex flex-col items-center justify-center p-6">
+                <option.icon className="w-12 h-12 mb-4 text-primary" />
+                <h3 className="text-lg font-semibold text-center">{option.title}</h3>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>
   );
-};
-
-export default AdminDashboard;
+}

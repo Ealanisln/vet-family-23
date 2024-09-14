@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+// Cliente (Customer)
 interface ICliente extends Document {
   nombre: string;
   apellido: string;
@@ -7,7 +8,6 @@ interface ICliente extends Document {
   telefono: string;
   direccion: string;
   metodoContactoPreferido: 'email' | 'telefono' | 'mensaje';
-  mascota: string;
   visitas: number;
   proximaVisitaGratis: boolean;
   ultimaVisita: Date;
@@ -18,7 +18,6 @@ interface ICliente extends Document {
   }>;
 }
 
-// Define the ClienteSchema
 const ClienteSchema: Schema = new Schema({
   nombre: { type: String, required: true },
   apellido: { type: String, required: true },
@@ -30,7 +29,6 @@ const ClienteSchema: Schema = new Schema({
     enum: ['email', 'telefono', 'mensaje'], 
     required: true 
   },
-  mascota: { type: String, required: true },
   visitas: { type: Number, default: 0 },
   proximaVisitaGratis: { type: Boolean, default: false },
   ultimaVisita: { type: Date, default: Date.now },
@@ -61,7 +59,7 @@ const MascotaSchema: Schema = new Schema({
   fechaNacimiento: { type: Date, required: true },
   sexo: { type: String, enum: ['macho', 'hembra'], required: true },
   peso: { type: Number, required: true },
-  numeroMicrochip: { type: String },
+  numeroMicrochip: { type: String }
 });
 
 // HistorialMedico (Medical Record)
@@ -82,7 +80,7 @@ const HistorialMedicoSchema: Schema = new Schema({
   diagnostico: { type: String, required: true },
   tratamiento: { type: String, required: true },
   recetas: [{ type: String }],
-  notas: { type: String },
+  notas: { type: String }
 });
 
 // Vacunacion (Vaccination)
@@ -97,7 +95,7 @@ const VacunacionSchema: Schema = new Schema({
   mascotaId: { type: Schema.Types.ObjectId, ref: 'Mascota', required: true },
   tipoVacuna: { type: String, required: true },
   fechaAdministracion: { type: Date, required: true },
-  fechaProximaDosis: { type: Date, required: true },
+  fechaProximaDosis: { type: Date, required: true }
 });
 
 // Cita (Appointment)
@@ -114,7 +112,7 @@ const CitaSchema: Schema = new Schema({
   mascotaId: { type: Schema.Types.ObjectId, ref: 'Mascota', required: true },
   fechaHora: { type: Date, required: true },
   motivo: { type: String, required: true },
-  estado: { type: String, enum: ['programada', 'completada', 'cancelada'], required: true },
+  estado: { type: String, enum: ['programada', 'completada', 'cancelada'], required: true }
 });
 
 // Facturacion (Billing)
@@ -133,7 +131,7 @@ const FacturacionSchema: Schema = new Schema({
   fecha: { type: Date, required: true },
   servicios: [{ type: String }],
   costo: { type: Number, required: true },
-  estadoPago: { type: String, enum: ['pagado', 'pendiente', 'atrasado'], required: true },
+  estadoPago: { type: String, enum: ['pagado', 'pendiente', 'atrasado'], required: true }
 });
 
 // Recordatorio (Reminder)
@@ -150,7 +148,7 @@ const RecordatorioSchema: Schema = new Schema({
   mascotaId: { type: Schema.Types.ObjectId, ref: 'Mascota', required: true },
   tipoRecordatorio: { type: String, required: true },
   fechaVencimiento: { type: Date, required: true },
-  estado: { type: String, enum: ['enviado', 'pendiente', 'completado'], required: true },
+  estado: { type: String, enum: ['enviado', 'pendiente', 'completado'], required: true }
 });
 
 // Personal (Staff)
@@ -163,15 +161,24 @@ interface IPersonal extends Document {
 const PersonalSchema: Schema = new Schema({
   nombre: { type: String, required: true },
   cargo: { type: String, required: true },
-  informacionContacto: { type: String, required: true },
+  informacionContacto: { type: String, required: true }
 });
 
-// Create models
+// Crear modelos
 export const Cliente = mongoose.models.Cliente || mongoose.model<ICliente>('Cliente', ClienteSchema);
-export const Mascota = mongoose.model<IMascota>('Mascota', MascotaSchema);
-export const HistorialMedico = mongoose.model<IHistorialMedico>('HistorialMedico', HistorialMedicoSchema);
-export const Vacunacion = mongoose.model<IVacunacion>('Vacunacion', VacunacionSchema);
-export const Cita = mongoose.model<ICita>('Cita', CitaSchema);
-export const Facturacion = mongoose.model<IFacturacion>('Facturacion', FacturacionSchema);
-export const Recordatorio = mongoose.model<IRecordatorio>('Recordatorio', RecordatorioSchema);
-export const Personal = mongoose.model<IPersonal>('Personal', PersonalSchema);CitaSchema.index({ clienteId: 1, fechaHora: 1 });
+export const Mascota = mongoose.models.Mascota || mongoose.model<IMascota>('Mascota', MascotaSchema);
+export const HistorialMedico = mongoose.models.HistorialMedico || mongoose.model<IHistorialMedico>('HistorialMedico', HistorialMedicoSchema);
+export const Vacunacion = mongoose.models.Vacunacion || mongoose.model<IVacunacion>('Vacunacion', VacunacionSchema);
+export const Cita = mongoose.models.Cita || mongoose.model<ICita>('Cita', CitaSchema);
+export const Facturacion = mongoose.models.Facturacion || mongoose.model<IFacturacion>('Facturacion', FacturacionSchema);
+export const Recordatorio = mongoose.models.Recordatorio || mongoose.model<IRecordatorio>('Recordatorio', RecordatorioSchema);
+export const Personal = mongoose.models.Personal || mongoose.model<IPersonal>('Personal', PersonalSchema);
+
+// Índices
+ClienteSchema.index({ email: 1 });
+MascotaSchema.index({ clienteId: 1 });
+HistorialMedicoSchema.index({ mascotaId: 1 });
+VacunacionSchema.index({ mascotaId: 1 });
+CitaSchema.index({ clienteId: 1, fechaHora: 1 });
+FacturacionSchema.index({ clienteId: 1, fecha: 1 });
+RecordatorioSchema.index({ clienteId: 1, fechaVencimiento: 1 });

@@ -179,9 +179,6 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.3.2(ts-node@10.9.2(@types/node@20.2.0)(typescript@5.0.4)))
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@20.2.0)(typescript@5.0.4)
       vaul:
         specifier: ^0.9.0
         version: 0.9.0(@types/react-dom@18.2.4)(@types/react@18.2.6)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -195,6 +192,9 @@ importers:
       '@tailwindcss/typography':
         specifier: ^0.5.12
         version: 0.5.12(tailwindcss@3.3.2(ts-node@10.9.2(@types/node@20.2.0)(typescript@5.0.4)))
+      '@types/dotenv':
+        specifier: ^8.2.0
+        version: 8.2.0
       '@types/mongodb':
         specifier: ^4.0.7
         version: 4.0.7
@@ -207,6 +207,9 @@ importers:
       '@types/nodemailer':
         specifier: ^6.4.14
         version: 6.4.14
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@20.2.0)(typescript@5.0.4)
       typescript:
         specifier: 5.0.4
         version: 5.0.4
@@ -2230,6 +2233,10 @@ packages:
 
   '@types/babel__traverse@7.20.5':
     resolution: {integrity: sha512-WXCyOcRtH37HAUkpXhUduaxdm82b4GSlyTqajXviN4EfiuPgNYR109xMCKvpl6zPIpua0DGlMEDCq+g8EdoheQ==}
+
+  '@types/dotenv@8.2.0':
+    resolution: {integrity: sha512-ylSC9GhfRH7m1EUXBXofhgx4lUWmFeQDINW5oLuS+gxWdfUeW4zJdeVTYVkexEW+e2VUvlZR2kGnGGipAWR7kw==}
+    deprecated: This is a stub types definition. dotenv provides its own type definitions, so you do not need this installed.
 
   '@types/event-source-polyfill@1.0.2':
     resolution: {integrity: sha512-qE5zrFd73BRs5oSjVys6g/5GboqOMbzLRTUFPAhfULvvvbRAOXw9m4Wk+p1BtoZm4JgW7TljGGfVabBqvi3eig==}
@@ -7940,6 +7947,10 @@ snapshots:
   '@types/babel__traverse@7.20.5':
     dependencies:
       '@babel/types': 7.24.0
+
+  '@types/dotenv@8.2.0':
+    dependencies:
+      dotenv: 16.4.5
 
   '@types/event-source-polyfill@1.0.2': {}
 

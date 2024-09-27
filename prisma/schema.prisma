@@ -10,111 +10,116 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Cliente {
-  id                      String            @id @default(auto()) @map("_id") @db.ObjectId
-  nombre                  String
-  email                   String            @unique
-  telefono                String
-  direccion               String
-  metodoContactoPreferido String
-  mascota                 String
-  visitas                 Int               @default(0)
-  proximaVisitaGratis     Boolean           @default(false)
-  ultimaVisita            DateTime          @default(now())
-  historialVisitas        HistorialVisita[]
-  mascotas                Mascota[]
-  citas                   Cita[]
-  facturaciones           Facturacion[]
-  recordatorios           Recordatorio[]
-  createdAt               DateTime          @default(now())
-  updatedAt               DateTime          @updatedAt
+model User {
+  id                    String           @id @default(auto()) @map("_id") @db.ObjectId
+  kindeId               String           @unique
+  email                 String           @unique
+  firstName             String?
+  lastName              String?
+  name                  String?
+  phone                 String?
+  address               String?
+  preferredContactMethod String?
+  pet                   String?
+  visits                Int              @default(0)
+  nextVisitFree         Boolean          @default(false)
+  lastVisit             DateTime?
+  visitHistory          VisitHistory[]
+  pets                  Pet[]
+  appointments          Appointment[]
+  billings              Billing[]
+  reminders             Reminder[]
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  @@map("users")
 }
 
-model HistorialVisita {
+model VisitHistory {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  clienteId String   @db.ObjectId
-  cliente   Cliente  @relation(fields: [clienteId], references: [id])
-  fecha     DateTime @default(now())
-  costo     Float
-  esGratis  Boolean  @default(false)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime @default(now())
+  cost      Float
+  isFree    Boolean  @default(false)
 }
 
-model Mascota {
-  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
-  clienteId          String            @db.ObjectId
-  cliente            Cliente           @relation(fields: [clienteId], references: [id])
-  nombre             String
-  especie            String
-  raza               String
-  fechaNacimiento    DateTime
-  sexo               String
-  peso               Float
-  numeroMicrochip    String?
-  historialesMedicos HistorialMedico[]
-  vacunaciones       Vacunacion[]
-  citas              Cita[]
-  Facturacion        Facturacion[]
-  Recordatorio       Recordatorio[]
+model Pet {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String          @db.ObjectId
+  user            User            @relation(fields: [userId], references: [id])
+  name            String
+  species         String
+  breed           String
+  dateOfBirth     DateTime
+  gender          String
+  weight          Float
+  microchipNumber String?
+  medicalHistory  MedicalHistory[]
+  vaccinations    Vaccination[]
+  appointments    Appointment[]
+  billings        Billing[]
+  reminders       Reminder[]
 }
 
-model HistorialMedico {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  mascotaId    String   @db.ObjectId
-  mascota      Mascota  @relation(fields: [mascotaId], references: [id])
-  fechaVisita  DateTime
-  motivoVisita String
-  diagnostico  String
-  tratamiento  String
-  recetas      String[]
-  notas        String?
+model MedicalHistory {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  petId         String   @db.ObjectId
+  pet           Pet      @relation(fields: [petId], references: [id])
+  visitDate     DateTime
+  reasonForVisit String
+  diagnosis     String
+  treatment     String
+  prescriptions String[]
+  notes         String?
 }
 
-model Vacunacion {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
-  mascotaId           String   @db.ObjectId
-  mascota             Mascota  @relation(fields: [mascotaId], references: [id])
-  tipoVacuna          String
-  fechaAdministracion DateTime
-  fechaProximaDosis   DateTime
-}
-
-model Cita {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  clienteId String   @db.ObjectId
-  cliente   Cliente  @relation(fields: [clienteId], references: [id])
-  mascotaId String   @db.ObjectId
-  mascota   Mascota  @relation(fields: [mascotaId], references: [id])
-  fechaHora DateTime
-  motivo    String
-  estado    String
-}
-
-model Facturacion {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  clienteId  String   @db.ObjectId
-  cliente    Cliente  @relation(fields: [clienteId], references: [id])
-  mascotaId  String?  @db.ObjectId
-  mascota    Mascota? @relation(fields: [mascotaId], references: [id])
-  fecha      DateTime
-  servicios  String[]
-  costo      Float
-  estadoPago String
-}
-
-model Recordatorio {
+model Vaccination {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  clienteId        String   @db.ObjectId
-  cliente          Cliente  @relation(fields: [clienteId], references: [id])
-  mascotaId        String   @db.ObjectId
-  mascota          Mascota  @relation(fields: [mascotaId], references: [id])
-  tipoRecordatorio String
-  fechaVencimiento DateTime
-  estado           String
+  petId            String   @db.ObjectId
+  pet              Pet      @relation(fields: [petId], references: [id])
+  vaccineType      String
+  administrationDate DateTime
+  nextDoseDate     DateTime
 }
 
-model Personal {
-  id                  String @id @default(auto()) @map("_id") @db.ObjectId
-  nombre              String
-  cargo               String
-  informacionContacto String
+model Appointment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  petId     String   @db.ObjectId
+  pet       Pet      @relation(fields: [petId], references: [id])
+  dateTime  DateTime
+  reason    String
+  status    String
+}
+
+model Billing {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  petId      String?  @db.ObjectId
+  pet        Pet?     @relation(fields: [petId], references: [id])
+  date       DateTime
+  services   String[]
+  cost       Float
+  paymentStatus String
+}
+
+model Reminder {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String   @db.ObjectId
+  user             User     @relation(fields: [userId], references: [id])
+  petId            String   @db.ObjectId
+  pet              Pet      @relation(fields: [petId], references: [id])
+  reminderType     String
+  dueDate          DateTime
+  status           String
+}
+
+model Staff {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  position        String
+  contactInformation String
 }

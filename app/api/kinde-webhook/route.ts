@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import jwksClient from "jwks-rsa";
 import jwt from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
+import { PrismaClient } from '@prisma/client';
 
-// The Kinde issuer URL should already be in your `.env` file
-// from when you initially set up Kinde. This will fetch your
-// public JSON web keys file
+const prisma = new PrismaClient();
+
 const client = jwksClient({
   jwksUri: `${process.env.KINDE_ISSUER_URL}/.well-known/jwks.json`,
 });
@@ -15,46 +16,55 @@ export async function POST(req: Request) {
     const token = await req.text();
 
     // Decode the token
-    const decodedToken = jwt.decode(token, { complete: true });
-    if (!decodedToken) {
-      throw new Error("Failed to decode token");
+    const jwtDecoded = jwt.decode(token, { complete: true });
+    if (!jwtDecoded) {
+      return NextResponse.json({
+        status: 500,
+        statusText: "error decoding jwt",
+      });
     }
-    const { header } = decodedToken as { header: { kid: string } };
-    const { kid } = header;
+
+    const header = jwtDecoded.header;
+    const kid = header.kid;
 
     // Verify the token
     const key = await client.getSigningKey(kid);
     const signingKey = key.getPublicKey();
-    const event = jwt.verify(token, signingKey);
+    const event = jwt.verify(token, signingKey) as JwtPayload;
 
     // Handle various events
-    if (typeof event === "object" && event !== null && "type" in event) {
-      switch (event.type) {
-        case "user.updated":
-          // Handle user updated event
-          console.log("User updated:", event.data);
-          break;
-        case "user.created":
-          // Handle user created event
-          console.log("User created:", event.data);
-          break;
-        case "user.authenticated":
-          // Handle user authenticated event
-          console.log("User authenticated:", event.data);
-          // You could also add logic here to update user session, etc.
-          break;
-        default:
-          // Handle other unrecognized events
-          console.log("Unhandled event type:", event.type);
-          break;
-      }
+    switch (event?.type) {
+      case "user.created":
+        // create a user in our database
+        const user = event.data.user;
+        const kindeId = user.id;
+        const email = user.email;
+        const first_name = user.first_name ?? null;
+        const last_name = user.last_name ?? null;
+
+        const newUser = await prisma.user.create({
+          data: {
+            kindeId,
+            email,
+            firstName: first_name,
+            lastName: last_name,
+          },
+        });
+
+        console.log("[newUser]", newUser);
+        break;
+      default:
+        console.log("event not handled", event.type);
+        break;
     }
 
+    return NextResponse.json({ status: 200, statusText: "success" });
   } catch (err) {
     if (err instanceof Error) {
-      console.error(err.message);
-      return NextResponse.json({ message: err.message }, { status: 400 });
+      console.error(err);
+      return NextResponse.json({ message: err.message }, { status: 500 });
     }
+  } finally {
+    await prisma.$disconnect();
   }
-  return NextResponse.json({ status: 200, statusText: "success" });
 }

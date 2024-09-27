@@ -6,8 +6,8 @@ import Drawer from "./Drawer";
 import Drawerdata from "./Drawerdata";
 import Image from "next/image";
 
-// import Signdialog from "./Signdialog";
-// import Registerdialog from "./Registerdialog";
+import Signdialog from "./Signdialog";
+import AuthButton from "./Signdialog";
 
 interface NavigationItem {
   name: string;
@@ -79,13 +79,12 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* SIGNIN DIALOG */}
-
-            {/* <Signdialog /> */}
-
             {/* REGISTER DIALOG */}
 
-            {/* <Registerdialog /> */}
+            {/* AUTH BUTTON */}
+            <div className="hidden lg:block">
+              <AuthButton />
+            </div>
 
             {/* DRAWER FOR MOBILE VIEW */}
 

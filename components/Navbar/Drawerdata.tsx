@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { LoginLink, RegisterLink } from "@kinde-oss/kinde-auth-nextjs";
 
 interface NavigationItem {
   name: string;
@@ -19,7 +20,7 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-const Data = () => {
+const Drawerdata = () => {
   return (
     <div className="rounded-md max-w-sm w-full mx-auto">
       <div className="flex-1 space-y-4 py-1">
@@ -40,13 +41,13 @@ const Data = () => {
                 {item.name}
               </Link>
             ))}
-            {/* <div className="mt-4"></div>
-            <button className="bg-white w-full text-midnightblue border border-midnightblue font-medium py-2 px-4 rounded">
-              Log In
-            </button>
-            <button className="bg-midnightblue w-full hover:bg-blue hover:text-white text-white font-medium my-2 py-2 px-4 rounded">
-              Sign up
-            </button> */}
+            <div className="mt-4"></div>
+            <LoginLink className="bg-white w-full text-midnightblue border border-midnightblue font-medium py-2 px-4 rounded block text-center mb-2">
+              Iniciar sesión
+            </LoginLink>
+            <RegisterLink className="bg-sky-950 w-full hover:bg-blue hover:text-white text-white font-medium py-2 px-4 rounded block text-center">
+              Registrarse
+            </RegisterLink>
           </div>
         </div>
       </div>
@@ -54,4 +55,4 @@ const Data = () => {
   );
 };
 
-export default Data;
+export default Drawerdata;

@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import Image from "next/image"
+import Image from "next/image";
 
 interface DrawerProps {
   children: ReactNode;

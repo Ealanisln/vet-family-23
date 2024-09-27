@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Cliente {
+  id                      String            @id @default(auto()) @map("_id") @db.ObjectId
+  nombre                  String
+  email                   String            @unique
+  telefono                String
+  direccion               String
+  metodoContactoPreferido String
+  mascota                 String
+  visitas                 Int               @default(0)
+  proximaVisitaGratis     Boolean           @default(false)
+  ultimaVisita            DateTime          @default(now())
+  historialVisitas        HistorialVisita[]
+  mascotas                Mascota[]
+  citas                   Cita[]
+  facturaciones           Facturacion[]
+  recordatorios           Recordatorio[]
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+}
+
+model HistorialVisita {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  clienteId String   @db.ObjectId
+  cliente   Cliente  @relation(fields: [clienteId], references: [id])
+  fecha     DateTime @default(now())
+  costo     Float
+  esGratis  Boolean  @default(false)
+}
+
+model Mascota {
+  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
+  clienteId          String            @db.ObjectId
+  cliente            Cliente           @relation(fields: [clienteId], references: [id])
+  nombre             String
+  especie            String
+  raza               String
+  fechaNacimiento    DateTime
+  sexo               String
+  peso               Float
+  numeroMicrochip    String?
+  historialesMedicos HistorialMedico[]
+  vacunaciones       Vacunacion[]
+  citas              Cita[]
+  Facturacion        Facturacion[]
+  Recordatorio       Recordatorio[]
+}
+
+model HistorialMedico {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  mascotaId    String   @db.ObjectId
+  mascota      Mascota  @relation(fields: [mascotaId], references: [id])
+  fechaVisita  DateTime
+  motivoVisita String
+  diagnostico  String
+  tratamiento  String
+  recetas      String[]
+  notas        String?
+}
+
+model Vacunacion {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  mascotaId           String   @db.ObjectId
+  mascota             Mascota  @relation(fields: [mascotaId], references: [id])
+  tipoVacuna          String
+  fechaAdministracion DateTime
+  fechaProximaDosis   DateTime
+}
+
+model Cita {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  clienteId String   @db.ObjectId
+  cliente   Cliente  @relation(fields: [clienteId], references: [id])
+  mascotaId String   @db.ObjectId
+  mascota   Mascota  @relation(fields: [mascotaId], references: [id])
+  fechaHora DateTime
+  motivo    String
+  estado    String
+}
+
+model Facturacion {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  clienteId  String   @db.ObjectId
+  cliente    Cliente  @relation(fields: [clienteId], references: [id])
+  mascotaId  String?  @db.ObjectId
+  mascota    Mascota? @relation(fields: [mascotaId], references: [id])
+  fecha      DateTime
+  servicios  String[]
+  costo      Float
+  estadoPago String
+}
+
+model Recordatorio {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  clienteId        String   @db.ObjectId
+  cliente          Cliente  @relation(fields: [clienteId], references: [id])
+  mascotaId        String   @db.ObjectId
+  mascota          Mascota  @relation(fields: [mascotaId], references: [id])
+  tipoRecordatorio String
+  fechaVencimiento DateTime
+  estado           String
+}
+
+model Personal {
+  id                  String @id @default(auto()) @map("_id") @db.ObjectId
+  nombre              String
+  cargo               String
+  informacionContacto String
+}

@@ -1,13 +1,12 @@
-// middleware.ts
-import { NextRequest, NextResponse } from 'next/server';
+import {
+  authMiddleware,
+  withAuth,
+} from "@kinde-oss/kinde-auth-nextjs/middleware";
 
-export function middleware(req: NextRequest) {
-  console.log("Route Middleware", req.nextUrl.pathname);
-  // You can add additional middleware logic here
-  return NextResponse.next();
+export default function middleware(req: Request) {
+  return withAuth(req);
 }
 
-// Optionally, don't invoke Middleware on some paths
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/admin"],
 };

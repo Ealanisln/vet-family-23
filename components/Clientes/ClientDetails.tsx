@@ -1,15 +1,21 @@
 // components/Clientes/ClientDetails.tsx
 "use client";
 
-import React from 'react';
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EditIcon, PawPrintIcon } from "lucide-react";
 import Link from "next/link";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import DialogoReservaMejorado from '@/components/Clientes/ReservaCita';
-import { Button } from '../ui/button';
-import { useRouter } from 'next/router';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import DialogoReservaMejorado from "@/components/Clientes/ReservaCita";
+import { Button } from "../ui/button";
 
 interface Pet {
   id: string | number;
@@ -47,21 +53,20 @@ export default function ClientDetails({ user }: { user: User }) {
         <h1 className="text-2xl font-bold mb-4">Mi Perfil</h1>
         <Card className="mb-6">
           <CardHeader>
-          <CardTitle className="flex justify-between items-center">Información Personal
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleEdit}
-            >
-              <EditIcon className="mr-2 h-4 w-4" /> Editar
-            </Button>
+            <CardTitle className="flex justify-between items-center">
+              Información Personal
+              <Button size="sm" variant="outline" onClick={handleEdit}>
+                <EditIcon className="mr-2 h-4 w-4" /> Editar
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="font-semibold">Nombre:</p>
-                <p>{user.firstName} {user.lastName}</p>
+                <p>
+                  {user.firstName} {user.lastName}
+                </p>
               </div>
               <div>
                 <p className="font-semibold">Email:</p>
@@ -108,7 +113,10 @@ export default function ClientDetails({ user }: { user: User }) {
                         <PawPrintIcon className="h-4 w-4 text-muted-foreground" />
                       </TableCell>
                       <TableCell>
-                        <Link href={`/cliente/mascotas/${pet.id}`} className="font-medium text-black hover:underline">
+                        <Link
+                          href={`/cliente/mascota/${pet.id}`}
+                          className="font-medium text-black hover:underline"
+                        >
                           {pet.name}
                         </Link>
                       </TableCell>
@@ -119,7 +127,10 @@ export default function ClientDetails({ user }: { user: User }) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
                       No hay mascotas registradas
                     </TableCell>
                   </TableRow>
@@ -140,7 +151,8 @@ export default function ClientDetails({ user }: { user: User }) {
               <ul className="list-disc pl-5">
                 {user.appointments.map((appointment: Appointment) => (
                   <li key={appointment.id}>
-                    {new Date(appointment.dateTime).toLocaleString()} - {appointment.reason}
+                    {new Date(appointment.dateTime).toLocaleString()} -{" "}
+                    {appointment.reason}
                   </li>
                 ))}
               </ul>

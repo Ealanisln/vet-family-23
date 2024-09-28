@@ -1,12 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { PrismaClient } from '@prisma/client';
 
-export async function GET() {
+const prisma = new PrismaClient();
+
+export async function GET(req: NextRequest) {
   try {
     const { getUser, isAuthenticated } = getKindeServerSession();
     
     let user = null;
     let authStatus = false;
+    let dbUser = null;
 
     try {
       user = await getUser();
@@ -22,12 +26,42 @@ export async function GET() {
       console.error("Error checking auth status:", authError instanceof Error ? authError.message : String(authError));
     }
 
-    return NextResponse.json({ user, isAuthenticated: authStatus });
+    if (user && user.id) {
+      try {
+        dbUser = await prisma.user.upsert({
+          where: { kindeId: user.id },
+          update: {
+            email: user.email || undefined,
+            firstName: user.given_name || undefined,
+            lastName: user.family_name || undefined,
+            name: user.given_name && user.family_name 
+              ? `${user.given_name} ${user.family_name}` 
+              : (user.given_name || user.family_name || undefined),
+          },
+          create: {
+            kindeId: user.id,
+            email: user.email || '',
+            firstName: user.given_name || null,
+            lastName: user.family_name || null,
+            name: user.given_name && user.family_name 
+              ? `${user.given_name} ${user.family_name}` 
+              : (user.given_name || user.family_name || null),
+          },
+        });
+        console.log("User updated/created in database:", dbUser);
+      } catch (dbError) {
+        console.error("Error updating/creating user in database:", dbError instanceof Error ? dbError.message : String(dbError));
+      }
+    }
+
+    return NextResponse.json({ user, isAuthenticated: authStatus, dbUser });
   } catch (error) {
     console.error("Error in auth-status API route:", error instanceof Error ? error.message : String(error));
     return NextResponse.json(
       { error: "Internal Server Error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }

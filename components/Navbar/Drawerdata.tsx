@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { LoginLink, RegisterLink, LogoutLink } from "@kinde-oss/kinde-auth-nextjs";
-import { useAuthStatus } from '@/hooks/auth-status'; // Asegúrate de actualizar esta ruta
+import { useAuthStatus } from '@/hooks/auth-status'; 
 
 interface NavigationItem {
   name: string;

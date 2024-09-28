@@ -44,14 +44,14 @@ export async function getUserById(id: string) {
 }
 
 export async function updateUser(userData: {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  phone?: string
-  address?: string
-  visits: number
-  nextVisitFree: boolean
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  visits?: number;
+  nextVisitFree?: boolean;
 }) {
   try {
     const updatedUser = await prisma.user.update({

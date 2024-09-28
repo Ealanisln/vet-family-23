@@ -188,7 +188,7 @@ export default function ClientsTable() {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No se encontraron resultados.
+                 Cargando resultados.
                 </TableCell>
               </TableRow>
             )}

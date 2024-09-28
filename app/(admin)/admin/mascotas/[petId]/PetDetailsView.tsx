@@ -77,7 +77,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <Link href={`/admin/clientes/${params.id}`}>
+          <Link href={`/admin/mascotas`}>
             <Button variant="outline" className="mb-2 sm:mb-0">
               <ArrowLeftIcon className="mr-2 h-4 w-4" /> Volver
             </Button>

@@ -16,16 +16,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { PlusIcon } from "lucide-react"
-import { addMedicalRecord } from '@/app/actions/add-medical-record'
+import { addMedicalHistory } from '@/app/actions/add-medical-record'
 
 export function AddMedicalRecordDialog() {
   const params = useParams()
   const [open, setOpen] = useState(false)
   const [record, setRecord] = useState({
-    date: '',
-    reason: '',
+    visitDate: '',
+    reasonForVisit: '',
     diagnosis: '',
     treatment: '',
+    prescriptions: '',
     notes: ''
   })
 
@@ -37,11 +38,16 @@ export function AddMedicalRecordDialog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const petId = params.petId as string
-    const result = await addMedicalRecord(petId, record)
+    const recordData = {
+      ...record,
+      visitDate: new Date(record.visitDate),
+      prescriptions: record.prescriptions.split(',').map(p => p.trim())
+    }
+    const result = await addMedicalHistory(petId, recordData)
     if (result.success) {
       console.log('Nuevo registro médico agregado:', result.record)
-      setOpen(false) // Cerrar el diálogo después de guardar exitosamente
-      setRecord({ date: '', reason: '', diagnosis: '', treatment: '', notes: '' }) // Limpiar el formulario
+      setOpen(false)
+      setRecord({ visitDate: '', reasonForVisit: '', diagnosis: '', treatment: '', prescriptions: '', notes: '' })
     } else {
       console.error('Error al agregar el registro médico:', result.error)
       // Aquí podrías mostrar un mensaje de error al usuario
@@ -65,27 +71,27 @@ export function AddMedicalRecordDialog() {
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="date" className="text-right">
+              <Label htmlFor="visitDate" className="text-right">
                 Fecha
               </Label>
               <Input
-                id="date"
-                name="date"
+                id="visitDate"
+                name="visitDate"
                 type="date"
-                value={record.date}
+                value={record.visitDate}
                 onChange={handleInputChange}
                 className="col-span-3"
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="reason" className="text-right">
+              <Label htmlFor="reasonForVisit" className="text-right">
                 Razón
               </Label>
               <Input
-                id="reason"
-                name="reason"
-                value={record.reason}
+                id="reasonForVisit"
+                name="reasonForVisit"
+                value={record.reasonForVisit}
                 onChange={handleInputChange}
                 className="col-span-3"
                 required
@@ -115,6 +121,19 @@ export function AddMedicalRecordDialog() {
                 onChange={handleInputChange}
                 className="col-span-3"
                 rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="prescriptions" className="text-right">
+                Prescripciones
+              </Label>
+              <Input
+                id="prescriptions"
+                name="prescriptions"
+                value={record.prescriptions}
+                onChange={handleInputChange}
+                className="col-span-3"
+                placeholder="Separadas por comas"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">

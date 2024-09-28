@@ -71,9 +71,9 @@ export function EditPetDialog({ pet }: EditPetDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        {/* <Button>
           <EditIcon className="mr-2 h-4 w-4" /> Editar
-        </Button>
+        </Button> */}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

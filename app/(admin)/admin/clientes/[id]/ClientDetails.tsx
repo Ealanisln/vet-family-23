@@ -4,9 +4,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, PlusIcon, EditIcon } from "lucide-react";
+import { CalendarIcon, PlusIcon, EditIcon, PawPrintIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+interface Pet {
+  id: string | number;
+  name: string;
+  species: string;
+}
 
 export default function ClientDetails({ user }: { user: any }) {
   const router = useRouter();
@@ -75,21 +82,40 @@ export default function ClientDetails({ user }: { user: any }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {user.pets.length > 0 ? (
-              <ul className="list-disc pl-5">
-                {user.pets.map((pet: any) => (
-                  <li key={pet.id}>
-                    <Link href={`/admin/clientes/${user.id}/mascotas/${pet.id}`} className="text-blue-600 hover:underline">
-                      {pet.name} ({pet.species})
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-muted-foreground">
-                No hay mascotas registradas
-              </p>
-            )}
+          <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[50px]"></TableHead>
+          <TableHead>Nombre</TableHead>
+          <TableHead>Especie</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {user.pets.length > 0 ? (
+          user.pets.map((pet: Pet) => (
+            <TableRow key={pet.id}>
+              <TableCell>
+                <PawPrintIcon className="h-4 w-4 text-muted-foreground" />
+              </TableCell>
+              <TableCell>
+              <Link href={`/admin/clientes/${user.id}/mascotas/${pet.id}`} className="font-medium text-black hover:underline">
+                  {pet.name}
+                </Link>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline">{pet.species}</Badge>
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan={3} className="text-center text-muted-foreground">
+              No hay mascotas registradas
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
           </CardContent>
         </Card>
         <Card>

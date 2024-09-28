@@ -2,13 +2,9 @@ import {
   FileText,
   User,
   PawPrint,
-  UserCog,
-  PenTool,
-  AlertTriangle,
-  XIcon,
-  LucideMessageCircleX,
-  MessageCircleXIcon,
+  AlertCircle,
   UserX,
+  Home,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
@@ -30,23 +26,11 @@ export default async function Component() {
 
   const username = user.given_name;
   const options = [
+    { title: "Dashboard", icon: Home, href: "/admin/" },
     { title: "Propietarios", icon: User, href: "/admin/clientes" },
-    { title: "Alta de Mascotas", icon: PawPrint, href: "/admin/nueva-mascota" },
-    {
-      title: "Actualización de Datos de Propietarios",
-      icon: UserCog,
-      href: "/admin/owners/update",
-    },
-    {
-      title: "Actualización de Datos de Mascotas",
-      icon: PenTool,
-      href: "/admin/pets/update",
-    },
-    {
-      title: "Reportar un Problema",
-      icon: AlertTriangle,
-      href: "/admin/report-problem",
-    },
+    { title: "Mascotas", icon: PawPrint, href: "/admin/mascotas" },
+    { title: "Nueva consulta", icon: FileText, href: "/admin/nueva-consulta" },
+    { title: "Reportar un Problema", icon: AlertCircle, href: "/admin/reportar-problema" },
     { title: "Cerrar sesión", icon: UserX, href: "/api/auth/logout" },
   ];
 

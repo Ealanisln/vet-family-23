@@ -3,7 +3,6 @@ import "./globals.css";
 import { FacebookPixelEvents } from "@/components/Facebook/FacebookPixel";
 import { Toaster } from "@/components/ui/toaster";
 import { GoogleTagManager } from "@next/third-parties/google";
-import { KindeProvider } from "@kinde-oss/kinde-auth-nextjs";
 
 export const metadata = {
   title: "Bienvenido a Family Vet 23",

@@ -37,7 +37,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-// You'll need to create this function to fetch pets data
 import { getPets } from "@/app/actions/get-pets"
 
 export type Pet = {
@@ -46,6 +45,7 @@ export type Pet = {
   species: string
   breed: string
   userId: string
+  ownerName: string
 }
 
 export const columns: ColumnDef<Pet>[] = [
@@ -69,6 +69,11 @@ export const columns: ColumnDef<Pet>[] = [
     cell: ({ row }) => <div className="capitalize">{row.getValue("breed")}</div>,
   },
   {
+    accessorKey: "ownerName",
+    header: "Dueño",
+    cell: ({ row }) => <div>{row.getValue("ownerName")}</div>,
+  },
+  {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
@@ -84,11 +89,6 @@ export const columns: ColumnDef<Pet>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(pet.id)}
-            >
-              Copiar ID de la mascota
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Ver detalles</DropdownMenuItem>
             <DropdownMenuItem>Editar mascota</DropdownMenuItem>
@@ -109,10 +109,14 @@ export default function PetsTable() {
   React.useEffect(() => {
     async function fetchPets() {
       try {
-        const pets = await getPets()
-        setData(pets)
+        const result = await getPets()
+        if (result.success) {
+          setData(result.pets)
+        } else {
+          console.error("Failed to fetch pets:", result.error)
+        }
       } catch (error) {
-        console.error("Failed to fetch pets:", error)
+        console.error("Error fetching pets:", error)
       }
     }
     fetchPets()

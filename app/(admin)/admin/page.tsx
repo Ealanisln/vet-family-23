@@ -10,7 +10,7 @@ export default async function Component() {
   const isAdmin = roles?.some((role) => role.key === "admin");
 
   if (!isAdmin) {
-    redirect("/usuario");
+    redirect("/cliente");
   }
 
   const username = user?.given_name || 'Usuario';

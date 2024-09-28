@@ -1,11 +1,10 @@
-// app/(main)/cliente/editar/page.tsx
-"use client";
+'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import EditUserProfile from '@/components/Clientes/EditUserProfile'; // Asegúrate de que la ruta sea correcta
+import EditUserProfile from '@/components/Clientes/EditUserProfile';
 
-export default function EditUserPage() {
+function UserProfileEditor() {
   const searchParams = useSearchParams();
   const userId = searchParams.get('id');
 
@@ -14,4 +13,12 @@ export default function EditUserPage() {
   }
 
   return <EditUserProfile userId={userId} />;
+}
+
+export default function EditUserPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UserProfileEditor />
+    </Suspense>
+  );
 }

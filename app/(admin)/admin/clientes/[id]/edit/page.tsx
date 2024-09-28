@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -12,7 +12,6 @@ import { getUserById, updateUser } from '@/app/actions/get-customers'
 import { useToast } from "@/components/ui/use-toast"
 import { ToastAction } from "@/components/ui/toast"
 
-// Define el tipo para el cliente
 type ClientData = {
   id: string;
   firstName: string;
@@ -73,6 +72,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
   const handleCheckboxChange = (checked: boolean) => {
     setClient(prevState => ({ ...prevState, nextVisitFree: checked }))
   }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -84,9 +84,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
           <ToastAction altText="Cerrar">Cerrar</ToastAction>
         ),
       })
-      // Revalidate the client details page
       router.refresh()
-      // Navigate back to the client details page
       router.push(`/admin/clientes/${client.id}`)
     } catch (error) {
       console.error('Error updating client:', error)
@@ -99,15 +97,15 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Editar Cliente</h1>
-      <Card>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
+      <h1 className="text-2xl font-bold mb-6">Editar Cliente</h1>
+      <Card className="w-full">
         <form onSubmit={handleSubmit}>
           <CardHeader>
-            <CardTitle>Información Personal</CardTitle>
+            <CardTitle className="text-xl">Información Personal</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="firstName">Nombre</Label>
                 <Input
@@ -116,6 +114,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                   value={client.firstName}
                   onChange={handleInputChange}
                   required
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -126,6 +125,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                   value={client.lastName}
                   onChange={handleInputChange}
                   required
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -137,6 +137,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                   value={client.email}
                   onChange={handleInputChange}
                   required
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -147,15 +148,17 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                   type="tel"
                   value={client.phone}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="address">Dirección</Label>
                 <Input
                   id="address"
                   name="address"
                   value={client.address}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
             </div>
@@ -168,6 +171,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                 value={client.visits}
                 onChange={handleInputChange}
                 min="0"
+                className="w-full sm:w-1/2"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -176,14 +180,14 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                 checked={client.nextVisitFree}
                 onCheckedChange={handleCheckboxChange}
               />
-              <Label htmlFor="nextVisitFree">Próxima visita gratis</Label>
+              <Label htmlFor="nextVisitFree" className="text-sm">Próxima visita gratis</Label>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button type="button" variant="outline" onClick={() => router.back()}>
+          <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+            <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">
               <ArrowLeftIcon className="mr-2 h-4 w-4" /> Volver
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="w-full sm:w-auto">
               <SaveIcon className="mr-2 h-4 w-4" /> Guardar Cambios
             </Button>
           </CardFooter>

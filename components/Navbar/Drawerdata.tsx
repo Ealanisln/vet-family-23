@@ -1,6 +1,9 @@
+'use client'
+
 import React from "react";
 import Link from "next/link";
-import { LoginLink, RegisterLink } from "@kinde-oss/kinde-auth-nextjs";
+import { LoginLink, RegisterLink, LogoutLink } from "@kinde-oss/kinde-auth-nextjs";
+import { useAuthStatus } from '@/hooks/auth-status'; // Asegúrate de actualizar esta ruta
 
 interface NavigationItem {
   name: string;
@@ -21,6 +24,8 @@ function classNames(...classes: string[]) {
 }
 
 const Drawerdata = () => {
+  const { user, isAuthenticated, isLoading } = useAuthStatus();
+
   return (
     <div className="rounded-md max-w-sm w-full mx-auto">
       <div className="flex-1 space-y-4 py-1">
@@ -42,12 +47,27 @@ const Drawerdata = () => {
               </Link>
             ))}
             <div className="mt-4"></div>
-            <LoginLink className="bg-white w-full text-midnightblue border border-midnightblue font-medium py-2 px-4 rounded block text-center mb-2">
-              Iniciar sesión
-            </LoginLink>
-            <RegisterLink className="bg-sky-950 w-full hover:bg-blue hover:text-white text-white font-medium py-2 px-4 rounded block text-center">
-              Registrarse
-            </RegisterLink>
+            {isLoading ? (
+              <div className="text-center">Cargando...</div>
+            ) : isAuthenticated && user ? (
+              <>
+                <div className="text-center mb-2">
+                  Bienvenido, {user.given_name || user.family_name || user.email || 'Usuario'}
+                </div>
+                <LogoutLink className="bg-sky-950 w-full hover:bg-blue hover:text-white text-white font-medium py-2 px-4 rounded block text-center">
+                  Cerrar sesión
+                </LogoutLink>
+              </>
+            ) : (
+              <>
+                <LoginLink className="bg-white w-full text-midnightblue border border-midnightblue font-medium py-2 px-4 rounded block text-center mb-2">
+                  Iniciar sesión
+                </LoginLink>
+                <RegisterLink className="bg-sky-950 w-full hover:bg-blue hover:text-white text-white font-medium py-2 px-4 rounded block text-center">
+                  Registrarse
+                </RegisterLink>
+              </>
+            )}
           </div>
         </div>
       </div>

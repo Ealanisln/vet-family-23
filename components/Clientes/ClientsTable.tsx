@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   LucideCircleEllipsis,
 } from "lucide-react"
@@ -39,21 +40,24 @@ import { getUsers } from "@/app/actions/get-customers"
 
 export type User = {
   id: string
-  name: string | null
+  firstName: string | null
+  lastName: string | null
   phone: string | null
   email: string
 }
 
 export const columns: ColumnDef<User>[] = [
   {
-    accessorKey: "name",
+    accessorKey: "firstName",
     header: "Nombre",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("name") || "N/A"}</div>,
-  },
-  {
-    accessorKey: "phone",
-    header: "Teléfono",
-    cell: ({ row }) => <div className="lowercase">{row.getValue("phone") || "N/A"}</div>,
+    cell: ({ row }) => {
+      const firstName = row.getValue("firstName") as string | null
+      const lastName = row.original.lastName as string | null
+      const fullName = [firstName, lastName].filter(Boolean).join(" ")
+      return  <Link href={`/admin/clientes/${row.original.id}`} className="hover:underline">
+      <div className="capitalize">{fullName || "N/A"}</div>
+    </Link>
+    },
   },
   {
     accessorKey: "email",
@@ -134,9 +138,9 @@ export default function ClientsTable() {
       <div className="flex items-center py-4">
         <Input
           placeholder="Filtrar por nombre..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("firstName")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("firstName")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />

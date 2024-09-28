@@ -39,15 +39,17 @@ export async function POST(req: Request) {
         const user = event.data.user;
         const kindeId = user.id;
         const email = user.email;
-        const first_name = user.first_name ?? null;
-        const last_name = user.last_name ?? null;
+        const firstName = user.given_name ?? null;
+        const lastName = user.family_name ?? null;
+        const name = firstName && lastName ? `${firstName} ${lastName}` : (firstName || lastName || null);
 
         const newUser = await prisma.user.create({
           data: {
             kindeId,
             email,
-            firstName: first_name,
-            lastName: last_name,
+            firstName,
+            lastName,
+            name,
           },
         });
 

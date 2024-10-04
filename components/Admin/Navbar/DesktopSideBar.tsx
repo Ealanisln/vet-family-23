@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { AddMedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
+import { MedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
 
 interface NavItemProps {
   href?: string;
@@ -48,8 +48,6 @@ const NavItem: React.FC<NavItemProps> = ({ href, icon, label, onClick }) => {
 };
 
 export const DesktopSidebar: React.FC = () => {
-  const [isAddMedicalRecordOpen, setIsAddMedicalRecordOpen] = useState(false);
-
   return (
     <TooltipProvider>
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
@@ -71,13 +69,14 @@ export const DesktopSidebar: React.FC = () => {
             icon={<PawPrint className="h-5 w-5" />}
             label="Mascotas"
           />
-          <NavItem
-            icon={<PlusCircle className="h-5 w-5" />}
-            label="Agregar Historial Médico"
-            onClick={() => setIsAddMedicalRecordOpen(true)}
-          />
-
-          <NavItem
+<MedicalRecordDialog
+  triggerButton={
+    <NavItem
+      icon={<PlusCircle className="h-5 w-5" />}
+      label="Agregar Historial Médico"
+    />
+  }
+/>          <NavItem
             href="mailto:emmanuel@alanis.dev"
             icon={<AlertCircle className="h-5 w-5" />}
             label="Reportar un problema"
@@ -91,10 +90,6 @@ export const DesktopSidebar: React.FC = () => {
           />
         </nav>
       </aside>
-      <AddMedicalRecordDialog
-        open={isAddMedicalRecordOpen}
-        onOpenChange={setIsAddMedicalRecordOpen}
-      />
     </TooltipProvider>
   );
 };

@@ -1,7 +1,9 @@
+// app/(admin)/admin/clientes/[id]/mascota/[petId]/PetDetailsView.tsx
+
 "use client";
 
 import React, { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +16,8 @@ import {
 } from "@/components/ui/table";
 import { EditIcon, ArrowLeftIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
-import { AddMedicalRecordDialog } from "@/components/Admin/AddMedicalRecord";
 import PetForm from "@/components/Admin/ui/PetForm";
+import { MedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
 
 interface MedicalHistory {
   id: string;
@@ -51,7 +53,6 @@ interface Pet {
 
 export default function PetDetailsView({ pet }: { pet: Pet }) {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
   const params = useParams();
 
   const handleClose = () => {
@@ -100,15 +101,23 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[
-              { label: 'Especie', value: pet.species },
-              { label: 'Raza', value: pet.breed },
-              { label: 'Fecha de Nacimiento', value: pet.dateOfBirth.toLocaleDateString() },
-              { label: 'Género', value: pet.gender },
-              { label: 'Peso', value: `${pet.weight} kg` },
-              { label: 'Número de Microchip', value: pet.microchipNumber || 'N/A' },
+              { label: "Especie", value: pet.species },
+              { label: "Raza", value: pet.breed },
+              {
+                label: "Fecha de Nacimiento",
+                value: pet.dateOfBirth.toLocaleDateString(),
+              },
+              { label: "Género", value: pet.gender },
+              { label: "Peso", value: `${pet.weight} kg` },
+              {
+                label: "Número de Microchip",
+                value: pet.microchipNumber || "N/A",
+              },
             ].map(({ label, value }, index) => (
               <div key={index} className="space-y-1">
-                <p className="font-semibold text-sm text-muted-foreground">{label}</p>
+                <p className="font-semibold text-sm text-muted-foreground">
+                  {label}
+                </p>
                 <p className="text-base">{value}</p>
               </div>
             ))}
@@ -120,7 +129,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <CardTitle>Historial Médico</CardTitle>
-            <AddMedicalRecordDialog />
+            <MedicalRecordDialog petId={pet.id} />
           </div>
         </CardHeader>
         <CardContent>
@@ -141,15 +150,28 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                   <TableBody>
                     {pet.medicalHistory.map((record) => (
                       <TableRow key={record.id}>
-                        <TableCell className="font-medium">{record.visitDate.toLocaleDateString()}</TableCell>
+                        <TableCell className="font-medium">
+                          {record.visitDate.toLocaleDateString()}
+                        </TableCell>
                         <TableCell>{record.reasonForVisit}</TableCell>
                         <TableCell>{record.diagnosis}</TableCell>
                         <TableCell>{record.treatment}</TableCell>
                         <TableCell>{record.notes || "N/A"}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon">
-                            <EditIcon className="h-4 w-4" />
-                          </Button>
+                          <MedicalRecordDialog
+                            existingRecord={{
+                              id: record.id,
+                              petId: record.petId,
+                              visitDate: record.visitDate
+                                .toISOString()
+                                .split("T")[0],
+                              reasonForVisit: record.reasonForVisit,
+                              diagnosis: record.diagnosis,
+                              treatment: record.treatment,
+                              prescriptions: record.prescriptions,
+                              notes: record.notes || undefined,
+                            }}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -190,7 +212,9 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                   <TableBody>
                     {pet.vaccinations.map((vaccination) => (
                       <TableRow key={vaccination.id}>
-                        <TableCell className="font-medium">{vaccination.vaccineType}</TableCell>
+                        <TableCell className="font-medium">
+                          {vaccination.vaccineType}
+                        </TableCell>
                         <TableCell>
                           {vaccination.administrationDate.toLocaleDateString()}
                         </TableCell>

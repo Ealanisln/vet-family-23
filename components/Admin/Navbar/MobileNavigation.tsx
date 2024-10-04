@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import {
   Home,
   Users,
   PawPrint,
-  FileText,
   AlertCircle,
   LogOut,
   PanelLeft,
@@ -12,7 +11,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { AddMedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
+import { MedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
+
 interface NavItemProps {
   href?: string;
   icon: React.ReactNode;
@@ -47,8 +47,6 @@ const NavItem: React.FC<NavItemProps> = ({ href, icon, label, onClick }) => {
 };
 
 export const MobileNavigation: React.FC = () => {
-  const [isAddMedicalRecordOpen, setIsAddMedicalRecordOpen] = useState(false);
-
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -76,12 +74,14 @@ export const MobileNavigation: React.FC = () => {
             icon={<PawPrint className="h-5 w-5" />}
             label="Mascotas"
           />
-          <NavItem
-            icon={<PlusCircle className="h-5 w-5" />}
-            label="Agregar Historial Médico"
-            onClick={() => setIsAddMedicalRecordOpen(true)}
-          />
-
+         <MedicalRecordDialog
+  triggerButton={
+    <NavItem
+      icon={<PlusCircle className="h-5 w-5" />}
+      label="Agregar Historial Médico"
+    />
+  }
+/>
           <NavItem
             href="mailto:emmanuel@alanis.dev"
             icon={<AlertCircle className="h-5 w-5" />}
@@ -94,10 +94,6 @@ export const MobileNavigation: React.FC = () => {
           />
         </nav>
       </SheetContent>
-      <AddMedicalRecordDialog
-        open={isAddMedicalRecordOpen}
-        onOpenChange={setIsAddMedicalRecordOpen}
-      />
     </Sheet>
   );
 };

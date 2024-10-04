@@ -1,10 +1,8 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import {
-  LucideCircleEllipsis,
-} from "lucide-react"
+import * as React from "react";
+import Link from "next/link";
+import { LucideCircleEllipsis } from "lucide-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -16,9 +14,9 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +24,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -35,28 +33,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { getUsers } from "@/app/actions/get-customers"
+} from "@/components/ui/table";
+import { getUsers } from "@/app/actions/get-customers";
+import Loader from "@/components/ui/loader";
 
 export type User = {
-  id: string
-  firstName: string | null
-  lastName: string | null
-  phone: string | null
-  email: string
-}
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  email: string;
+};
 
 export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "firstName",
     header: "Nombre",
     cell: ({ row }) => {
-      const firstName = row.getValue("firstName") as string | null
-      const lastName = row.original.lastName as string | null
-      const fullName = [firstName, lastName].filter(Boolean).join(" ")
-      return  <Link href={`/admin/clientes/${row.original.id}`} className="hover:underline">
-      <div className="capitalize">{fullName || "N/A"}</div>
-    </Link>
+      const firstName = row.getValue("firstName") as string | null;
+      const lastName = row.original.lastName as string | null;
+      const fullName = [firstName, lastName].filter(Boolean).join(" ");
+      return (
+        <Link
+          href={`/admin/clientes/${row.original.id}`}
+          className="hover:underline"
+        >
+          <div className="capitalize">{fullName || "N/A"}</div>
+        </Link>
+      );
     },
   },
   {
@@ -68,7 +72,7 @@ export const columns: ColumnDef<User>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const user = row.original
+      const user = row.original;
 
       return (
         <DropdownMenu>
@@ -90,29 +94,33 @@ export const columns: ColumnDef<User>[] = [
             <DropdownMenuItem>Editar usuario</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )
+      );
     },
   },
-]
+];
 
 export default function ClientsTable() {
-  const [data, setData] = React.useState<User[]>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
+  const [data, setData] = React.useState<User[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
 
   React.useEffect(() => {
     async function fetchUsers() {
       try {
-        const users = await getUsers()
-        setData(users)
+        setLoading(true);
+        const users = await getUsers();
+        setData(users);
       } catch (error) {
-        console.error("Failed to fetch users:", error)
+        console.error("Failed to fetch users:", error);
+      } finally {
+        setLoading(false);
       }
     }
-    fetchUsers()
-  }, [])
+    fetchUsers();
+  }, []);
 
   const table = useReactTable({
     data,
@@ -131,7 +139,7 @@ export default function ClientsTable() {
       columnVisibility,
       rowSelection,
     },
-  })
+  });
 
   return (
     <div className="w-full">
@@ -150,23 +158,28 @@ export default function ClientsTable() {
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <Loader size={32} className="mx-auto" />
+                  <p className="mt-2">Cargando resultados...</p>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -174,21 +187,15 @@ export default function ClientsTable() {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                 Cargando resultados.
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  No se encontraron resultados.
                 </TableCell>
               </TableRow>
             )}
@@ -220,5 +227,5 @@ export default function ClientsTable() {
         </div>
       </div>
     </div>
-  )
+  );
 }

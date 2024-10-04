@@ -1,10 +1,8 @@
 "use client";
 
-import * as React from "react"
-import Link from "next/link"
-import {
-  LucideCircleEllipsis,
-} from "lucide-react"
+import * as React from "react";
+import Link from "next/link";
+import { LucideCircleEllipsis } from "lucide-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -16,9 +14,9 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +24,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -35,25 +33,29 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
-import { getPets } from "@/app/actions/get-pets"
+import { getPets } from "@/app/actions/get-pets";
+import Loader from "@/components/ui/loader";
 
 export type Pet = {
-  id: string
-  name: string
-  species: string
-  breed: string
-  userId: string
-  ownerName: string
-}
+  id: string;
+  name: string;
+  species: string;
+  breed: string;
+  userId: string;
+  ownerName: string;
+};
 
 export const columns: ColumnDef<Pet>[] = [
   {
     accessorKey: "name",
     header: "Nombre",
     cell: ({ row }) => (
-      <Link href={`/admin/mascotas/${row.original.id}`} className="hover:underline">
+      <Link
+        href={`/admin/mascotas/${row.original.id}`}
+        className="hover:underline"
+      >
         <div className="capitalize">{row.getValue("name")}</div>
       </Link>
     ),
@@ -61,12 +63,16 @@ export const columns: ColumnDef<Pet>[] = [
   {
     accessorKey: "species",
     header: "Especie",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("species")}</div>,
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("species")}</div>
+    ),
   },
   {
     accessorKey: "breed",
     header: "Raza",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("breed")}</div>,
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("breed")}</div>
+    ),
   },
   {
     accessorKey: "ownerName",
@@ -77,7 +83,7 @@ export const columns: ColumnDef<Pet>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const pet = row.original
+      const pet = row.original;
 
       return (
         <DropdownMenu>
@@ -94,33 +100,40 @@ export const columns: ColumnDef<Pet>[] = [
             <DropdownMenuItem>Editar mascota</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )
+      );
     },
   },
-]
+];
 
 export default function PetsTable() {
-  const [data, setData] = React.useState<Pet[]>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
+  const [data, setData] = React.useState<Pet[]>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     async function fetchPets() {
       try {
-        const result = await getPets()
+        setLoading(true);
+        const result = await getPets();
         if (result.success) {
-          setData(result.pets)
+          setData(result.pets);
         } else {
-          console.error("Failed to fetch pets:", result.error)
+          console.error("Failed to fetch pets:", result.error);
         }
       } catch (error) {
-        console.error("Error fetching pets:", error)
+        console.error("Error fetching pets:", error);
+      } finally {
+        setLoading(false);
       }
     }
-    fetchPets()
-  }, [])
+    fetchPets();
+  }, []);
 
   const table = useReactTable({
     data,
@@ -139,7 +152,7 @@ export default function PetsTable() {
       columnVisibility,
       rowSelection,
     },
-  })
+  });
 
   return (
     <div className="w-full">
@@ -168,13 +181,23 @@ export default function PetsTable() {
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  <Loader size={32} className="mx-auto" />
+                  <p className="mt-2">Cargando mascotas...</p>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -196,7 +219,7 @@ export default function PetsTable() {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                 Cargando mascotas.
+                  No se encontraron mascotas.
                 </TableCell>
               </TableRow>
             )}
@@ -228,5 +251,5 @@ export default function PetsTable() {
         </div>
       </div>
     </div>
-  )
+  );
 }

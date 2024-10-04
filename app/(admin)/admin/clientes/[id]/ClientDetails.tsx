@@ -74,7 +74,7 @@ export default function ClientDetails({ user }: { user: any }) {
               <Button
                 size="sm"
                 onClick={() =>
-                  router.push(`/admin/clientes/${user.id}/mascotas/agregar`)
+                  router.push(`/admin/clientes/${user.id}/mascota/agregar`)
                 }
               >
                 <PlusIcon className="mr-2 h-4 w-4" /> Agregar Mascota

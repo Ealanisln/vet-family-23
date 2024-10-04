@@ -38,19 +38,18 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
       id: pet.id,
       name: pet.name,
       species: pet.species,
-      ownerName: `${pet.user.firstName || ''} ${pet.user.lastName || ''}`.trim() || 'N/A'
+      ownerName: `${pet.user?.firstName || ''} ${pet.user?.lastName || ''}`.trim() || 'N/A'
     }))
 
     return { success: true, pets: formattedPets }
   } catch (error) {
     console.error('Failed to fetch pets for medical record:', error)
     return { success: false, error: 'Failed to fetch pets for medical record' }
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
 interface MedicalHistoryInput {
+  id?: string;  // Make id optional
   visitDate: Date;
   reasonForVisit: string;
   diagnosis: string;
@@ -59,16 +58,18 @@ interface MedicalHistoryInput {
   notes?: string;
 }
 
-type AddMedicalHistoryResult = 
+type MedicalHistoryResult = 
   | { success: true; record: any }
   | { success: false; error: string }
 
-export async function addMedicalHistory(petId: string, recordData: MedicalHistoryInput): Promise<AddMedicalHistoryResult> {
+export async function addMedicalHistory(petId: string, recordData: MedicalHistoryInput): Promise<MedicalHistoryResult> {
   try {
+    const { id, ...data } = recordData;  // Remove id from data if present
     const newRecord = await prisma.medicalHistory.create({
       data: {
         petId,
-        ...recordData
+        ...data,
+        prescriptions: { set: data.prescriptions }
       }
     })
 
@@ -76,7 +77,28 @@ export async function addMedicalHistory(petId: string, recordData: MedicalHistor
   } catch (error) {
     console.error('Failed to add medical history:', error)
     return { success: false, error: 'Failed to add medical history' }
-  } finally {
-    await prisma.$disconnect()
+  }
+}
+
+export async function updateMedicalHistory(petId: string, recordData: MedicalHistoryInput): Promise<MedicalHistoryResult> {
+  try {
+    if (!recordData.id) {
+      throw new Error('Record ID is required for updating');
+    }
+
+    const { id, ...data } = recordData;
+    const updatedRecord = await prisma.medicalHistory.update({
+      where: { id: id },
+      data: {
+        petId,
+        ...data,
+        prescriptions: { set: data.prescriptions }
+      }
+    })
+
+    return { success: true, record: updatedRecord }
+  } catch (error) {
+    console.error('Failed to update medical history:', error)
+    return { success: false, error: 'Failed to update medical history' }
   }
 }

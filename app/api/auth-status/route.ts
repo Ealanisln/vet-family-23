@@ -32,20 +32,10 @@ export async function GET(req: NextRequest) {
           where: { kindeId: user.id },
           update: {
             email: user.email || undefined,
-            firstName: user.given_name || undefined,
-            lastName: user.family_name || undefined,
-            name: user.given_name && user.family_name 
-              ? `${user.given_name} ${user.family_name}` 
-              : (user.given_name || user.family_name || undefined),
           },
           create: {
             kindeId: user.id,
             email: user.email || '',
-            firstName: user.given_name || null,
-            lastName: user.family_name || null,
-            name: user.given_name && user.family_name 
-              ? `${user.given_name} ${user.family_name}` 
-              : (user.given_name || user.family_name || null),
           },
         });
         console.log("User updated/created in database:", dbUser);

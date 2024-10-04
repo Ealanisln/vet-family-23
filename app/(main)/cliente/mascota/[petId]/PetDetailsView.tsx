@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import PetForm from "@/components/Admin/ui/PetForm";
+import ClientePetForm from "@/components/Clientes/ClientePetForm";
 
 interface MedicalHistory {
   id: string;
@@ -73,7 +73,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
           <h1 className="text-2xl font-bold">Detalles de {pet.name}</h1>
         </div>
         <div className="w-full sm:w-auto mt-4 sm:mt-0">
-          <PetForm
+          <ClientePetForm
             isEditing={true}
             initialPet={formatPetForForm(pet)}
             onClose={() => {}}

@@ -4,6 +4,8 @@ import * as React from "react"
 import Link from "next/link"
 import {
   LucideCircleEllipsis,
+  Plus,
+  Trash2
 } from "lucide-react"
 import {
   ColumnDef,
@@ -36,15 +38,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getUsers } from "@/app/actions/get-customers"
+import { getUser, deleteUser } from "@/app/actions/new/user"
+import { toast } from "@/components/ui/use-toast"
 
+// Update the User type to match your Prisma schema
 export type User = {
   id: string
+  kindeId: string
+  email: string
   firstName: string | null
   lastName: string | null
+  name: string | null
   phone: string | null
-  email: string
+  address: string | null
+  preferredContactMethod: string | null
+  pet: string | null
+  visits: number
+  nextVisitFree: boolean
+  lastVisit: Date | null
+  createdAt: Date
+  updatedAt: Date
 }
+
 
 export const columns: ColumnDef<User>[] = [
   {
@@ -54,9 +69,9 @@ export const columns: ColumnDef<User>[] = [
       const firstName = row.getValue("firstName") as string | null
       const lastName = row.original.lastName as string | null
       const fullName = [firstName, lastName].filter(Boolean).join(" ")
-      return  <Link href={`/admin/clientes/${row.original.id}`} className="hover:underline">
-      <div className="capitalize">{fullName || "N/A"}</div>
-    </Link>
+      return <Link href={`/admin/clientes/${row.original.id}`} className="hover:underline">
+        <div className="capitalize">{fullName || "N/A"}</div>
+      </Link>
     },
   },
   {
@@ -69,6 +84,25 @@ export const columns: ColumnDef<User>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const user = row.original
+
+      const handleDelete = async () => {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar a ${user.firstName} ${user.lastName}?`)) {
+          const result = await deleteUser(user.id)
+          if (result.success) {
+            toast({
+              title: "Usuario eliminado",
+              description: `${user.firstName} ${user.lastName} ha sido eliminado exitosamente.`,
+            })
+            // Refresh the table data here
+          } else {
+            toast({
+              title: "Error",
+              description: "No se pudo eliminar el usuario. Por favor, inténtalo de nuevo.",
+              variant: "destructive",
+            })
+          }
+        }
+      }
 
       return (
         <DropdownMenu>
@@ -86,8 +120,16 @@ export const columns: ColumnDef<User>[] = [
               Copiar ID del usuario
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Ver detalles</DropdownMenuItem>
-            <DropdownMenuItem>Editar usuario</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={`/admin/clientes/${user.id}`}>Ver detalles</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={`/admin/clientes/${user.id}/edit`}>Editar usuario</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>Eliminar usuario</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -105,10 +147,20 @@ export default function ClientsTable() {
   React.useEffect(() => {
     async function fetchUsers() {
       try {
-        const users = await getUsers()
-        setData(users)
+        const usersPromises = Array.from({ length: 10 }, async (_, i) => {
+          const result = await getUser(`user${i + 1}`)
+          return result.success && result.user ? result.user : null
+        })
+
+        const users = await Promise.all(usersPromises)
+        setData(users.filter((user): user is User => user !== null))
       } catch (error) {
         console.error("Failed to fetch users:", error)
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los usuarios. Por favor, inténtalo de nuevo.",
+          variant: "destructive",
+        })
       }
     }
     fetchUsers()
@@ -135,7 +187,7 @@ export default function ClientsTable() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      <div className="flex items-center justify-between py-4">
         <Input
           placeholder="Filtrar por nombre..."
           value={(table.getColumn("firstName")?.getFilterValue() as string) ?? ""}
@@ -144,6 +196,11 @@ export default function ClientsTable() {
           }
           className="max-w-sm"
         />
+        <Link href="/admin/clientes/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> Crear Usuario
+          </Button>
+        </Link>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -188,7 +245,7 @@ export default function ClientsTable() {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                 Cargando resultados.
+                  No se encontraron resultados.
                 </TableCell>
               </TableRow>
             )}

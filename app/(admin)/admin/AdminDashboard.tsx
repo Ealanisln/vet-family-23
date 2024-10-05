@@ -12,7 +12,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
-import { AddMedicalRecordDialog } from './AddMedicalRecordDialog';
+import { MedicalRecordDialog } from './AddMedicalRecordDialog';
 
 interface MenuOptionProps {
   href: string;
@@ -81,8 +81,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ username, isAdmin }) =>
         </div>
         <MenuOption {...logoutOption} />
       </div>
-      <AddMedicalRecordDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-    </div>
+      <MedicalRecordDialog 
+  triggerButton={
+    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+      <CardContent className="flex flex-col items-center justify-center p-6">
+        <FileText className="w-12 h-12 mb-4 text-primary" />
+        <h3 className="text-lg font-semibold text-center">Nueva consulta</h3>
+      </CardContent>
+    </Card>
+  }
+/>    </div>
   );
 }
 

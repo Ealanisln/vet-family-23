@@ -1,54 +1,86 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   try {
-    const { getUser, isAuthenticated } = getKindeServerSession();
+    const { getUser, isAuthenticated, getAccessToken } = getKindeServerSession();
     
     let user = null;
     let authStatus = false;
     let dbUser = null;
+    let userRoles: any[] = [];
 
     try {
       user = await getUser();
-      console.log("User fetched successfully:", user);
-    } catch (userError) {
-      console.error("Error fetching user:", userError instanceof Error ? userError.message : String(userError));
-    }
-    
-    try {
+      console.log("User from Kinde:", user);
+      
       authStatus = await isAuthenticated();
-      console.log("Auth status fetched successfully:", authStatus);
-    } catch (authError) {
-      console.error("Error checking auth status:", authError instanceof Error ? authError.message : String(authError));
-    }
+      console.log("Auth status:", authStatus);
 
-    if (user && user.id) {
-      try {
-        dbUser = await prisma.user.upsert({
+      if (user && user.id) {
+        dbUser = await prisma.user.findUnique({
           where: { kindeId: user.id },
-          update: {
-            email: user.email || undefined,
-          },
-          create: {
-            kindeId: user.id,
-            email: user.email || '',
-          },
         });
-        console.log("User updated/created in database:", dbUser);
-      } catch (dbError) {
-        console.error("Error updating/creating user in database:", dbError instanceof Error ? dbError.message : String(dbError));
+        console.log("User from database:", dbUser);
+
+        if (!dbUser) {
+          console.log("Creating new user in database");
+          dbUser = await prisma.user.create({
+            data: {
+              kindeId: user.id,
+              email: user.email || "",
+              roles: [],
+            },
+          });
+          console.log("New user created:", dbUser);
+        }
+
+        // Obtener roles del token de acceso
+        const accessToken = await getAccessToken();
+        console.log("Access token:", accessToken);
+
+        if (accessToken && typeof accessToken === "object" && "roles" in accessToken) {
+          userRoles = Array.isArray(accessToken.roles) ? accessToken.roles : [];
+          console.log("Roles from access token:", userRoles);
+        } else {
+          console.log("No roles found in access token");
+        }
+
+        // Actualizar roles solo si han cambiado
+        if (JSON.stringify(dbUser.roles) !== JSON.stringify(userRoles)) {
+          console.log("Updating user roles in database");
+          await prisma.user.update({
+            where: { id: dbUser.id },
+            data: { roles: userRoles },
+          });
+          console.log("User roles updated");
+        } else {
+          console.log("User roles unchanged");
+        }
       }
+    } catch (error) {
+      console.error("Error in auth process:", error);
     }
 
-    return NextResponse.json({ user, isAuthenticated: authStatus, dbUser });
+    const response = {
+      user: { ...user, roles: userRoles },
+      isAuthenticated: authStatus,
+      dbUser,
+      roles: userRoles,
+    };
+    console.log("API response:", response);
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("Error in auth-status API route:", error instanceof Error ? error.message : String(error));
+    console.error("Error in auth-status API route:", error);
     return NextResponse.json(
-      { error: "Internal Server Error", details: error instanceof Error ? error.message : "Unknown error" },
+      {
+        error: "Internal Server Error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   } finally {

@@ -158,16 +158,6 @@ export default function AddPetView() {
                 />
               </div>
             </div>
-            {/* <div className="space-y-2">
-              <Label htmlFor="medicalHistory">Historial Médico</Label>
-              <Textarea
-                id="medicalHistory"
-                name="medicalHistory"
-                value={pet.medicalHistory}
-                onChange={handleInputChange}
-                rows={4}
-              />
-            </div> */}
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button

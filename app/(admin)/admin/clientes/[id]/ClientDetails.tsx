@@ -98,7 +98,7 @@ export default function ClientDetails({ user }: { user: any }) {
                 <PawPrintIcon className="h-4 w-4 text-muted-foreground" />
               </TableCell>
               <TableCell>
-              <Link href={`/admin/clientes/${user.id}/mascotas/${pet.id}`} className="font-medium text-black hover:underline">
+              <Link href={`/admin/clientes/${user.id}/mascota/${pet.id}`} className="font-medium text-black hover:underline">
                   {pet.name}
                 </Link>
               </TableCell>

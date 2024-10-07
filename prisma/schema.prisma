@@ -11,30 +11,30 @@ generator client {
 }
 
 model User {
-  id                    String           @id @default(auto()) @map("_id") @db.ObjectId
-  kindeId               String           @unique
-  email                 String           @unique
-  firstName             String?
-  lastName              String?
-  name                  String?
-  phone                 String?
-  address               String?
+  id                     String           @id @default(auto()) @map("_id") @db.ObjectId
+  kindeId                String           @unique
+  email                  String?           @unique
+  firstName              String?
+  lastName               String?
+  name                   String?
+  phone                  String?
+  address                String?
   preferredContactMethod String?
-  pet                   String?
-  visits                Int              @default(0)
-  nextVisitFree         Boolean          @default(false)
-  lastVisit             DateTime?
-  visitHistory          VisitHistory[]
-  pets                  Pet[]
-  appointments          Appointment[]
-  billings              Billing[]
-  reminders             Reminder[]
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
+  pet                    String?
+  visits                 Int              @default(0)
+  nextVisitFree          Boolean          @default(false)
+  lastVisit              DateTime?
+  visitHistory           VisitHistory[]
+  pets                   Pet[]
+  appointments           Appointment[]
+  billings               Billing[]
+  reminders              Reminder[]
+  roles                  String[]         // Nuevo campo para roles
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
 
   @@map("users")
 }
-
 model VisitHistory {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId

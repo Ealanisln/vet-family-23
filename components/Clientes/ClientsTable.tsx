@@ -39,10 +39,21 @@ import Loader from "@/components/ui/loader";
 
 export type User = {
   id: string;
+  kindeId: string;
+  email: string | null;
   firstName: string | null;
   lastName: string | null;
+  name: string | null;
   phone: string | null;
-  email: string;
+  address: string | null;
+  preferredContactMethod: string | null;
+  pet: string | null;
+  visits: number;
+  nextVisitFree: boolean;
+  lastVisit: Date | null;
+  roles: string[];
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export const columns: ColumnDef<User>[] = [
@@ -58,7 +69,9 @@ export const columns: ColumnDef<User>[] = [
           href={`/admin/clientes/${row.original.id}`}
           className="hover:underline"
         >
-          <div className="capitalize">{fullName || "N/A"}</div>
+          <div className="capitalize">
+            {fullName || row.original.name || "N/A"}
+          </div>
         </Link>
       );
     },
@@ -66,7 +79,9 @@ export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "email",
     header: "Correo",
-    cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+    cell: ({ row }) => (
+      <div className="lowercase">{row.getValue("email") || "N/A"}</div>
+    ),
   },
   {
     id: "actions",
@@ -103,8 +118,11 @@ export default function ClientsTable() {
   const [data, setData] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
   React.useEffect(() => {
@@ -112,7 +130,7 @@ export default function ClientsTable() {
       try {
         setLoading(true);
         const users = await getUsers();
-        setData(users);
+        setData(users as User[]); // Type assertion here if necessary
       } catch (error) {
         console.error("Failed to fetch users:", error);
       } finally {
@@ -146,7 +164,9 @@ export default function ClientsTable() {
       <div className="flex items-center py-4">
         <Input
           placeholder="Filtrar por nombre..."
-          value={(table.getColumn("firstName")?.getFilterValue() as string) ?? ""}
+          value={
+            (table.getColumn("firstName")?.getFilterValue() as string) ?? ""
+          }
           onChange={(event) =>
             table.getColumn("firstName")?.setFilterValue(event.target.value)
           }
@@ -174,7 +194,10 @@ export default function ClientsTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   <Loader size={32} className="mx-auto" />
                   <p className="mt-2">Cargando resultados...</p>
                 </TableCell>
@@ -187,14 +210,20 @@ export default function ClientsTable() {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No se encontraron resultados.
                 </TableCell>
               </TableRow>

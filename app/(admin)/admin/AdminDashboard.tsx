@@ -1,18 +1,19 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   FileText,
   User,
   PawPrint,
   AlertCircle,
   UserX,
-  LucideIcon
+  LucideIcon,
+  UserPlus,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
-import { MedicalRecordDialog } from './AddMedicalRecordDialog';
+import { MedicalRecordDialog } from "./AddMedicalRecordDialog";
 
 interface MenuOptionProps {
   href: string;
@@ -36,16 +37,28 @@ interface AdminDashboardProps {
   isAdmin: boolean;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ username, isAdmin }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({
+  username,
+  isAdmin,
+}) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const options: MenuOptionProps[] = [
     { title: "Propietarios", icon: User, href: "/admin/clientes" },
+    { title: "Nuevo Propietario", icon: UserPlus, href: "/admin/clientes/nuevo-cliente" },
     { title: "Mascotas", icon: PawPrint, href: "/admin/mascotas" },
-    { title: "Reportar un Problema", icon: AlertCircle, href: "mailto:emmanuel@alanis.dev?subject=Reporte%20de%20Problema%20-%20Panel%20de%20Administración" },
+    {
+      title: "Reportar un Problema",
+      icon: AlertCircle,
+      href: "mailto:emmanuel@alanis.dev?subject=Reporte%20de%20Problema%20-%20Panel%20de%20Administración",
+    },
   ];
 
-  const logoutOption: MenuOptionProps = { title: "Cerrar sesión", icon: UserX, href: "/api/auth/logout" };
+  const logoutOption: MenuOptionProps = {
+    title: "Cerrar sesión",
+    icon: UserX,
+    href: "/api/auth/logout",
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -71,27 +84,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ username, isAdmin }) =>
         {options.map((option, index) => (
           <MenuOption key={index} {...option} />
         ))}
-        <div onClick={() => setIsDialogOpen(true)}>
+       <MedicalRecordDialog
+        triggerButton={
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardContent className="flex flex-col items-center justify-center p-6">
               <FileText className="w-12 h-12 mb-4 text-primary" />
-              <h3 className="text-lg font-semibold text-center">Nueva consulta</h3>
+              <h3 className="text-lg font-semibold text-center">
+                Nueva consulta
+              </h3>
             </CardContent>
           </Card>
-        </div>
+        }
+      />
         <MenuOption {...logoutOption} />
       </div>
-      <MedicalRecordDialog 
-  triggerButton={
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-      <CardContent className="flex flex-col items-center justify-center p-6">
-        <FileText className="w-12 h-12 mb-4 text-primary" />
-        <h3 className="text-lg font-semibold text-center">Nueva consulta</h3>
-      </CardContent>
-    </Card>
-  }
-/>    </div>
+      
+    </div>
   );
-}
+};
 
 export default AdminDashboard;

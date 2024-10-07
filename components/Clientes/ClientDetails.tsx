@@ -1,4 +1,3 @@
-// components/Clientes/ClientDetails.tsx
 "use client";
 
 import React from "react";
@@ -33,7 +32,7 @@ interface User {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null; // Actualizado para permitir null
   phone: string;
   address: string;
   visits?: number;
@@ -44,9 +43,9 @@ interface User {
 
 export default function ClientDetails({ user }: { user: User }) {
   const handleEdit = () => {
-    // Use window.location for client-side navigation
     window.location.href = `/cliente/editar?id=${user.id}`;
   };
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
@@ -70,7 +69,7 @@ export default function ClientDetails({ user }: { user: User }) {
               </div>
               <div>
                 <p className="font-semibold">Email:</p>
-                <p>{user.email}</p>
+                <p>{user.email || "N/A"}</p>
               </div>
               <div>
                 <p className="font-semibold">Teléfono:</p>

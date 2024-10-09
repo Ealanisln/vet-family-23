@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import "./globals.css";
 import { FacebookPixelEvents } from "@/components/Facebook/FacebookPixel";
-import { Toaster } from "@/components/ui/toaster";
+import dynamic from 'next/dynamic';
 import { GoogleTagManager } from "@next/third-parties/google";
+import { Toaster } from "@/components/ui/toaster";
+
+
 
 export const metadata = {
   title: "Bienvenido a Family Vet 23",
@@ -21,8 +24,8 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-        <GoogleTagManager gtmId="AW-16513203690" />
         <Toaster />
+        <GoogleTagManager gtmId="AW-16513203690" />
         <Suspense fallback={null}>
           <FacebookPixelEvents />
         </Suspense>

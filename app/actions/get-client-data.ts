@@ -1,5 +1,3 @@
-'use server'
-
 import { PrismaClient } from '@prisma/client'
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server"
 import { redirect } from "next/navigation"
@@ -7,15 +5,16 @@ import { redirect } from "next/navigation"
 const prisma = new PrismaClient()
 
 export async function getClientData() {
-  const { getUser } = getKindeServerSession()
+  const { getUser, getPermissions } = getKindeServerSession()
   const kindeUser = await getUser()
+  const permissions = await getPermissions()
 
   if (!kindeUser || !kindeUser.id) {
     redirect('/api/auth/login')
   }
 
   try {
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { kindeId: kindeUser.id },
       include: {
         pets: true,
@@ -35,10 +34,57 @@ export async function getClientData() {
     })
 
     if (!user) {
-      throw new Error('User not found')
+      console.log('User not found in local database, creating new user')
+      user = await prisma.user.create({
+        data: {
+          kindeId: kindeUser.id,
+          email: kindeUser.email || '',
+          firstName: kindeUser.given_name || null,
+          lastName: kindeUser.family_name || null,
+          name: kindeUser.given_name && kindeUser.family_name ? `${kindeUser.given_name} ${kindeUser.family_name}` : null,
+          roles: permissions?.permissions || ['user'], // Use permissions instead of roles
+          pets: { create: [] },
+          appointments: { create: [] },
+          billings: { create: [] },
+          reminders: { create: [] },
+        },
+        include: {
+          pets: true,
+          appointments: true,
+          billings: true,
+          reminders: true,
+        },
+      })
+    } else {
+      // Update user information if it exists
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email: kindeUser.email || undefined,
+          firstName: kindeUser.given_name || undefined,
+          lastName: kindeUser.family_name || undefined,
+          name: kindeUser.given_name && kindeUser.family_name ? `${kindeUser.given_name} ${kindeUser.family_name}` : undefined,
+          roles: permissions?.permissions || undefined, // Update roles with permissions
+        },
+        include: {
+          pets: true,
+          appointments: {
+            where: {
+              dateTime: {
+                gte: new Date(),
+              },
+            },
+            orderBy: {
+              dateTime: 'asc',
+            },
+          },
+          billings: true,
+          reminders: true,
+        },
+      })
     }
 
-    // Transformar los datos para enviar solo la información necesaria al cliente
+    // Transform the data to send only the necessary information to the client
     return {
       id: user.id,
       firstName: user.firstName || "",
@@ -58,9 +104,16 @@ export async function getClientData() {
         dateTime: appointment.dateTime.toISOString(),
         reason: appointment.reason,
       })),
+      roles: user.roles,
     }
   } catch (error) {
     console.error('Error fetching client data:', error)
-    throw new Error('Failed to fetch client data')
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch client data: ${error.message}`)
+    } else {
+      throw new Error('Failed to fetch client data: Unknown error')
+    }
+  } finally {
+    await prisma.$disconnect()
   }
 }

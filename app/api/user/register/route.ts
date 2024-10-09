@@ -1,3 +1,5 @@
+// app/api/user/register/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { createHash } from "crypto";
@@ -83,45 +85,35 @@ async function createOrUpdateUser(user: any) {
   const userHash = generateUserHash(user);
 
   try {
-    const dbUser = await prisma.$transaction(async (tx) => {
-      const existingUser = await tx.user.findUnique({
-        where: { kindeId: user.id },
-      });
-
-      if (!existingUser || generateUserHash(existingUser) !== userHash) {
-        return tx.user.upsert({
-          where: { kindeId: user.id },
-          update: {
-            email: user.email || undefined,
-            phone: user.phone || undefined,
-            firstName: user.given_name || undefined,
-            lastName: user.family_name || undefined,
-            name:
-              user.given_name && user.family_name
-                ? `${user.given_name} ${user.family_name}`
-                : user.given_name || user.family_name || undefined,
-            roles: user.roles || [],
-            internalId: user.internalId || undefined, // Añadido internalId
-          },
-          create: {
-            kindeId: user.id,
-            email: user.email || null,
-            phone: user.phone || null,
-            firstName: user.given_name || null,
-            lastName: user.family_name || null,
-            name:
-              user.given_name && user.family_name
-                ? `${user.given_name} ${user.family_name}`
-                : user.given_name || user.family_name || null,
-            roles: user.roles || [],
-            visits: 0,
-            nextVisitFree: false,
-            internalId: user.internalId || null, // Añadido internalId
-          },
-        });
-      }
-
-      return existingUser;
+    const dbUser = await prisma.user.upsert({
+      where: { kindeId: user.id },
+      update: {
+        email: user.email || undefined,
+        phone: user.phone || undefined,
+        firstName: user.given_name || undefined,
+        lastName: user.family_name || undefined,
+        name:
+          user.given_name && user.family_name
+            ? `${user.given_name} ${user.family_name}`
+            : user.given_name || user.family_name || undefined,
+        roles: user.roles || [],
+        internalId: user.internalId || undefined,
+      },
+      create: {
+        kindeId: user.id,
+        email: user.email || null,
+        phone: user.phone || null,
+        firstName: user.given_name || null,
+        lastName: user.family_name || null,
+        name:
+          user.given_name && user.family_name
+            ? `${user.given_name} ${user.family_name}`
+            : user.given_name || user.family_name || null,
+        roles: user.roles || [],
+        visits: 0,
+        nextVisitFree: false,
+        internalId: user.internalId || null,
+      },
     });
 
     console.log("User operation completed:", dbUser);
@@ -221,7 +213,6 @@ export async function POST(req: NextRequest) {
     let dbUser;
 
     if (email) {
-      // Si hay email, registramos en Kinde y luego en la base de datos local
       let token;
       try {
         token = await getKindeToken();
@@ -249,7 +240,6 @@ export async function POST(req: NextRequest) {
           given_name: userData.profile.given_name,
           family_name: userData.profile.family_name,
           roles: userData.roles || [],
-          internalId: userData.internalId, // Añadido internalId
         });
       } catch (error) {
         console.error("Error registering user with Kinde:", error);
@@ -259,7 +249,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Enviar invitación si es necesario
       if (userData.send_invite) {
         try {
           const inviteResponse = await fetch(
@@ -282,7 +271,6 @@ export async function POST(req: NextRequest) {
         }
       }
     } else {
-      // Si solo hay teléfono, registramos solo en la base de datos local
       try {
         dbUser = await createLocalUser(userData);
       } catch (error) {
@@ -294,7 +282,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Ensure we're returning the dbUser in the response
     return NextResponse.json({ kindeUser: registeredUser, dbUser: dbUser });
   } catch (error) {
     console.error("Error registering user:", error);

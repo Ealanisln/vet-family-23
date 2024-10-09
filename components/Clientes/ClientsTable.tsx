@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LucideCircleEllipsis } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { LucideCircleEllipsis, Trash2 } from "lucide-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -36,8 +37,19 @@ import {
 } from "@/components/ui/table";
 import { getUsers } from "@/app/actions/get-customers";
 import Loader from "@/components/ui/loader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useCallback } from "react";
 
-export type User = {
+export interface User {
   id: string;
   internalId: string | null;
   kindeId: string;
@@ -55,9 +67,76 @@ export type User = {
   roles: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface ActionsProps {
+  user: User;
+  onDelete: (userId: string) => Promise<void>;
+}
+
+const Actions: React.FC<ActionsProps> = ({ user, onDelete }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Abrir menú</span>
+            <LucideCircleEllipsis className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+          <DropdownMenuItem
+            onClick={() => navigator.clipboard.writeText(user.id)}
+          >
+            Copiar ID del usuario
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>Ver detalles</DropdownMenuItem>
+          <DropdownMenuItem>Editar usuario</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Eliminar usuario
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente la
+              cuenta del usuario y todos los datos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onDelete(user.id);
+                setShowDeleteDialog(false);
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 };
 
-export const columns: ColumnDef<User>[] = [
+const createColumns = (
+  onDelete: (userId: string) => Promise<void>
+): ColumnDef<User>[] => [
   {
     accessorKey: "firstName",
     header: "Nombre",
@@ -92,31 +171,7 @@ export const columns: ColumnDef<User>[] = [
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => {
-      const user = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menú</span>
-              <LucideCircleEllipsis className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(user.id)}
-            >
-              Copiar ID del usuario
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Ver detalles</DropdownMenuItem>
-            <DropdownMenuItem>Editar usuario</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <Actions user={row.original} onDelete={onDelete} />,
   },
 ];
 
@@ -130,13 +185,53 @@ export default function ClientsTable() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const { toast } = useToast();
+
+  const handleDeleteUser = useCallback(
+    async (userId: string) => {
+      try {
+        console.log("Attempting to delete user:", userId);
+        const response = await fetch(`/api/user/delete`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId, isDeleteProfile: true }),
+        });
+
+        if (response.ok) {
+          setData((prevData) => prevData.filter((user) => user.id !== userId));
+          console.log("User deleted successfully, showing toast");
+          toast({
+            title: "Éxito",
+            description: "Usuario eliminado exitosamente.",
+            variant: "default",
+          });
+        } else {
+          throw new Error("Failed to delete user");
+        }
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        toast({
+          title: "Error",
+          description: "Error al eliminar el usuario.",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast, setData]
+  );
+
+  const columns = React.useMemo(
+    () => createColumns(handleDeleteUser),
+    [handleDeleteUser]
+  );
 
   React.useEffect(() => {
     async function fetchUsers() {
       try {
         setLoading(true);
         const users = await getUsers();
-        // Transform the fetched data to match the User type
         const transformedUsers: User[] = users.map((user: any) => ({
           id: user.id,
           internalId: user.internalId || null,

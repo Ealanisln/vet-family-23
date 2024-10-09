@@ -1,4 +1,3 @@
-// app/admin/clientes/[id]/ClientDetails.tsx
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +53,10 @@ export default function ClientDetails({ user }: { user: any }) {
               <div>
                 <p className="font-semibold">Dirección:</p>
                 <p>{user.address || "N/A"}</p>
+              </div>
+              <div>
+                <p className="font-semibold">ID Interno:</p>
+                <p>{user.internalId || "N/A"}</p>
               </div>
             </div>
             <div className="mt-4">

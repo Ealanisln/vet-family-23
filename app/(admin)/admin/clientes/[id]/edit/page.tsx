@@ -1,5 +1,3 @@
-// app/(admin)/admin/clientes/[id]/edit/page.tsx
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react'
@@ -23,6 +21,7 @@ type ClientData = {
   address: string;
   visits: number;
   nextVisitFree: boolean;
+  internalId?: string;
 }
 
 export default function EditClientPage({ params }: { params: { id: string } }) {
@@ -36,7 +35,8 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
     phone: '',
     address: '',
     visits: 0,
-    nextVisitFree: false
+    nextVisitFree: false,
+    internalId: undefined
   })
 
   const fetchUser = useCallback(async () => {
@@ -50,7 +50,8 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
         phone: userData.phone ?? '',
         address: userData.address ?? '',
         visits: userData.visits ?? 0,
-        nextVisitFree: userData.nextVisitFree ?? false
+        nextVisitFree: userData.nextVisitFree ?? false,
+        internalId: userData.internalId ?? undefined
       })
     } catch (error) {
       console.error('Error fetching user data:', error)
@@ -68,7 +69,10 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setClient(prevState => ({ ...prevState, [name]: value }))
+    setClient(prevState => ({ 
+      ...prevState, 
+      [name]: name === 'visits' ? (value ? parseInt(value) : 0) : value 
+    }))
   }
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -131,14 +135,13 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email (opcional)</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   value={client.email}
                   onChange={handleInputChange}
-                  required
                   className="w-full"
                 />
               </div>
@@ -174,6 +177,18 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                 onChange={handleInputChange}
                 min="0"
                 className="w-full sm:w-1/2"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="internalId">ID Interno (opcional)</Label>
+              <Input
+                id="internalId"
+                name="internalId"
+                type="number"
+                value={client.internalId ?? ''}
+                onChange={handleInputChange}
+                className="w-full sm:w-1/2"
+                min="0"
               />
             </div>
             <div className="flex items-center space-x-2">

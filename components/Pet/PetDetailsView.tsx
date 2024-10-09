@@ -1,11 +1,12 @@
-// app/(admin)/admin/clientes/[id]/mascota/[petId]/PetDetailsView.tsx
+// components/Pet/PetDetailsView.tsx
 
 "use client";
 
 import React, { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -18,6 +19,7 @@ import { EditIcon, ArrowLeftIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import PetForm from "@/components/Admin/ui/PetForm";
 import { MedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
+import { updatePetNeuteredStatus } from "@/app/actions/add-edit-pet";
 
 interface MedicalHistory {
   id: string;
@@ -47,16 +49,48 @@ interface Pet {
   gender: string;
   weight: number;
   microchipNumber: string | null;
+  isNeutered: boolean;
   medicalHistory: MedicalHistory[];
   vaccinations: Vaccination[];
 }
 
+const calculateAge = (dateOfBirth: Date): string => {
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  if (age < 1) {
+    const months = monthDifference < 0 ? monthDifference + 12 : monthDifference;
+    return `${months} ${months === 1 ? 'mes' : 'meses'}`;
+  }
+
+  return `${age} ${age === 1 ? 'año' : 'años'}`;
+};
+
 export default function PetDetailsView({ pet }: { pet: Pet }) {
   const [open, setOpen] = useState(false);
+  const [isNeutered, setIsNeutered] = useState(pet.isNeutered);
   const params = useParams();
+  const pathname = usePathname();
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleNeuteredChange = async (checked: boolean) => {
+    setIsNeutered(checked);
+    const result = await updatePetNeuteredStatus(pet.id, checked);
+    if (result.success) {
+      console.log("Estado de esterilización actualizado correctamente");
+    } else {
+      console.error("Error al actualizar el estado de esterilización:", result.error);
+      setIsNeutered(!checked);
+    }
   };
 
   const formatPetForForm = (pet: Pet) => {
@@ -69,16 +103,25 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       gender: pet.gender,
       weight: pet.weight.toString(),
       microchipNumber: pet.microchipNumber || undefined,
+      isNeutered: pet.isNeutered,
       medicalHistory:
         pet.medicalHistory.length > 0 ? pet.medicalHistory[0].notes || "" : "",
     };
   };
 
+  const getBackLink = () => {
+    if (pathname.includes('/admin/clientes/')) {
+      return `/admin/clientes/${params.id}`;
+    } else {
+      return '/admin/mascotas';
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
+<div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <Link href={`/admin/clientes/${params.id}`}>
+          <Link href={getBackLink()}>
             <Button variant="outline" className="mb-2 sm:mb-0">
               <ArrowLeftIcon className="mr-2 h-4 w-4" /> Volver
             </Button>
@@ -103,24 +146,37 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
             {[
               { label: "Especie", value: pet.species },
               { label: "Raza", value: pet.breed },
-              {
-                label: "Fecha de Nacimiento",
-                value: pet.dateOfBirth.toLocaleDateString(),
-              },
+              { label: "Fecha de Nacimiento", value: pet.dateOfBirth.toLocaleDateString() },
+              { label: "Edad", value: calculateAge(pet.dateOfBirth) },
               { label: "Género", value: pet.gender },
               { label: "Peso", value: `${pet.weight} kg` },
-              {
-                label: "Número de Microchip",
-                value: pet.microchipNumber || "N/A",
-              },
+              { label: "Número de Microchip", value: pet.microchipNumber || "N/A" },
             ].map(({ label, value }, index) => (
               <div key={index} className="space-y-1">
-                <p className="font-semibold text-sm text-muted-foreground">
-                  {label}
-                </p>
+                <p className="font-semibold text-sm text-muted-foreground">{label}</p>
                 <p className="text-base">{value}</p>
               </div>
             ))}
+          </div>
+          <div className="mt-6">
+            <div className="items-top flex space-x-2">
+              <Checkbox
+                id="isNeutered"
+                checked={isNeutered}
+                onCheckedChange={handleNeuteredChange}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="isNeutered"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Esterilizado/a
+                </label>
+                <p className="text-sm text-muted-foreground">
+                  Indica si la mascota ha sido esterilizada o castrada.
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -162,9 +218,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                             existingRecord={{
                               id: record.id,
                               petId: record.petId,
-                              visitDate: record.visitDate
-                                .toISOString()
-                                .split("T")[0],
+                              visitDate: record.visitDate.toISOString().split("T")[0],
                               reasonForVisit: record.reasonForVisit,
                               diagnosis: record.diagnosis,
                               treatment: record.treatment,

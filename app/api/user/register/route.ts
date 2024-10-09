@@ -101,6 +101,7 @@ async function createOrUpdateUser(user: any) {
                 ? `${user.given_name} ${user.family_name}`
                 : user.given_name || user.family_name || undefined,
             roles: user.roles || [],
+            internalId: user.internalId || undefined, // Añadido internalId
           },
           create: {
             kindeId: user.id,
@@ -115,6 +116,7 @@ async function createOrUpdateUser(user: any) {
             roles: user.roles || [],
             visits: 0,
             nextVisitFree: false,
+            internalId: user.internalId || null, // Añadido internalId
           },
         });
       }
@@ -195,6 +197,7 @@ async function createLocalUser(userData: any) {
       roles: userData.roles || [],
       visits: 0,
       nextVisitFree: false,
+      internalId: userData.internalId ? userData.internalId.toString() : null,
     },
   });
 }
@@ -246,6 +249,7 @@ export async function POST(req: NextRequest) {
           given_name: userData.profile.given_name,
           family_name: userData.profile.family_name,
           roles: userData.roles || [],
+          internalId: userData.internalId, // Añadido internalId
         });
       } catch (error) {
         console.error("Error registering user with Kinde:", error);

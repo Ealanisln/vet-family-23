@@ -116,3 +116,22 @@ export async function updatePet(userId: string, petId: string, petData: {
     await prisma.$disconnect()
   }
 }
+
+export async function updatePetNeuteredStatus(petId: string, isNeutered: boolean) {
+  try {
+    const updatedPet = await prisma.pet.update({
+      where: { id: petId },
+      data: { isNeutered },
+    })
+
+    // Asumiendo que quieres revalidar la página de detalles de la mascota
+    revalidatePath(`/admin/mascotas/${petId}`)
+
+    return { success: true, pet: updatedPet }
+  } catch (error) {
+    console.error('Failed to update pet neutered status:', error)
+    return { success: false, error: 'Failed to update pet neutered status' }
+  } finally {
+    await prisma.$disconnect()
+  }
+}

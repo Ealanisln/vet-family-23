@@ -39,6 +39,7 @@ import Loader from "@/components/ui/loader";
 
 export type User = {
   id: string;
+  internalId: string | null;
   kindeId: string;
   email: string | null;
   firstName: string | null;
@@ -82,6 +83,11 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => (
       <div className="lowercase">{row.getValue("email") || "N/A"}</div>
     ),
+  },
+  {
+    accessorKey: "phone",
+    header: "Teléfono",
+    cell: ({ row }) => <div>{row.getValue("phone") || "N/A"}</div>,
   },
   {
     id: "actions",
@@ -130,7 +136,27 @@ export default function ClientsTable() {
       try {
         setLoading(true);
         const users = await getUsers();
-        setData(users as User[]); // Type assertion here if necessary
+        // Transform the fetched data to match the User type
+        const transformedUsers: User[] = users.map((user: any) => ({
+          id: user.id,
+          internalId: user.internalId || null,
+          kindeId: user.kindeId,
+          email: user.email || null,
+          firstName: user.firstName || null,
+          lastName: user.lastName || null,
+          name: user.name || null,
+          phone: user.phone || null,
+          address: user.address || null,
+          preferredContactMethod: user.preferredContactMethod || null,
+          pet: user.pet || null,
+          visits: user.visits || 0,
+          nextVisitFree: user.nextVisitFree || false,
+          lastVisit: user.lastVisit ? new Date(user.lastVisit) : null,
+          roles: user.roles || [],
+          createdAt: new Date(user.createdAt),
+          updatedAt: new Date(user.updatedAt),
+        }));
+        setData(transformedUsers);
       } catch (error) {
         console.error("Failed to fetch users:", error);
       } finally {

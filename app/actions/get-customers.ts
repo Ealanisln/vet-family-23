@@ -1,8 +1,8 @@
-'use server'
+"use server";
 
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export async function getUsers() {
   try {
@@ -13,12 +13,13 @@ export async function getUsers() {
         lastName: true,
         phone: true,
         email: true,
+        internalId: true, // Añadido internalId a la selección
       },
-    })
-    return users
+    });
+    return users;
   } catch (error) {
-    console.error('Error fetching users:', error)
-    throw new Error('Failed to fetch users')
+    console.error("Error fetching users:", error);
+    throw new Error("Failed to fetch users");
   }
 }
 
@@ -32,14 +33,14 @@ export async function getUserById(id: string) {
         billings: true,
         reminders: true,
       },
-    })
+    });
     if (!user) {
-      throw new Error('User not found')
+      throw new Error("User not found");
     }
-    return user
+    return user;
   } catch (error) {
-    console.error('Error fetching user:', error)
-    throw new Error('Failed to fetch user')
+    console.error("Error fetching user:", error);
+    throw new Error("Failed to fetch user");
   }
 }
 
@@ -52,6 +53,7 @@ export async function updateUser(userData: {
   address: string;
   visits?: number;
   nextVisitFree?: boolean;
+  internalId?: string; // Añadido internalId como opcional
 }) {
   try {
     const updatedUser = await prisma.user.update({
@@ -64,11 +66,12 @@ export async function updateUser(userData: {
         address: userData.address,
         visits: userData.visits,
         nextVisitFree: userData.nextVisitFree,
+        internalId: userData.internalId, // Añadido internalId a la actualización
       },
-    })
-    return updatedUser
+    });
+    return updatedUser;
   } catch (error) {
-    console.error('Error updating user:', error)
-    throw new Error('Failed to update user')
+    console.error("Error updating user:", error);
+    throw new Error("Failed to update user");
   }
 }

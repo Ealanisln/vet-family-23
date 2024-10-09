@@ -1,7 +1,7 @@
 // app/(admin)/admin/mascotas/[petId]/page.tsx
 
+import PetDetailsView from '@/components/Pet/PetDetailsView';
 import { getPetDetails } from './getPetDetails';
-import PetDetailsView from './PetDetailsView';
 
 export default async function PetDetailsPage({
   params,

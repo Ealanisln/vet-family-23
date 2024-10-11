@@ -1,11 +1,20 @@
+// get-customers.ts
+
 "use server";
 
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function getUsers() {
+export async function getUsers(token: string) {
   try {
+    // Here you would typically use the token to authenticate the request
+    // For example, you might pass it as a header to an external API
+    // or use it to verify the user's session
+
+    // For now, we'll just log that we received a token
+    console.log("Received token for authentication:", token);
+
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -13,7 +22,18 @@ export async function getUsers() {
         lastName: true,
         phone: true,
         email: true,
-        internalId: true, // Añadido internalId a la selección
+        internalId: true,
+        kindeId: true,
+        name: true,
+        address: true,
+        preferredContactMethod: true,
+        pet: true,
+        visits: true,
+        nextVisitFree: true,
+        lastVisit: true,
+        roles: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
     return users;
@@ -53,7 +73,7 @@ export async function updateUser(userData: {
   address: string;
   visits?: number;
   nextVisitFree?: boolean;
-  internalId?: string; // Añadido internalId como opcional
+  internalId?: string;
 }) {
   try {
     const updatedUser = await prisma.user.update({
@@ -66,7 +86,7 @@ export async function updateUser(userData: {
         address: userData.address,
         visits: userData.visits,
         nextVisitFree: userData.nextVisitFree,
-        internalId: userData.internalId, // Añadido internalId a la actualización
+        internalId: userData.internalId,
       },
     });
     return updatedUser;

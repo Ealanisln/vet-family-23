@@ -5,12 +5,16 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Custom error type for Kinde API errors
 interface KindeApiError {
   errors: Array<{ code: string; message: string }>;
 }
 
-// Helper function to check if an error is a KindeApiError
+interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+}
+
 function isKindeApiError(error: unknown): error is KindeApiError {
   return (
     typeof error === "object" &&
@@ -20,7 +24,7 @@ function isKindeApiError(error: unknown): error is KindeApiError {
   );
 }
 
-async function getKindeToken(): Promise<string> {
+async function getKindeToken(): Promise<TokenResponse> {
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL ||
     `http://localhost:${process.env.PORT || 3000}`;
@@ -28,42 +32,66 @@ async function getKindeToken(): Promise<string> {
 
   console.log("Fetching Kinde token from:", tokenUrl);
 
-  try {
-    const response = await fetch(tokenUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+  const response = await fetch(tokenUrl, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
 
-    console.log("Kinde token response status:", response.status);
+  console.log("Kinde token response status:", response.status);
 
-    const responseText = await response.text();
-    console.log("Kinde token response body:", responseText);
+  const responseText = await response.text();
+  console.log("Kinde token response body:", responseText);
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch Kinde token: ${response.status} ${responseText}`
-      );
-    }
-
-    const data = JSON.parse(responseText);
-    if (!data.access_token) {
-      throw new Error(`No access token in response: ${JSON.stringify(data)}`);
-    }
-    return data.access_token;
-  } catch (error) {
-    console.error("Error fetching Kinde token:", error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch Kinde token: ${response.status} ${responseText}`
+    );
   }
+
+  const data = JSON.parse(responseText);
+  if (!data.access_token) {
+    throw new Error(`Invalid token response: ${JSON.stringify(data)}`);
+  }
+  return data;
+}
+async function refreshKindeToken(refreshToken: string): Promise<TokenResponse> {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    `http://localhost:${process.env.PORT || 3000}`;
+  const tokenUrl = new URL("/api/kinde-token", baseUrl).toString();
+
+  console.log("Refreshing Kinde token");
+
+  const response = await fetch(tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to refresh token: ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (!data.access_token || !data.refresh_token) {
+    throw new Error(`Invalid refresh token response: ${JSON.stringify(data)}`);
+  }
+  return data;
 }
 
 async function deleteUserFromKinde(
   kindeUserId: string,
-  token: string,
+  tokenResponse: TokenResponse,
   isDeleteProfile: boolean = false
 ): Promise<void> {
   const baseUrl = process.env.NEXT_PUBLIC_KINDE_ISSUER_URL;
+  if (!baseUrl) {
+    throw new Error("NEXT_PUBLIC_KINDE_ISSUER_URL is not set");
+  }
+
   const url = new URL(`${baseUrl}/api/v1/user`);
   url.searchParams.append("id", kindeUserId);
   if (isDeleteProfile) {
@@ -72,62 +100,59 @@ async function deleteUserFromKinde(
 
   console.log("Deleting user from Kinde. URL:", url.toString());
 
-  try {
-    const response = await fetch(url.toString(), {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const response = await fetch(url.toString(), {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${tokenResponse.access_token}`,
+    },
+  });
 
-    console.log("Kinde delete response status:", response.status);
+  console.log("Kinde delete response status:", response.status);
 
-    const responseText = await response.text();
-    console.log("Kinde delete response body:", responseText);
+  const responseText = await response.text();
+  console.log("Kinde delete response body:", responseText);
 
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = JSON.parse(responseText);
-      } catch {
-        errorData = responseText;
-      }
-      console.error("Kinde API Error Response:", errorData);
-      throw new Error(
-        `Failed to delete user from Kinde: ${JSON.stringify(errorData)}`
-      );
-    }
-
-    const responseData = JSON.parse(responseText);
-    console.log("Kinde delete success:", responseData);
-  } catch (error) {
-    console.error("Error in deleteUserFromKinde:", error);
-    throw error;
+  if (response.status === 401 || response.status === 403) {
+    console.log("Token may be invalid or expired, attempting to refresh");
+    const newTokenResponse = await refreshKindeToken(
+      tokenResponse.refresh_token
+    );
+    return deleteUserFromKinde(kindeUserId, newTokenResponse, isDeleteProfile);
   }
+
+  if (!response.ok) {
+    let errorData;
+    try {
+      errorData = JSON.parse(responseText);
+    } catch {
+      errorData = responseText;
+    }
+    console.error("Kinde API Error Response:", errorData);
+    throw new Error(
+      `Failed to delete user from Kinde: ${JSON.stringify(errorData)}`
+    );
+  }
+
+  const responseData = JSON.parse(responseText);
+  console.log("Kinde delete success:", responseData);
 }
 
 async function deleteUserFromDatabase(userId: string): Promise<void> {
-  // Obtener todas las mascotas del usuario
   const userPets = await prisma.pet.findMany({ where: { userId } });
 
-  // Eliminar todos los registros relacionados, incluyendo los de las mascotas
   await prisma.$transaction([
-    // Eliminar registros relacionados con las mascotas
     prisma.medicalHistory.deleteMany({
       where: { petId: { in: userPets.map((pet) => pet.id) } },
     }),
     prisma.vaccination.deleteMany({
       where: { petId: { in: userPets.map((pet) => pet.id) } },
     }),
-    // Eliminar registros relacionados directamente con el usuario
     prisma.visitHistory.deleteMany({ where: { userId } }),
     prisma.appointment.deleteMany({ where: { userId } }),
     prisma.billing.deleteMany({ where: { userId } }),
     prisma.reminder.deleteMany({ where: { userId } }),
-    // Eliminar todas las mascotas del usuario
     prisma.pet.deleteMany({ where: { userId } }),
-    // Finalmente, eliminar al usuario
     prisma.user.delete({ where: { id: userId } }),
   ]);
 }
@@ -159,8 +184,8 @@ export async function DELETE(req: NextRequest) {
           "Attempting to delete user from Kinde. KindeId:",
           user.kindeId
         );
-        const token = await getKindeToken();
-        await deleteUserFromKinde(user.kindeId, token, isDeleteProfile);
+        const tokenResponse = await getKindeToken();
+        await deleteUserFromKinde(user.kindeId, tokenResponse, isDeleteProfile);
         console.log("User successfully deleted from Kinde");
       } catch (error: unknown) {
         console.error("Error deleting user from Kinde:", error);
@@ -169,8 +194,22 @@ export async function DELETE(req: NextRequest) {
         } else if (isKindeApiError(error)) {
           console.error("Kinde API error:", error.errors);
         }
-        // Decide whether to continue with local deletion or not
-        // For now, we'll continue with the local deletion
+
+        // If the error is due to invalid credentials or token, we'll return an error response
+        if (
+          isKindeApiError(error) &&
+          error.errors.some(
+            (e) =>
+              e.code === "INVALID_CREDENTIALS" || e.code === "TOKEN_INVALID"
+          )
+        ) {
+          return NextResponse.json(
+            { error: "Authentication failed with Kinde. Please try again." },
+            { status: 401 }
+          );
+        }
+        // For other errors, we'll log them but continue with local deletion
+        console.log("Continuing with local deletion despite Kinde error");
       }
     } else {
       console.log(

@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
-import { LucideCircleEllipsis, Trash2 } from "lucide-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -18,14 +18,6 @@ import {
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -37,17 +29,7 @@ import {
 } from "@/components/ui/table";
 import { getUsers } from "@/app/actions/get-customers";
 import Loader from "@/components/ui/loader";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useCallback } from "react";
+import Actions from './ClientActions';
 
 export interface User {
   id: string;
@@ -69,197 +51,138 @@ export interface User {
   updatedAt: Date;
 }
 
-interface ActionsProps {
-  user: User;
-  onDelete: (userId: string) => Promise<void>;
+async function renewKindeToken() {
+  try {
+    const response = await fetch('/api/kinde-token');
+    if (!response.ok) {
+      throw new Error(`Failed to renew Kinde token: ${response.statusText}`);
+    }
+    const data = await response.json();
+    console.log('Renewed Kinde token:', data.access_token);
+    return data.access_token;
+  } catch (error) {
+    console.error('Error renewing Kinde token:', error);
+    throw error;
+  }
 }
 
-const Actions: React.FC<ActionsProps> = ({ user, onDelete }) => {
-  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
-
-  return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Abrir menú</span>
-            <LucideCircleEllipsis className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-          <DropdownMenuItem
-            onClick={() => navigator.clipboard.writeText(user.id)}
-          >
-            Copiar ID del usuario
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Ver detalles</DropdownMenuItem>
-          <DropdownMenuItem>Editar usuario</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => setShowDeleteDialog(true)}
-            className="text-red-600"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Eliminar usuario
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente la
-              cuenta del usuario y todos los datos asociados.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                onDelete(user.id);
-                setShowDeleteDialog(false);
-              }}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
-};
-
-const createColumns = (
-  onDelete: (userId: string) => Promise<void>
-): ColumnDef<User>[] => [
-  {
-    accessorKey: "firstName",
-    header: "Nombre",
-    cell: ({ row }) => {
-      const firstName = row.getValue("firstName") as string | null;
-      const lastName = row.original.lastName as string | null;
-      const fullName = [firstName, lastName].filter(Boolean).join(" ");
-      return (
-        <Link
-          href={`/admin/clientes/${row.original.id}`}
-          className="hover:underline"
-        >
-          <div className="capitalize">
-            {fullName || row.original.name || "N/A"}
-          </div>
-        </Link>
-      );
-    },
-  },
-  {
-    accessorKey: "email",
-    header: "Correo",
-    cell: ({ row }) => (
-      <div className="lowercase">{row.getValue("email") || "N/A"}</div>
-    ),
-  },
-  {
-    accessorKey: "phone",
-    header: "Teléfono",
-    cell: ({ row }) => <div>{row.getValue("phone") || "N/A"}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => <Actions user={row.original} onDelete={onDelete} />,
-  },
-];
-
 export default function ClientsTable() {
-  const [data, setData] = React.useState<User[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [data, setData] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
+
   const { toast } = useToast();
 
   const handleDeleteUser = useCallback(
     async (userId: string) => {
+      console.log(`Attempting to delete user with ID: ${userId}`);
       try {
-        console.log("Attempting to delete user:", userId);
+        let token = await renewKindeToken();
+        console.log('Using token for delete request:', token);
+        
         const response = await fetch(`/api/user/delete`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
           body: JSON.stringify({ userId, isDeleteProfile: true }),
         });
-
-        if (response.ok) {
-          setData((prevData) => prevData.filter((user) => user.id !== userId));
-          console.log("User deleted successfully, showing toast");
-          toast({
-            title: "Éxito",
-            description: "Usuario eliminado exitosamente.",
-            variant: "default",
+  
+        console.log('Delete request response:', response.status, await response.text());
+  
+        if (response.status === 401) {
+          console.log('Received 401, attempting to renew token and retry');
+          token = await renewKindeToken();
+          console.log('Using renewed token for retry:', token);
+          const retryResponse = await fetch(`/api/user/delete`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ userId, isDeleteProfile: true }),
           });
-        } else {
-          throw new Error("Failed to delete user");
+  
+          console.log('Retry response:', retryResponse.status, await retryResponse.text());
+  
+          if (!retryResponse.ok) {
+            throw new Error(`Failed to delete user: ${retryResponse.statusText}`);
+          }
+        } else if (!response.ok) {
+          throw new Error(`Failed to delete user: ${response.statusText}`);
         }
+  
+        console.log(`User with ID ${userId} deleted successfully`);
+        setData((prevData) => prevData.filter((user) => user.id !== userId));
+        toast({
+          title: "Éxito",
+          description: "Usuario eliminado exitosamente.",
+          variant: "default",
+        });
       } catch (error) {
         console.error("Error deleting user:", error);
         toast({
           title: "Error",
-          description: "Error al eliminar el usuario.",
+          description: error instanceof Error ? error.message : "Error al eliminar el usuario.",
           variant: "destructive",
         });
       }
     },
-    [toast, setData]
+    [toast]
   );
-
-  const columns = React.useMemo(
-    () => createColumns(handleDeleteUser),
+  
+  const columns = useMemo<ColumnDef<User>[]>(
+    () => [
+      {
+        accessorKey: "firstName",
+        header: "Nombre",
+        cell: ({ row }) => {
+          const firstName = row.getValue("firstName") as string | null;
+          const lastName = row.original.lastName as string | null;
+          const fullName = [firstName, lastName].filter(Boolean).join(" ");
+          return (
+            <Link
+              href={`/admin/clientes/${row.original.id}`}
+              className="hover:underline"
+            >
+              <div className="capitalize">
+                {fullName || row.original.name || "N/A"}
+              </div>
+            </Link>
+          );
+        },
+      },
+      {
+        accessorKey: "email",
+        header: "Correo",
+        cell: ({ row }) => (
+          <div className="lowercase">{row.getValue("email") || "N/A"}</div>
+        ),
+      },
+      {
+        accessorKey: "phone",
+        header: "Teléfono",
+        cell: ({ row }) => <div>{row.getValue("phone") || "N/A"}</div>,
+      },
+      {
+        id: "actions",
+        cell: ({ row }) => {
+          console.log(`Rendering Actions for user: ${row.original.id}`);
+          return (
+            <Actions
+              user={row.original}
+              onDelete={handleDeleteUser}
+            />
+          );
+        },
+      },
+    ],
     [handleDeleteUser]
   );
-
-  React.useEffect(() => {
-    async function fetchUsers() {
-      try {
-        setLoading(true);
-        const users = await getUsers();
-        const transformedUsers: User[] = users.map((user: any) => ({
-          id: user.id,
-          internalId: user.internalId || null,
-          kindeId: user.kindeId,
-          email: user.email || null,
-          firstName: user.firstName || null,
-          lastName: user.lastName || null,
-          name: user.name || null,
-          phone: user.phone || null,
-          address: user.address || null,
-          preferredContactMethod: user.preferredContactMethod || null,
-          pet: user.pet || null,
-          visits: user.visits || 0,
-          nextVisitFree: user.nextVisitFree || false,
-          lastVisit: user.lastVisit ? new Date(user.lastVisit) : null,
-          roles: user.roles || [],
-          createdAt: new Date(user.createdAt),
-          updatedAt: new Date(user.updatedAt),
-        }));
-        setData(transformedUsers);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchUsers();
-  }, []);
 
   const table = useReactTable({
     data,
@@ -280,14 +203,58 @@ export default function ClientsTable() {
     },
   });
 
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        setLoading(true);
+        const token = await renewKindeToken();
+        const users = await getUsers(token);
+        const transformedUsers: User[] = users.map((user: any) => ({
+          id: user.id,
+          internalId: user.internalId || null,
+          kindeId: user.kindeId,
+          email: user.email || null,
+          firstName: user.firstName || null,
+          lastName: user.lastName || null,
+          name: user.name || null,
+          phone: user.phone || null,
+          address: user.address || null,
+          preferredContactMethod: user.preferredContactMethod || null,
+          pet: user.pet || null,
+          visits: user.visits || 0,
+          nextVisitFree: user.nextVisitFree || false,
+          lastVisit: user.lastVisit ? new Date(user.lastVisit) : null,
+          roles: user.roles || [],
+          createdAt: new Date(user.createdAt),
+          updatedAt: new Date(user.updatedAt),
+        }));
+        setData(transformedUsers);
+        console.log(`Fetched ${transformedUsers.length} users`);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch users. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUsers();
+  }, [toast]);
+
+  const rowCount = table.getRowModel().rows.length;
+  useEffect(() => {
+    console.log(`Table data updated. Current row count: ${rowCount}`);
+  }, [rowCount]);
+
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
           placeholder="Filtrar por nombre..."
-          value={
-            (table.getColumn("firstName")?.getFilterValue() as string) ?? ""
-          }
+          value={(table.getColumn("firstName")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("firstName")?.setFilterValue(event.target.value)
           }
@@ -315,10 +282,7 @@ export default function ClientsTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   <Loader size={32} className="mx-auto" />
                   <p className="mt-2">Cargando resultados...</p>
                 </TableCell>
@@ -331,20 +295,14 @@ export default function ClientsTable() {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   No se encontraron resultados.
                 </TableCell>
               </TableRow>

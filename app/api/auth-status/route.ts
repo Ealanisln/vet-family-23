@@ -1,3 +1,5 @@
+// app/api/auth-status/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { PrismaClient } from "@prisma/client";
@@ -43,35 +45,6 @@ export async function GET(req: NextRequest) {
           userPermissions = permissions.permissions.map((permission: KindePermission) => permission.key);
         } else {
           console.log("No permissions found or permissions is not an array");
-        }
-
-        if (!dbUser) {
-          console.log("Creating new user in database");
-          dbUser = await prisma.user.create({
-            data: {
-              kindeId: user.id,
-              email: user.email || "",
-              firstName: user.given_name || null,
-              lastName: user.family_name || null,
-              name: user.given_name && user.family_name ? `${user.given_name} ${user.family_name}` : null,
-              roles: userPermissions,
-            },
-          });
-          console.log("New user created:", dbUser);
-        } else {
-          // Update user information and roles
-          const updatedUser = await prisma.user.update({
-            where: { id: dbUser.id },
-            data: {
-              email: user.email || undefined,
-              firstName: user.given_name || undefined,
-              lastName: user.family_name || undefined,
-              name: user.given_name && user.family_name ? `${user.given_name} ${user.family_name}` : undefined,
-              roles: userPermissions,
-            },
-          });
-          console.log("User updated:", updatedUser);
-          dbUser = updatedUser;
         }
       }
     } catch (error) {

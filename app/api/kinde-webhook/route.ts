@@ -33,7 +33,6 @@ interface KindeEvent extends JwtPayload {
 }
 
 export async function POST(req: Request) {
-  console.log("Webhook received a POST request");
   
   try {
     const token = await req.text();

@@ -1,50 +1,54 @@
-// app/api/auth-status/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-interface KindePermission {
-  id: string;
-  key: string;
-}
-
-interface KindePermissions {
-  permissions: KindePermission[];
-}
-
 export async function GET(req: NextRequest) {
   try {
-    const { getUser, isAuthenticated, getPermissions } = getKindeServerSession();
+    const { getUser, isAuthenticated, getAccessToken } = getKindeServerSession();
     
     let user = null;
     let authStatus = false;
     let dbUser = null;
-    let userPermissions: string[] = [];
+    let userRoles: any[] = [];
 
     try {
       user = await getUser();
-      console.log("User from Kinde:", user);
       
       authStatus = await isAuthenticated();
-      console.log("Auth status:", authStatus);
 
       if (user && user.id) {
         dbUser = await prisma.user.findUnique({
           where: { kindeId: user.id },
         });
-        console.log("User from database:", dbUser);
 
-        // Get permissions
-        const permissions = await getPermissions() as KindePermissions | null;
-        console.log("Permissions from Kinde:", permissions);
+        if (!dbUser) {
+          console.log("Creating new user in database");
+          dbUser = await prisma.user.create({
+            data: {
+              kindeId: user.id,
+              email: user.email || "",
+              roles: [],
+            },
+          });
+        }
 
-        if (permissions && Array.isArray(permissions.permissions)) {
-          userPermissions = permissions.permissions.map((permission: KindePermission) => permission.key);
+        // Obtener roles del token de acceso
+        const accessToken = await getAccessToken();
+
+        if (accessToken && typeof accessToken === "object" && "roles" in accessToken) {
+          userRoles = Array.isArray(accessToken.roles) ? accessToken.roles : [];
         } else {
-          console.log("No permissions found or permissions is not an array");
+        }
+
+        // Actualizar roles solo si han cambiado
+        if (JSON.stringify(dbUser.roles) !== JSON.stringify(userRoles)) {
+          await prisma.user.update({
+            where: { id: dbUser.id },
+            data: { roles: userRoles },
+          });
+        } else {
         }
       }
     } catch (error) {
@@ -52,10 +56,10 @@ export async function GET(req: NextRequest) {
     }
 
     const response = {
-      user: { ...user, permissions: userPermissions },
+      user: { ...user, roles: userRoles },
       isAuthenticated: authStatus,
       dbUser,
-      permissions: userPermissions,
+      roles: userRoles,
     };
     console.log("API response:", response);
 

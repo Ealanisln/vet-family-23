@@ -1,3 +1,5 @@
+// hooks/auth-status.ts
+
 import { useState, useEffect } from 'react';
 
 interface AuthStatus {

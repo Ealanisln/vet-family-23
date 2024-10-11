@@ -13,7 +13,6 @@ export async function getUsers(token: string) {
     // or use it to verify the user's session
 
     // For now, we'll just log that we received a token
-    console.log("Received token for authentication:", token);
 
     const users = await prisma.user.findMany({
       select: {

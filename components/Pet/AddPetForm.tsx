@@ -1,3 +1,5 @@
+// components/Pet/AddPetForm.tsx
+
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import {
   Card,
@@ -47,7 +49,11 @@ interface AddPetFormProps {
   userId: string;
 }
 
-const AddPetForm: React.FC<AddPetFormProps> = ({ onSubmit, onCancel, userId }) => {
+const AddPetForm: React.FC<AddPetFormProps> = ({
+  onSubmit,
+  onCancel,
+  userId,
+}) => {
   const [pet, setPet] = useState<PetFormData>({
     name: "",
     species: "",
@@ -111,6 +117,8 @@ const AddPetForm: React.FC<AddPetFormProps> = ({ onSubmit, onCancel, userId }) =
                   <SelectItem value="perro">Perro</SelectItem>
                   <SelectItem value="gato">Gato</SelectItem>
                   <SelectItem value="ave">Ave</SelectItem>
+                  <SelectItem value="huron">Hurón</SelectItem>
+                  <SelectItem value="huron">Conejo</SelectItem>
                   <SelectItem value="otro">Otro</SelectItem>
                 </SelectContent>
               </Select>
@@ -167,8 +175,12 @@ const AddPetForm: React.FC<AddPetFormProps> = ({ onSubmit, onCancel, userId }) =
                 name="microchipNumber"
                 value={pet.microchipNumber}
                 onChange={handleInputChange}
+                maxLength={15} // Limita a 15 caracteres
+                inputMode="numeric" // Sugerencia de teclado numérico en móviles
+                pattern="\d*" // Acepta solo números
               />
             </div>
+
             <div className="space-y-2 col-span-2">
               <Label htmlFor="medicalHistory">Historia Médica</Label>
               <Textarea

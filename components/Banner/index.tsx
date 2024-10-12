@@ -17,8 +17,14 @@ interface ButtonProps {
   icon?: React.ReactNode;
 }
 
-const CustomButton: React.FC<ButtonProps> = ({ href, children, onClick, icon }) => {
-  const buttonClass = "text-white text-lg font-medium py-4 px-8 rounded-full transition duration-300 ease-in-out bg-[#8B5CF6] hover:bg-[#7C3AED] shadow-lg hover:shadow-xl transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 flex items-center justify-center";
+const CustomButton: React.FC<ButtonProps> = ({
+  href,
+  children,
+  onClick,
+  icon,
+}) => {
+  const buttonClass =
+    "text-white text-lg font-medium py-4 px-8 rounded-full transition duration-300 ease-in-out bg-[#8B5CF6] hover:bg-[#7C3AED] shadow-lg hover:shadow-xl transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 flex items-center justify-center";
 
   const content = (
     <>
@@ -93,7 +99,7 @@ const Banner = () => {
               y amorosa para garantizar la salud y felicidad de tus peludos.
             </h3>
             <div className="flex flex-col sm:flex-row gap-4 pt-8 mx-auto lg:mx-0">
-              <CustomButton href="#servicios">Conoce nuestros servicios</CustomButton>
+              <CustomButton href="/promociones">Promociones</CustomButton>
               <AppointmentDialog />
             </div>
           </div>

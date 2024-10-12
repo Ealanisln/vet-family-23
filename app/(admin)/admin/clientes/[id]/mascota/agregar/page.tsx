@@ -99,6 +99,8 @@ export default function AddPetView() {
                     <SelectItem value="perro">Perro</SelectItem>
                     <SelectItem value="gato">Gato</SelectItem>
                     <SelectItem value="ave">Ave</SelectItem>
+                    <SelectItem value="huron">Hurón</SelectItem>
+                    <SelectItem value="huron">Conejo</SelectItem>
                     <SelectItem value="otro">Otro</SelectItem>
                   </SelectContent>
                 </Select>
@@ -155,6 +157,9 @@ export default function AddPetView() {
                   name="microchipNumber"
                   value={pet.microchipNumber}
                   onChange={handleInputChange}
+                  maxLength={15} // Limita a 15 caracteres
+                  inputMode="numeric" // Sugerencia de teclado numérico en móviles
+                  pattern="\d*" // Acepta solo números
                 />
               </div>
             </div>

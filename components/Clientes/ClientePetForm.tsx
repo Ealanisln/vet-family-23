@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -45,7 +45,11 @@ interface Pet {
   microchipNumber?: string;
 }
 
-const ClientePetForm: React.FC<PetFormProps> = ({ isEditing = false, initialPet = null, onClose }) => {
+const ClientePetForm: React.FC<PetFormProps> = ({
+  isEditing = false,
+  initialPet = null,
+  onClose,
+}) => {
   const params = useParams();
   const router = useRouter();
   const [pet, setPet] = useState<Pet>({
@@ -64,9 +68,7 @@ const ClientePetForm: React.FC<PetFormProps> = ({ isEditing = false, initialPet 
     }
   }, [isEditing, initialPet]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPet((prevState) => ({ ...prevState, [name]: value }));
   };
@@ -127,6 +129,8 @@ const ClientePetForm: React.FC<PetFormProps> = ({ isEditing = false, initialPet 
                 <SelectItem value="perro">Perro</SelectItem>
                 <SelectItem value="gato">Gato</SelectItem>
                 <SelectItem value="ave">Ave</SelectItem>
+                <SelectItem value="huron">Hurón</SelectItem>
+                <SelectItem value="huron">Conejo</SelectItem>
                 <SelectItem value="otro">Otro</SelectItem>
               </SelectContent>
             </Select>
@@ -184,6 +188,9 @@ const ClientePetForm: React.FC<PetFormProps> = ({ isEditing = false, initialPet 
               name="microchipNumber"
               value={pet.microchipNumber}
               onChange={handleInputChange}
+              maxLength={15} // Limita a 15 caracteres
+              inputMode="numeric" // Sugerencia de teclado numérico en móviles
+              pattern="\d*" // Acepta solo números
             />
           </div>
         </div>
@@ -221,7 +228,8 @@ const ClientePetForm: React.FC<PetFormProps> = ({ isEditing = false, initialPet 
           <DialogHeader>
             <DialogTitle>Editar Mascota</DialogTitle>
             <DialogDescription>
-              Realiza cambios en la información de la mascota aquí. Haz clic en guardar cuando hayas terminado.
+              Realiza cambios en la información de la mascota aquí. Haz clic en
+              guardar cuando hayas terminado.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>{formContent}</form>

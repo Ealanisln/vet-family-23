@@ -1,38 +1,137 @@
-## Vet for Family  23
+# Vet Family
 
-This website was created for a veterinary clinic. 
-This a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+**Vet Family** is a comprehensive management system for veterinary clinics. Built with **Next.js** using the App Router, **MongoDB**, **Prisma ORM**, and **TypeScript**, it helps clinics manage user profiles, pets, medical history, appointments, billing, and reminders efficiently.
+
+## Features
+
+- **User Management**: Track user details, including contact information, visit history, and reminders.
+- **Pet Management**: Store detailed records of pets, including species, breed, vaccinations, medical history, and more.
+- **Appointments**: Schedule and manage vet appointments, ensuring all visits are logged.
+- **Billing System**: Keep track of payments, services, and payment statuses.
+- **Reminders**: Set up and manage reminders for vaccinations, appointments, and follow-ups.
+- **Multi-role Support**: Support for multiple user roles, such as clients and staff.
+
+## Tech Stack
+
+- **Next.js (App Router)** - React framework for building web applications.
+- **MongoDB** - NoSQL database for storing app data.
+- **Prisma ORM** - Provides an abstraction layer for the database.
+- **TypeScript** - Typed JavaScript for better code maintainability and readability.
+
+## Database Schema
+
+The database is designed with **MongoDB** using **Prisma ORM** to handle complex relationships between users, pets, and their records.
+
+### Models
+
+#### `User`
+
+- `internalId`: Optional internal ID.
+- `kindeId`: Unique identifier from Kinde authentication.
+- `email`, `firstName`, `lastName`, `phone`, `address`: Personal details of the user.
+- `pet`: Stores the pet's information.
+- `visits`: Number of visits, with a flag for a free visit.
+- `visitHistory`: Linked visit history for the user.
+- `pets`: List of pets owned by the user.
+- `appointments`: List of scheduled appointments.
+- `billings`: Billing history for the user.
+- `reminders`: Reminders linked to the user.
+- `roles`: Support for multiple roles.
+
+#### `Pet`
+
+- Stores details such as species, breed, weight, and medical history.
+- Relationships with `User`, `MedicalHistory`, `Vaccinations`, `Appointments`, `Billings`, and `Reminders`.
+
+#### `MedicalHistory`
+
+- Tracks each visit's details, including reasons, diagnosis, treatment, prescriptions, and notes.
+
+#### `Vaccination`
+
+- Records details of vaccinations, including types, administration dates, and next doses.
+
+#### `Appointment`
+
+- Details of appointments, including reason and status.
+
+#### `Billing`
+
+- Manages billing records, including services, costs, and payment statuses.
+
+#### `Reminder`
+
+- Allows setting reminders for key events, like vaccinations and appointments.
+
+#### `Staff`
+
+- Tracks staff details such as name, position, and contact information.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+- **Node.js** v16+
+- **MongoDB** instance
+- Environment variables set up for **MongoDB URL** and other secrets.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository:
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+   ```
+   bash
+   
+   
+   Copy code
+   git clone https://github.com/your-username/vet-family.git
+   ```
 
-## What includes
+2. Install dependencies:
 
-This website can be used for marketing purposes, specialized in pets:
+   ```
+   bash
+   
+   
+   Copy code
+   cd vet-family
+   npm install
+   ```
 
-- Includes a blog, powered by Sanity. 
-- For the contact form, node mailer is used to send emails from the form. 
-- To show the location is using @react-google-maps/api.
+3. Set up environment variables in a `.env` file:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+   ```
+   perl
+   
+   
+   Copy code
+   DATABASE_URL=mongodb+srv://<username>:<password>@cluster0.mongodb.net/mydatabase
+   ```
 
-## Deploy on Vercel
+4. Apply Prisma migrations:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```
+   bash
+   
+   
+   Copy code
+   npx prisma migrate dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+5. Start the development server:
+
+   ```
+   bash
+   
+   
+   Copy code
+   npm run dev
+   ```
+
+## Contributing
+
+Feel free to submit issues and pull requests. Contributions are always welcome!
+
+## License
+
+This project is licensed under the MIT License.

@@ -1,5 +1,4 @@
 // app/api/kinde-webhook/route.ts
-
 import { NextResponse } from "next/server";
 import jwksClient from "jwks-rsa";
 import jwt from "jsonwebtoken";
@@ -33,7 +32,6 @@ interface KindeEvent extends JwtPayload {
 }
 
 export async function POST(req: Request) {
-  
   try {
     const token = await req.text();
     console.log("Received token:", token.substring(0, 20) + "...");
@@ -71,7 +69,7 @@ export async function POST(req: Request) {
         const roles = user.roles?.map((role: KindeRole) => role.key) || ['user'];
         
         const updatedUser = await prisma.user.upsert({
-          where: { kindeId: kindeId },
+          where: { email: email },
           create: {
             kindeId,
             email,
@@ -81,7 +79,7 @@ export async function POST(req: Request) {
             roles,
           },
           update: {
-            email,
+            kindeId,
             firstName,
             lastName,
             name,

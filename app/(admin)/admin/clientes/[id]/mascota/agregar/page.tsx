@@ -12,7 +12,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { ArrowLeftIcon, PlusIcon } from "lucide-react";
 import { addPet } from "@/app/actions/add-edit-pet";
 
@@ -34,7 +34,7 @@ export default function AddPetView() {
     weight: "",
     gender: "",
     microchipNumber: "",
-    medicalHistory: "",
+    isNeutered: false,
   });
 
   const handleInputChange = (
@@ -48,6 +48,10 @@ export default function AddPetView() {
     setPet((prevState) => ({ ...prevState, [name]: value }));
   };
 
+  const handleNeuteredChange = (checked: boolean) => {
+    setPet((prevState) => ({ ...prevState, isNeutered: checked }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const userId = params.id as string;
@@ -59,7 +63,6 @@ export default function AddPetView() {
     if (result.success) {
       router.push(`/admin/clientes/${userId}`);
     } else {
-      // Handle error, maybe show an error message to the user
       console.error(result.error);
     }
   };
@@ -88,9 +91,7 @@ export default function AddPetView() {
                 <Label htmlFor="species">Especie</Label>
                 <Select
                   name="species"
-                  onValueChange={(value) =>
-                    handleSelectChange(value, "species")
-                  }
+                  onValueChange={(value) => handleSelectChange(value, "species")}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar especie" />
@@ -100,7 +101,7 @@ export default function AddPetView() {
                     <SelectItem value="gato">Gato</SelectItem>
                     <SelectItem value="ave">Ave</SelectItem>
                     <SelectItem value="huron">Hurón</SelectItem>
-                    <SelectItem value="huron">Conejo</SelectItem>
+                    <SelectItem value="conejo">Conejo</SelectItem>
                     <SelectItem value="otro">Otro</SelectItem>
                   </SelectContent>
                 </Select>
@@ -157,10 +158,23 @@ export default function AddPetView() {
                   name="microchipNumber"
                   value={pet.microchipNumber}
                   onChange={handleInputChange}
-                  maxLength={15} // Limita a 15 caracteres
-                  inputMode="numeric" // Sugerencia de teclado numérico en móviles
-                  pattern="\d*" // Acepta solo números
+                  maxLength={15}
+                  inputMode="numeric"
+                  pattern="\d*"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="isNeutered">Esterilizado/a</Label>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isNeutered"
+                    checked={pet.isNeutered}
+                    onCheckedChange={handleNeuteredChange}
+                  />
+                  <Label htmlFor="isNeutered">
+                    {pet.isNeutered ? "Sí" : "No"}
+                  </Label>
+                </div>
               </div>
             </div>
           </CardContent>

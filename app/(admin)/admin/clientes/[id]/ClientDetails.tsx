@@ -6,13 +6,30 @@ import { Button } from "@/components/ui/button";
 import { CalendarIcon, PlusIcon, EditIcon, PawPrintIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Pet {
   id: string | number;
   name: string;
   species: string;
 }
+
+const formatPhoneNumber = (phone: string | null): string => {
+  if (!phone) return "N/A";
+  // Eliminar todos los caracteres no numéricos
+  const digits = phone.replace(/\D/g, "");
+  // Tomar los últimos 10 dígitos
+  const last10Digits = digits.slice(-10);
+  // Formatear como (XXX) XXX-XXXX
+  return last10Digits.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
+};
 
 export default function ClientDetails({ user }: { user: any }) {
   const router = useRouter();
@@ -48,7 +65,7 @@ export default function ClientDetails({ user }: { user: any }) {
               </div>
               <div>
                 <p className="font-semibold">Teléfono:</p>
-                <p>{user.phone || "N/A"}</p>
+                <p>{formatPhoneNumber(user.phone)}</p>
               </div>
               <div>
                 <p className="font-semibold">Dirección:</p>
@@ -85,40 +102,46 @@ export default function ClientDetails({ user }: { user: any }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-          <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[50px]"></TableHead>
-          <TableHead>Nombre</TableHead>
-          <TableHead>Especie</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {user.pets.length > 0 ? (
-          user.pets.map((pet: Pet) => (
-            <TableRow key={pet.id}>
-              <TableCell>
-                <PawPrintIcon className="h-4 w-4 text-muted-foreground" />
-              </TableCell>
-              <TableCell>
-              <Link href={`/admin/clientes/${user.id}/mascota/${pet.id}`} className="font-medium text-black hover:underline">
-                  {pet.name}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">{pet.species}</Badge>
-              </TableCell>
-            </TableRow>
-          ))
-        ) : (
-          <TableRow>
-            <TableCell colSpan={3} className="text-center text-muted-foreground">
-              No hay mascotas registradas
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Especie</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {user.pets.length > 0 ? (
+                  user.pets.map((pet: Pet) => (
+                    <TableRow key={pet.id}>
+                      <TableCell>
+                        <PawPrintIcon className="h-4 w-4 text-muted-foreground" />
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/admin/clientes/${user.id}/mascota/${pet.id}`}
+                          className="font-medium text-black hover:underline"
+                        >
+                          {pet.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{pet.species}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
+                      No hay mascotas registradas
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
         <Card>

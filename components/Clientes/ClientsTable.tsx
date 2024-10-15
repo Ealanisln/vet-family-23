@@ -66,6 +66,16 @@ async function renewKindeToken() {
   }
 }
 
+const formatPhoneNumber = (phone: string | null): string => {
+  if (!phone) return "N/A";
+  // Eliminar todos los caracteres no numéricos
+  const digits = phone.replace(/\D/g, '');
+  // Tomar los últimos 10 dígitos
+  const last10Digits = digits.slice(-10);
+  // Formatear como (XXX) XXX-XXXX
+  return last10Digits.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+};
+
 export default function ClientsTable() {
   const [data, setData] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -166,7 +176,10 @@ export default function ClientsTable() {
       {
         accessorKey: "phone",
         header: "Teléfono",
-        cell: ({ row }) => <div>{row.getValue("phone") || "N/A"}</div>,
+        cell: ({ row }) => {
+          const phone = row.getValue("phone") as string | null;
+          return <div>{formatPhoneNumber(phone)}</div>;
+        },
       },
       {
         id: "actions",

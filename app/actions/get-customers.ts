@@ -3,6 +3,7 @@
 "use server";
 
 import { PrismaClient } from "@prisma/client";
+import { createKindeManagementAPIClient } from "@kinde-oss/kinde-auth-nextjs/server";
 
 const prisma = new PrismaClient();
 
@@ -19,9 +20,9 @@ export async function getUsers(token: string) {
         id: true,
         firstName: true,
         lastName: true,
+        internalId: true,
         phone: true,
         email: true,
-        internalId: true,
         kindeId: true,
         name: true,
         address: true,
@@ -75,6 +76,7 @@ export async function updateUser(userData: {
   internalId?: string;
 }) {
   try {
+    // Actualizar en la base de datos local
     const updatedUser = await prisma.user.update({
       where: { id: userData.id },
       data: {
@@ -88,6 +90,36 @@ export async function updateUser(userData: {
         internalId: userData.internalId,
       },
     });
+
+    // Crear el cliente de la API de Kinde
+    const { usersApi } = await createKindeManagementAPIClient();
+
+    // Actualizar en Kinde (solo nombre y apellido)
+    try {
+      await usersApi.updateUser({
+        id: userData.id,
+        updateUserRequest: {
+          givenName: userData.firstName,
+          familyName: userData.lastName,
+        },
+      });
+    } catch (kindeError) {
+      console.error("Error updating user in Kinde:", kindeError);
+      // Aquí podrías decidir si quieres lanzar un error o simplemente loggearlo
+    }
+
+    // Si el email ha cambiado, registra una advertencia
+    if (updatedUser.email !== userData.email) {
+      console.warn(
+        `Email update for user ${userData.id} was not synced to Kinde. Local email: ${userData.email}, Kinde email may be different.`
+      );
+    }
+
+    // Registra una advertencia para el teléfono
+    console.warn(
+      `Phone number for user ${userData.id} was updated locally but not in Kinde.`
+    );
+
     return updatedUser;
   } catch (error) {
     console.error("Error updating user:", error);

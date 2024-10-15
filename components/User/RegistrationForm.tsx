@@ -1,3 +1,4 @@
+// UserRegistrationForm.tsx
 "use client";
 
 import React from "react";
@@ -31,7 +32,7 @@ const formSchema = z
       .optional()
       .or(z.literal("")),
     phone: z.string().min(10, "Invalid phone number").optional(),
-    internalId: z.number().int().positive().optional(),
+    internalId: z.string().optional(),
   })
   .refine((data) => data.email || data.phone, {
     message: "Either email or phone is required",
@@ -87,7 +88,8 @@ export default function UserRegistrationForm() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to register user");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to register user");
       }
 
       const responseData = await response.json();
@@ -100,7 +102,9 @@ export default function UserRegistrationForm() {
       router.push(`/admin/clientes/registro-exitoso?userId=${userId}`);
     } catch (err) {
       setError(
-        "An error occurred while registering the user. Please try again."
+        err instanceof Error
+          ? err.message
+          : "An error occurred while registering the user. Please try again."
       );
       console.error("Registration error:", err);
     }
@@ -173,10 +177,15 @@ export default function UserRegistrationForm() {
                 <FormItem>
                   <FormLabel>ID Interno (opcional)</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field} 
-                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                    <Input
+                      type="text"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value ? e.target.value : undefined
+                        )
+                      }
+                      pattern="\d*" // Optional: ensures only numeric input
                     />
                   </FormControl>
                   <FormMessage />

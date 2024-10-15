@@ -1,12 +1,10 @@
-// components/Pet/PetDetailsView.tsx
-
 "use client";
 
 import React, { useState } from "react";
 import { useParams, usePathname } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -118,7 +116,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
   };
 
   return (
-<div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <Link href={getBackLink()}>
@@ -159,24 +157,22 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
             ))}
           </div>
           <div className="mt-6">
-            <div className="items-top flex space-x-2">
-              <Checkbox
+            <div className="flex items-center space-x-2">
+              <Switch
                 id="isNeutered"
                 checked={isNeutered}
                 onCheckedChange={handleNeuteredChange}
               />
-              <div className="grid gap-1.5 leading-none">
-                <label
-                  htmlFor="isNeutered"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Esterilizado/a
-                </label>
-                <p className="text-sm text-muted-foreground">
-                  Indica si la mascota ha sido esterilizada o castrada.
-                </p>
-              </div>
+              <label
+                htmlFor="isNeutered"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Esterilizado/a
+              </label>
             </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Indica si la mascota ha sido esterilizada o castrada.
+            </p>
           </div>
         </CardContent>
       </Card>

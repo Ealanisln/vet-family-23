@@ -1,5 +1,3 @@
-// app/api/user/register/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { createHash } from "crypto";
@@ -12,10 +10,13 @@ interface KindeUserData {
   identities: Array<{
     type: string;
     details: {
-      email: string;
+      email?: string;
       phone?: string;
     };
   }>;
+  roles?: string[];
+  send_invite?: boolean;
+  internalId?: string;
 }
 
 interface KindePayload {
@@ -26,7 +27,7 @@ interface KindePayload {
   identities: Array<{
     type: string;
     details: {
-      email: string;
+      email?: string;
       phone?: string;
     };
   }>;
@@ -124,6 +125,20 @@ async function createOrUpdateUser(user: any) {
   }
 }
 
+function formatPhoneNumber(phone: string): string {
+  // Eliminar todos los caracteres no numéricos
+  const digits = phone.replace(/\D/g, "");
+
+  // Asumimos que los números son de México (código de país +52)
+  // Si el número no comienza con 52, lo añadimos
+  if (!digits.startsWith("52")) {
+    return `+52${digits}`;
+  }
+
+  // Si ya comienza con 52, solo añadimos el '+'
+  return `+${digits}`;
+}
+
 async function registerWithKinde(userData: KindeUserData, token: string) {
   const kindePayload: KindePayload = {
     profile: {
@@ -132,19 +147,18 @@ async function registerWithKinde(userData: KindeUserData, token: string) {
     },
     identities: [
       {
-        type: "email",
+        type: userData.identities[0].details.email ? "email" : "phone",
         details: {
-          email: userData.identities[0].details.email,
+          ...(userData.identities[0].details.email && {
+            email: userData.identities[0].details.email,
+          }),
+          ...(userData.identities[0].details.phone && {
+            phone: formatPhoneNumber(userData.identities[0].details.phone),
+          }),
         },
       },
     ],
   };
-
-  // If phone is provided, add it to the identity details
-  if (userData.identities[0].details.phone) {
-    kindePayload.identities[0].details.phone =
-      userData.identities[0].details.phone;
-  }
 
   console.log(
     "Sending payload to Kinde:",
@@ -175,28 +189,9 @@ async function registerWithKinde(userData: KindeUserData, token: string) {
   return registerResponse.json();
 }
 
-async function createLocalUser(userData: any) {
-  const localKindeId = `local_${createHash("md5").update(userData.identities[0].details.phone).digest("hex")}`;
-
-  return prisma.user.create({
-    data: {
-      kindeId: localKindeId,
-      email: userData.identities[0].details.email || null,
-      phone: userData.identities[0].details.phone,
-      firstName: userData.profile.given_name,
-      lastName: userData.profile.family_name,
-      name: `${userData.profile.given_name} ${userData.profile.family_name}`,
-      roles: userData.roles || [],
-      visits: 0,
-      nextVisitFree: false,
-      internalId: userData.internalId ? userData.internalId.toString() : null,
-    },
-  });
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const userData = await req.json();
+    const userData: KindeUserData = await req.json();
     console.log("Received user data:", JSON.stringify(userData, null, 2));
 
     const email = userData.identities[0]?.details?.email;
@@ -209,76 +204,65 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let token;
+    try {
+      token = await getKindeToken();
+    } catch (tokenError) {
+      console.error("Error getting Kinde token:", tokenError);
+      return NextResponse.json(
+        { error: "Failed to authenticate with Kinde" },
+        { status: 500 }
+      );
+    }
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Failed to get Kinde access token" },
+        { status: 500 }
+      );
+    }
+
     let registeredUser;
     let dbUser;
 
-    if (email) {
-      let token;
+    try {
+      registeredUser = await registerWithKinde(userData, token);
+      dbUser = await createOrUpdateUser({
+        id: registeredUser.id,
+        email: email,
+        phone: phone ? formatPhoneNumber(phone) : undefined,
+        given_name: userData.profile.given_name,
+        family_name: userData.profile.family_name,
+        roles: userData.roles || [],
+        internalId: userData.internalId,
+      });
+    } catch (error) {
+      console.error("Error registering user with Kinde:", error);
+      return NextResponse.json(
+        { error: "Failed to register user with Kinde" },
+        { status: 500 }
+      );
+    }
+
+    if (userData.send_invite && email) {
       try {
-        token = await getKindeToken();
-      } catch (tokenError) {
-        console.error("Error getting Kinde token:", tokenError);
-        return NextResponse.json(
-          { error: "Failed to authenticate with Kinde" },
-          { status: 500 }
-        );
-      }
-
-      if (!token) {
-        return NextResponse.json(
-          { error: "Failed to get Kinde access token" },
-          { status: 500 }
-        );
-      }
-
-      try {
-        registeredUser = await registerWithKinde(userData, token);
-        dbUser = await createOrUpdateUser({
-          id: registeredUser.id,
-          email: email,
-          phone: phone,
-          given_name: userData.profile.given_name,
-          family_name: userData.profile.family_name,
-          roles: userData.roles || [],
-        });
-      } catch (error) {
-        console.error("Error registering user with Kinde:", error);
-        return NextResponse.json(
-          { error: "Failed to register user with Kinde" },
-          { status: 500 }
-        );
-      }
-
-      if (userData.send_invite) {
-        try {
-          const inviteResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_KINDE_ISSUER_URL}/api/v1/users/${registeredUser.id}/invite`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
-              },
-            }
-          );
-
-          if (!inviteResponse.ok) {
-            console.warn("Failed to send invitation to user");
+        const inviteResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_KINDE_ISSUER_URL}/api/v1/users/${registeredUser.id}/invite`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
           }
-        } catch (inviteError) {
-          console.error("Error sending invitation:", inviteError);
-        }
-      }
-    } else {
-      try {
-        dbUser = await createLocalUser(userData);
-      } catch (error) {
-        console.error("Error creating local user:", error);
-        return NextResponse.json(
-          { error: "Failed to create local user" },
-          { status: 500 }
         );
+
+        if (!inviteResponse.ok) {
+          console.warn("Failed to send invitation to user");
+        }
+      } catch (inviteError) {
+        console.error("Error sending invitation:", inviteError);
       }
     }
 

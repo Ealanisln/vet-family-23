@@ -41,7 +41,7 @@ function generateUserHash(user: any) {
 
 async function getKindeToken() {
   const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.KINDE_SITE_URL ||
     `http://localhost:${process.env.PORT || 3000}`;
   const tokenUrl = new URL("/api/kinde-token", baseUrl).toString();
 

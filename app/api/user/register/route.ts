@@ -1,5 +1,3 @@
-// app/api/user/register/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { createHash } from "crypto";
@@ -84,20 +82,19 @@ async function getKindeToken() {
   }
 }
 
-async function createOrUpdateUser(user: any) {
-  console.log("Starting createOrUpdateUser with user data:", JSON.stringify(user, null, 2));
+async function createOrUpdateUser(kindeUser: any, originalUserData: KindeUserData) {
+  console.log("Starting createOrUpdateUser with Kinde user data:", JSON.stringify(kindeUser, null, 2));
+  console.log("Original user data:", JSON.stringify(originalUserData, null, 2));
 
   const userData = {
-    kindeId: user.id as string,
-    email: user.email as string | null,
-    phone: user.phone as string | null,
-    firstName: user.given_name as string | null,
-    lastName: user.family_name as string | null,
-    name: user.given_name && user.family_name 
-      ? `${user.given_name} ${user.family_name}` as string 
-      : null,
-    roles: user.roles as string[] | [],
-    internalId: user.internalId as string | null,
+    kindeId: kindeUser.id,
+    email: originalUserData.identities[0]?.details?.email,
+    phone: originalUserData.identities[0]?.details?.phone,
+    firstName: originalUserData.profile.given_name,
+    lastName: originalUserData.profile.family_name,
+    name: `${originalUserData.profile.given_name} ${originalUserData.profile.family_name}`,
+    roles: originalUserData.roles || [],
+    internalId: originalUserData.internalId,
   };
 
   console.log("Prepared user data for database:", JSON.stringify(userData, null, 2));
@@ -124,50 +121,21 @@ async function createOrUpdateUser(user: any) {
 
       console.log("User operation completed. Returned user data:", JSON.stringify(dbUser, null, 2));
 
-      // Immediate verification within the same transaction
-      const verifiedUser = await prisma.user.findUnique({
-        where: { kindeId: userData.kindeId },
-      });
-
-      console.log("Verified user data from database:", JSON.stringify(verifiedUser, null, 2));
-
-      if (JSON.stringify(dbUser) !== JSON.stringify(verifiedUser)) {
-        console.warn("Warning: Discrepancy between upserted user and database record");
-        console.log("Differences:", JSON.stringify(diffObjects(dbUser, verifiedUser), null, 2));
-      }
-
-      return { dbUser, verifiedUser };
+      return dbUser;
     });
 
-    return result.dbUser;
+    return result;
   } catch (dbError) {
     console.error("Error in createOrUpdateUser:", dbError);
     throw dbError;
   }
 }
 
-// Helper function to find differences between objects
-function diffObjects(obj1: any, obj2: any) {
-  const diff: any = {};
-  Object.keys(obj1).forEach((key) => {
-    if (JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])) {
-      diff[key] = { obj1: obj1[key], obj2: obj2[key] };
-    }
-  });
-  return diff;
-}
-
 function formatPhoneNumber(phone: string): string {
-  // Eliminar todos los caracteres no numéricos
   const digits = phone.replace(/\D/g, "");
-
-  // Asumimos que los números son de México (código de país +52)
-  // Si el número no comienza con 52, lo añadimos
   if (!digits.startsWith("52")) {
     return `+52${digits}`;
   }
-
-  // Si ya comienza con 52, solo añadimos el '+'
   return `+${digits}`;
 }
 
@@ -268,15 +236,7 @@ export async function POST(req: NextRequest) {
         JSON.stringify(registeredUser, null, 2)
       );
 
-      dbUser = await createOrUpdateUser({
-        id: registeredUser.id,
-        email: email,
-        phone: phone ? formatPhoneNumber(phone) : undefined,
-        given_name: userData.profile.given_name,
-        family_name: userData.profile.family_name,
-        roles: userData.roles || [],
-        internalId: userData.internalId,
-      });
+      dbUser = await createOrUpdateUser(registeredUser, userData);
       console.log(
         "User saved/updated in database:",
         JSON.stringify(dbUser, null, 2)

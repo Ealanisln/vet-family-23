@@ -1,3 +1,5 @@
+// components/Promociones/index.tsx
+
 import React from "react";
 import { promocionesData, Promocion, DatosPromociones } from "./data";
 import Image from "next/image";

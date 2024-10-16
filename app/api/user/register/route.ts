@@ -1,3 +1,5 @@
+// app/api/user/register/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { createHash } from "crypto";
@@ -85,7 +87,10 @@ async function getKindeToken() {
 async function createOrUpdateUser(user: any) {
   const userHash = generateUserHash(user);
 
-  console.log("Starting createOrUpdateUser with user data:", JSON.stringify(user, null, 2));
+  console.log(
+    "Starting createOrUpdateUser with user data:",
+    JSON.stringify(user, null, 2)
+  );
 
   try {
     const dbUser = await prisma.user.upsert({
@@ -119,18 +124,29 @@ async function createOrUpdateUser(user: any) {
       },
     });
 
-    console.log("User operation completed. Returned user data:", JSON.stringify(dbUser, null, 2));
+    console.log(
+      "User operation completed. Returned user data:",
+      JSON.stringify(dbUser, null, 2)
+    );
 
     // Additional verification step
     const verifiedUser = await prisma.user.findUnique({
       where: { kindeId: user.id },
     });
 
-    console.log("Verified user data from database:", JSON.stringify(verifiedUser, null, 2));
+    console.log(
+      "Verified user data from database:",
+      JSON.stringify(verifiedUser, null, 2)
+    );
 
     if (JSON.stringify(dbUser) !== JSON.stringify(verifiedUser)) {
-      console.warn("Warning: Discrepancy between upserted user and database record");
-      console.log("Differences:", JSON.stringify(diffObjects(dbUser, verifiedUser), null, 2));
+      console.warn(
+        "Warning: Discrepancy between upserted user and database record"
+      );
+      console.log(
+        "Differences:",
+        JSON.stringify(diffObjects(dbUser, verifiedUser), null, 2)
+      );
     }
 
     return dbUser;
@@ -143,7 +159,7 @@ async function createOrUpdateUser(user: any) {
 // Helper function to find differences between objects
 function diffObjects(obj1: any, obj2: any) {
   const diff: any = {};
-  Object.keys(obj1).forEach(key => {
+  Object.keys(obj1).forEach((key) => {
     if (JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])) {
       diff[key] = { obj1: obj1[key], obj2: obj2[key] };
     }
@@ -216,6 +232,7 @@ async function registerWithKinde(userData: KindeUserData, token: string) {
 }
 
 export async function POST(req: NextRequest) {
+  console.log("Starting user registration process");
   try {
     const userData: KindeUserData = await req.json();
     console.log("Received user data:", JSON.stringify(userData, null, 2));
@@ -224,6 +241,7 @@ export async function POST(req: NextRequest) {
     const phone = userData.identities[0]?.details?.phone;
 
     if (!email && !phone) {
+      console.error("Missing email and phone");
       return NextResponse.json(
         { error: "Either email or phone must be provided" },
         { status: 400 }
@@ -233,6 +251,7 @@ export async function POST(req: NextRequest) {
     let token;
     try {
       token = await getKindeToken();
+      console.log("Successfully obtained Kinde token");
     } catch (tokenError) {
       console.error("Error getting Kinde token:", tokenError);
       return NextResponse.json(
@@ -242,6 +261,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!token) {
+      console.error("No token received from getKindeToken");
       return NextResponse.json(
         { error: "Failed to get Kinde access token" },
         { status: 500 }
@@ -253,6 +273,11 @@ export async function POST(req: NextRequest) {
 
     try {
       registeredUser = await registerWithKinde(userData, token);
+      console.log(
+        "User registered with Kinde:",
+        JSON.stringify(registeredUser, null, 2)
+      );
+
       dbUser = await createOrUpdateUser({
         id: registeredUser.id,
         email: email,
@@ -262,44 +287,58 @@ export async function POST(req: NextRequest) {
         roles: userData.roles || [],
         internalId: userData.internalId,
       });
+      console.log(
+        "User saved/updated in database:",
+        JSON.stringify(dbUser, null, 2)
+      );
     } catch (error) {
-      console.error("Error registering user with Kinde:", error);
+      console.error("Error during user registration or database save:", error);
       return NextResponse.json(
-        { error: "Failed to register user with Kinde" },
+        { error: "Failed to register user" },
         { status: 500 }
       );
     }
 
     if (userData.send_invite && email) {
       try {
-        const inviteResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_KINDE_ISSUER_URL}/api/v1/users/${registeredUser.id}/invite`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!inviteResponse.ok) {
-          console.warn("Failed to send invitation to user");
-        }
+        const inviteResponse = await sendKindeInvite(registeredUser.id, token);
+        console.log("Kinde invite response:", inviteResponse);
       } catch (inviteError) {
         console.error("Error sending invitation:", inviteError);
+        // Consider if you want to return an error response here or just log it
       }
     }
 
+    console.log("User registration process completed successfully");
     return NextResponse.json({ kindeUser: registeredUser, dbUser: dbUser });
   } catch (error) {
-    console.error("Error registering user:", error);
+    console.error("Unexpected error during user registration:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
     );
   } finally {
     await prisma.$disconnect();
+    console.log("Prisma client disconnected");
   }
+}
+
+async function sendKindeInvite(userId: string, token: string) {
+  const inviteResponse = await fetch(
+    `${process.env.NEXT_PUBLIC_KINDE_ISSUER_URL}/api/v1/users/${userId}/invite`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    }
+  );
+
+  if (!inviteResponse.ok) {
+    throw new Error(`Failed to send invitation: ${inviteResponse.statusText}`);
+  }
+
+  return inviteResponse.json();
 }

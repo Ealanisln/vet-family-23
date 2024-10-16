@@ -1,7 +1,7 @@
 // app/api/kinde-token/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import nodeFetch from "node-fetch"; // Add this import
+import nodeFetch from "node-fetch"; 
 
 const fetch = global.fetch || nodeFetch;
 

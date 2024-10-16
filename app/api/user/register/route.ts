@@ -98,7 +98,7 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             phone: user.phone,
             firstName: user.given_name,
             lastName: user.family_name,
-            name: `${user.given_name} ${user.family_name}`,
+            name: `${user.given_name} ${user.family_name}`.trim(),
             roles: user.roles || ["user"],
             internalId: user.internalId,
           },
@@ -108,7 +108,7 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             phone: user.phone,
             firstName: user.given_name,
             lastName: user.family_name,
-            name: `${user.given_name} ${user.family_name}`,
+            name: `${user.given_name} ${user.family_name}`.trim(),
             roles: user.roles || ["user"],
             visits: 0,
             nextVisitFree: false,
@@ -132,8 +132,8 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
 
         if (
           !verifiedUser ||
-          verifiedUser.firstName === null ||
-          verifiedUser.lastName === null
+          verifiedUser.firstName !== user.given_name ||
+          verifiedUser.lastName !== user.family_name
         ) {
           throw new Error("User data not saved correctly");
         }
@@ -152,8 +152,8 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
 
       if (
         !finalVerifiedUser ||
-        finalVerifiedUser.firstName === null ||
-        finalVerifiedUser.lastName === null
+        finalVerifiedUser.firstName !== user.given_name ||
+        finalVerifiedUser.lastName !== user.family_name
       ) {
         throw new Error("User data not consistent after final verification");
       }

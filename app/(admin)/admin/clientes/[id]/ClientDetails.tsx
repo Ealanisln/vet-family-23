@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, PlusIcon, EditIcon, PawPrintIcon } from "lucide-react";
+import { CalendarIcon, PlusIcon, EditIcon, PawPrintIcon, SyringeIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -19,6 +19,7 @@ interface Pet {
   id: string | number;
   name: string;
   species: string;
+  isDeceased: boolean; // Nueva propiedad añadida
 }
 
 const formatPhoneNumber = (phone: string | null): string => {
@@ -123,6 +124,7 @@ export default function ClientDetails({ user }: { user: any }) {
                           className="font-medium text-black hover:underline"
                         >
                           {pet.name}
+                          {pet.isDeceased ? " (Finado)" : ""}
                         </Link>
                       </TableCell>
                       <TableCell>
@@ -144,30 +146,7 @@ export default function ClientDetails({ user }: { user: any }) {
             </Table>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              Próximas Citas
-              <Button size="sm">
-                <CalendarIcon className="mr-2 h-4 w-4" /> Agendar Cita
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {user.appointments.length > 0 ? (
-              <ul className="list-disc pl-5">
-                {user.appointments.map((appointment: any) => (
-                  <li key={appointment.id}>
-                    {new Date(appointment.dateTime).toLocaleString()} -{" "}
-                    {appointment.reason}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-muted-foreground">No hay citas próximas</p>
-            )}
-          </CardContent>
-        </Card>
+        
       </div>
     </div>
   );

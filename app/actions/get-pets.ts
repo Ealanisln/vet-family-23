@@ -11,6 +11,7 @@ export interface Pet {
   breed: string;
   userId: string;
   ownerName: string;
+  isDeceased: boolean;  
 }
 
 type GetPetsResult = 
@@ -26,6 +27,7 @@ export async function getPets(): Promise<GetPetsResult> {
         species: true,
         breed: true,
         userId: true,
+        isDeceased: true,  // Añadimos isDeceased a la consulta
         user: {
           select: {
             firstName: true,
@@ -44,7 +46,8 @@ export async function getPets(): Promise<GetPetsResult> {
       species: pet.species,
       breed: pet.breed,
       userId: pet.userId,
-      ownerName: `${pet.user.firstName || ''} ${pet.user.lastName || ''}`.trim() || 'N/A'
+      ownerName: `${pet.user.firstName || ''} ${pet.user.lastName || ''}`.trim() || 'N/A',
+      isDeceased: pet.isDeceased  // Incluimos isDeceased en el objeto formateado
     }))
 
     return { success: true, pets: formattedPets }

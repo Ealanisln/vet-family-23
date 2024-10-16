@@ -73,7 +73,9 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
       if (!petId && !existingRecord) {
         const result = await getPetsForMedicalRecord();
         if (result.success) {
-          setPets(result.pets);
+          // Filter out deceased pets
+          const alivePets = result.pets.filter((pet) => !pet.isDeceased);
+          setPets(alivePets);
           setError(null);
         } else {
           console.error("Error fetching pets:", result.error);

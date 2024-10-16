@@ -41,7 +41,7 @@ function generateUserHash(user: any) {
 
 async function getKindeToken() {
   const baseUrl =
-    process.env.KINDE_SITE_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
     `http://localhost:${process.env.PORT || 3000}`;
   const tokenUrl = new URL("/api/kinde-token", baseUrl).toString();
 
@@ -82,52 +82,157 @@ async function getKindeToken() {
   }
 }
 
-async function createOrUpdateUser(kindeUser: any, originalUserData: KindeUserData) {
-  console.log("Starting createOrUpdateUser with Kinde user data:", JSON.stringify(kindeUser, null, 2));
-  console.log("Original user data:", JSON.stringify(originalUserData, null, 2));
+async function createOrUpdateUser(user: any, maxRetries = 5) {
+  console.log(
+    "Starting createOrUpdateUser with user data:",
+    JSON.stringify(user, null, 2)
+  );
 
-  const userData = {
-    kindeId: kindeUser.id,
-    email: originalUserData.identities[0]?.details?.email,
-    phone: originalUserData.identities[0]?.details?.phone,
-    firstName: originalUserData.profile.given_name,
-    lastName: originalUserData.profile.family_name,
-    name: `${originalUserData.profile.given_name} ${originalUserData.profile.family_name}`,
-    roles: originalUserData.roles || [],
-    internalId: originalUserData.internalId,
-  };
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await prisma.$transaction(async (prisma) => {
+        const dbUser = await prisma.user.upsert({
+          where: { kindeId: user.id },
+          update: {
+            email: user.email,
+            phone: user.phone,
+            firstName: user.given_name,
+            lastName: user.family_name,
+            name: `${user.given_name} ${user.family_name}`,
+            roles: user.roles || ["user"],
+            internalId: user.internalId,
+          },
+          create: {
+            kindeId: user.id,
+            email: user.email,
+            phone: user.phone,
+            firstName: user.given_name,
+            lastName: user.family_name,
+            name: `${user.given_name} ${user.family_name}`,
+            roles: user.roles || ["user"],
+            visits: 0,
+            nextVisitFree: false,
+            internalId: user.internalId,
+          },
+        });
 
-  console.log("Prepared user data for database:", JSON.stringify(userData, null, 2));
+        console.log(
+          `Attempt ${attempt}: User operation completed. Returned user data:`,
+          JSON.stringify(dbUser, null, 2)
+        );
 
-  try {
-    const result = await prisma.$transaction(async (prisma) => {
-      const dbUser = await prisma.user.upsert({
-        where: { kindeId: userData.kindeId },
-        update: {
-          email: userData.email,
-          phone: userData.phone,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          name: userData.name,
-          roles: userData.roles,
-          internalId: userData.internalId,
-        },
-        create: {
-          ...userData,
-          visits: 0,
-          nextVisitFree: false,
-        },
+        // Immediate verification
+        const verifiedUser = await prisma.user.findUnique({
+          where: { kindeId: user.id },
+        });
+        console.log(
+          `Attempt ${attempt}: Verified user data from database:`,
+          JSON.stringify(verifiedUser, null, 2)
+        );
+
+        if (
+          !verifiedUser ||
+          verifiedUser.firstName === null ||
+          verifiedUser.lastName === null
+        ) {
+          throw new Error("User data not saved correctly");
+        }
+
+        return verifiedUser;
       });
 
-      console.log("User operation completed. Returned user data:", JSON.stringify(dbUser, null, 2));
+      // Final verification (without delay)
+      const finalVerifiedUser = await prisma.user.findUnique({
+        where: { kindeId: user.id },
+      });
+      console.log(
+        `Attempt ${attempt}: Final verified user data:`,
+        JSON.stringify(finalVerifiedUser, null, 2)
+      );
 
-      return dbUser;
-    });
+      if (
+        !finalVerifiedUser ||
+        finalVerifiedUser.firstName === null ||
+        finalVerifiedUser.lastName === null
+      ) {
+        throw new Error("User data not consistent after final verification");
+      }
 
-    return result;
-  } catch (dbError) {
-    console.error("Error in createOrUpdateUser:", dbError);
-    throw dbError;
+      return finalVerifiedUser;
+    } catch (dbError) {
+      console.error(
+        `Attempt ${attempt}: Error in createOrUpdateUser:`,
+        dbError
+      );
+      if (attempt === maxRetries) {
+        throw dbError;
+      }
+      // No delay between retries
+    }
+  }
+  throw new Error("Failed to create or update user after max retries");
+}
+
+export async function POST(req: NextRequest) {
+  console.log("Starting user registration process");
+
+  try {
+    const userData: KindeUserData = await req.json();
+    console.log("Received user data:", JSON.stringify(userData, null, 2));
+
+    const email = userData.identities[0]?.details?.email;
+    const phone = userData.identities[0]?.details?.phone;
+
+    if (!email && !phone) {
+      return NextResponse.json(
+        { error: "Either email or phone must be provided" },
+        { status: 400 }
+      );
+    }
+
+    let token = await getKindeToken();
+
+    let registeredUser = await registerWithKinde(userData, token);
+    console.log(
+      "User registered with Kinde:",
+      JSON.stringify(registeredUser, null, 2)
+    );
+
+    const userDataForDb = {
+      id: registeredUser.id,
+      email: email,
+      phone: phone ? formatPhoneNumber(phone) : undefined,
+      given_name: userData.profile.given_name,
+      family_name: userData.profile.family_name,
+      roles: userData.roles || ["user"],
+      internalId: userData.internalId,
+    };
+
+    const dbUser = await createOrUpdateUser(userDataForDb);
+    console.log(
+      "User successfully saved/updated in database:",
+      JSON.stringify(dbUser, null, 2)
+    );
+
+    if (userData.send_invite && email) {
+      try {
+        const inviteResponse = await sendKindeInvite(registeredUser.id, token);
+        console.log("Kinde invite response:", inviteResponse);
+      } catch (inviteError) {
+        console.error("Error sending invitation:", inviteError);
+      }
+    }
+
+    console.log("User registration process completed successfully");
+    return NextResponse.json({ kindeUser: registeredUser, dbUser: dbUser });
+  } catch (error) {
+    console.error("Error during user registration:", error);
+    return NextResponse.json(
+      { error: "Failed to register user" },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -187,90 +292,6 @@ async function registerWithKinde(userData: KindeUserData, token: string) {
   }
 
   return registerResponse.json();
-}
-
-export async function POST(req: NextRequest) {
-  console.log("Starting user registration process");
-  try {
-    const userData: KindeUserData = await req.json();
-    console.log("Received user data:", JSON.stringify(userData, null, 2));
-
-    const email = userData.identities[0]?.details?.email;
-    const phone = userData.identities[0]?.details?.phone;
-
-    if (!email && !phone) {
-      console.error("Missing email and phone");
-      return NextResponse.json(
-        { error: "Either email or phone must be provided" },
-        { status: 400 }
-      );
-    }
-
-    let token;
-    try {
-      token = await getKindeToken();
-      console.log("Successfully obtained Kinde token");
-    } catch (tokenError) {
-      console.error("Error getting Kinde token:", tokenError);
-      return NextResponse.json(
-        { error: "Failed to authenticate with Kinde" },
-        { status: 500 }
-      );
-    }
-
-    if (!token) {
-      console.error("No token received from getKindeToken");
-      return NextResponse.json(
-        { error: "Failed to get Kinde access token" },
-        { status: 500 }
-      );
-    }
-
-    let registeredUser;
-    let dbUser;
-
-    try {
-      registeredUser = await registerWithKinde(userData, token);
-      console.log(
-        "User registered with Kinde:",
-        JSON.stringify(registeredUser, null, 2)
-      );
-
-      dbUser = await createOrUpdateUser(registeredUser, userData);
-      console.log(
-        "User saved/updated in database:",
-        JSON.stringify(dbUser, null, 2)
-      );
-    } catch (error) {
-      console.error("Error during user registration or database save:", error);
-      return NextResponse.json(
-        { error: "Failed to register user" },
-        { status: 500 }
-      );
-    }
-
-    if (userData.send_invite && email) {
-      try {
-        const inviteResponse = await sendKindeInvite(registeredUser.id, token);
-        console.log("Kinde invite response:", inviteResponse);
-      } catch (inviteError) {
-        console.error("Error sending invitation:", inviteError);
-        // Consider if you want to return an error response here or just log it
-      }
-    }
-
-    console.log("User registration process completed successfully");
-    return NextResponse.json({ kindeUser: registeredUser, dbUser: dbUser });
-  } catch (error) {
-    console.error("Unexpected error during user registration:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
-  } finally {
-    await prisma.$disconnect();
-    console.log("Prisma client disconnected");
-  }
 }
 
 async function sendKindeInvite(userId: string, token: string) {

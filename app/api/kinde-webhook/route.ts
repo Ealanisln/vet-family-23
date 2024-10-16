@@ -1,4 +1,3 @@
-// app/api/kinde-webhook/route.ts
 import { NextResponse } from "next/server";
 import jwksClient from "jwks-rsa";
 import jwt from "jsonwebtoken";
@@ -62,39 +61,16 @@ export async function POST(req: Request) {
         const user = event.data.user;
         console.log("User data received:", JSON.stringify(user, null, 2));
 
-        const kindeId = user.id;
-        const email = user.email;
-        const firstName = user.given_name ?? null;
-        const lastName = user.family_name ?? null;
-        const name =
-          firstName && lastName
-            ? `${firstName} ${lastName}`
-            : firstName || lastName || null;
-        const roles = user.roles?.map((role: KindeRole) => role.key) || [
-          "user",
-        ];
-        const phoneNumber = user.phone_number ?? null;
+        const userDataForDb = {
+          id: user.id,
+          email: user.email,
+          given_name: user.given_name,
+          family_name: user.family_name,
+          phone: user.phone_number,
+          roles: user.roles?.map((role: KindeRole) => role.key) || ["user"],
+        };
 
-        const updatedUser = await prisma.user.upsert({
-          where: { kindeId: kindeId },
-          create: {
-            kindeId,
-            email,
-            firstName,
-            lastName,
-            name,
-            roles,
-            phone: phoneNumber, // Cambiado de phoneNumber a phone
-          },
-          update: {
-            email,
-            firstName,
-            lastName,
-            name,
-            roles,
-            phone: phoneNumber,
-          },
-        });
+        const updatedUser = await createOrUpdateUser(userDataForDb);
 
         console.log(
           "User upserted in database:",
@@ -119,4 +95,93 @@ export async function POST(req: Request) {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+async function createOrUpdateUser(user: any, maxRetries = 5) {
+  console.log(
+    "Starting createOrUpdateUser with user data:",
+    JSON.stringify(user, null, 2)
+  );
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await prisma.$transaction(async (prisma) => {
+        const dbUser = await prisma.user.upsert({
+          where: { kindeId: user.id },
+          update: {
+            email: user.email,
+            phone: user.phone,
+            firstName: user.given_name,
+            lastName: user.family_name,
+            name: `${user.given_name} ${user.family_name}`.trim(),
+            roles: user.roles || ["user"],
+          },
+          create: {
+            kindeId: user.id,
+            email: user.email,
+            phone: user.phone,
+            firstName: user.given_name,
+            lastName: user.family_name,
+            name: `${user.given_name} ${user.family_name}`.trim(),
+            roles: user.roles || ["user"],
+            visits: 0,
+            nextVisitFree: false,
+          },
+        });
+
+        console.log(
+          `Attempt ${attempt}: User operation completed. Returned user data:`,
+          JSON.stringify(dbUser, null, 2)
+        );
+
+        // Immediate verification
+        const verifiedUser = await prisma.user.findUnique({
+          where: { kindeId: user.id },
+        });
+        console.log(
+          `Attempt ${attempt}: Verified user data from database:`,
+          JSON.stringify(verifiedUser, null, 2)
+        );
+
+        if (
+          !verifiedUser ||
+          verifiedUser.firstName !== user.given_name ||
+          verifiedUser.lastName !== user.family_name
+        ) {
+          throw new Error("User data not saved correctly");
+        }
+
+        return verifiedUser;
+      });
+
+      // Final verification (without delay)
+      const finalVerifiedUser = await prisma.user.findUnique({
+        where: { kindeId: user.id },
+      });
+      console.log(
+        `Attempt ${attempt}: Final verified user data:`,
+        JSON.stringify(finalVerifiedUser, null, 2)
+      );
+
+      if (
+        !finalVerifiedUser ||
+        finalVerifiedUser.firstName !== user.given_name ||
+        finalVerifiedUser.lastName !== user.family_name
+      ) {
+        throw new Error("User data not consistent after final verification");
+      }
+
+      return finalVerifiedUser;
+    } catch (dbError) {
+      console.error(
+        `Attempt ${attempt}: Error in createOrUpdateUser:`,
+        dbError
+      );
+      if (attempt === maxRetries) {
+        throw dbError;
+      }
+      // No delay between retries
+    }
+  }
+  throw new Error("Failed to create or update user after max retries");
 }

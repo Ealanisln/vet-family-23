@@ -1,14 +1,12 @@
 import { Suspense } from "react";
 import "./globals.css";
 import { FacebookPixelEvents } from "@/components/Facebook/FacebookPixel";
-import dynamic from 'next/dynamic';
-import { GoogleTagManager } from "@next/third-parties/google";
+import dynamic from "next/dynamic";
+import GoogleAnalytics from "@/components/GoogleAnalytics/";
 import { Toaster } from "@/components/ui/toaster";
 
-
-
 export const metadata = {
-  title: "Bienvenido a Family Vet 23",
+  title: "Bienvenido a Vet Family",
   description: "Cuidando a tus mascotas, amándolas como tú lo haces.",
   icons: {
     icon: "/icon.svg", // /public path
@@ -25,8 +23,8 @@ export default function RootLayout({
       <body>
         {children}
         <Toaster />
-        <GoogleTagManager gtmId="AW-16513203690" />
         <Suspense fallback={null}>
+          <GoogleAnalytics GA_MEASUREMENT_ID="G-PXSVH1SGKW" />
           <FacebookPixelEvents />
         </Suspense>
       </body>

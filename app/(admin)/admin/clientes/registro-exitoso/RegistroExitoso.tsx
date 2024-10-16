@@ -53,21 +53,25 @@ const RegistroExitoso: React.FC = () => {
   };
 
   if (!userId) {
-    return <div>Cargando...</div>;
+    return <div className="w-full px-4 sm:px-6 lg:px-8">Cargando...</div>;
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Registro Exitoso</h1>
-      <p className="mb-4">
-        ¡El usuario ha sido registrado con éxito! Ahora puedes agregar una
-        mascota.
-      </p>
-      <AddPetForm
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-        userId={userId}
-      />
+    <div className="w-full px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl py-6 sm:py-10">
+        <h1 className="text-2xl font-bold mb-5 text-center sm:text-left">
+          Clientes de la Registro exitoso
+        </h1>{" "}
+        <p className="mb-4">
+          ¡El usuario ha sido registrado con éxito! Ahora puedes agregar una
+          mascota.
+        </p>
+        <AddPetForm
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          userId={userId}
+        />
+      </div>{" "}
     </div>
   );
 };

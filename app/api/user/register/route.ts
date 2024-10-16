@@ -85,6 +85,8 @@ async function getKindeToken() {
 async function createOrUpdateUser(user: any) {
   const userHash = generateUserHash(user);
 
+  console.log("Starting createOrUpdateUser with user data:", JSON.stringify(user, null, 2));
+
   try {
     const dbUser = await prisma.user.upsert({
       where: { kindeId: user.id },
@@ -117,12 +119,36 @@ async function createOrUpdateUser(user: any) {
       },
     });
 
-    console.log("User operation completed:", dbUser);
+    console.log("User operation completed. Returned user data:", JSON.stringify(dbUser, null, 2));
+
+    // Additional verification step
+    const verifiedUser = await prisma.user.findUnique({
+      where: { kindeId: user.id },
+    });
+
+    console.log("Verified user data from database:", JSON.stringify(verifiedUser, null, 2));
+
+    if (JSON.stringify(dbUser) !== JSON.stringify(verifiedUser)) {
+      console.warn("Warning: Discrepancy between upserted user and database record");
+      console.log("Differences:", JSON.stringify(diffObjects(dbUser, verifiedUser), null, 2));
+    }
+
     return dbUser;
   } catch (dbError) {
     console.error("Error in createOrUpdateUser:", dbError);
     throw dbError;
   }
+}
+
+// Helper function to find differences between objects
+function diffObjects(obj1: any, obj2: any) {
+  const diff: any = {};
+  Object.keys(obj1).forEach(key => {
+    if (JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])) {
+      diff[key] = { obj1: obj1[key], obj2: obj2[key] };
+    }
+  });
+  return diff;
 }
 
 function formatPhoneNumber(phone: string): string {

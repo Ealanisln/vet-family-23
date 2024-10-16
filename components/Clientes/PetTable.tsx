@@ -37,6 +37,7 @@ import {
 
 import { getPets } from "@/app/actions/get-pets";
 import Loader from "@/components/ui/loader";
+import { Checkbox } from "../ui/checkbox";
 
 export type Pet = {
   id: string;
@@ -45,6 +46,7 @@ export type Pet = {
   breed: string;
   userId: string;
   ownerName: string;
+  isDeceased: boolean;  // Añadimos esta propiedad
 };
 
 export const columns: ColumnDef<Pet>[] = [
@@ -115,6 +117,8 @@ export default function PetsTable() {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [loading, setLoading] = React.useState(true);
+  const [showDeceased, setShowDeceased] = React.useState(false);
+
 
   React.useEffect(() => {
     async function fetchPets() {
@@ -135,8 +139,12 @@ export default function PetsTable() {
     fetchPets();
   }, []);
 
+  const filteredData = React.useMemo(() => {
+    return showDeceased ? data : data.filter(pet => !pet.isDeceased);
+  }, [data, showDeceased]);
+
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -165,6 +173,14 @@ export default function PetsTable() {
           }
           className="max-w-sm"
         />
+        <div className="ml-4 flex items-center space-x-2">
+          <Checkbox
+            id="show-deceased"
+            checked={showDeceased}
+            onCheckedChange={(checked) => setShowDeceased(checked as boolean)}
+          />
+          <label htmlFor="show-deceased">Mostrar mascotas fallecidas</label>
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>

@@ -17,7 +17,10 @@ import { EditIcon, ArrowLeftIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import PetForm from "@/components/Admin/ui/PetForm";
 import { MedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
-import { updatePetNeuteredStatus } from "@/app/actions/add-edit-pet";
+import {
+  updatePetNeuteredStatus,
+  updatePetDeceasedStatus,
+} from "@/app/actions/add-edit-pet";
 
 interface MedicalHistory {
   id: string;
@@ -48,6 +51,7 @@ interface Pet {
   weight: number;
   microchipNumber: string | null;
   isNeutered: boolean;
+  isDeceased: boolean;
   medicalHistory: MedicalHistory[];
   vaccinations: Vaccination[];
 }
@@ -57,22 +61,26 @@ const calculateAge = (dateOfBirth: Date): string => {
   const birthDate = new Date(dateOfBirth);
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDifference = today.getMonth() - birthDate.getMonth();
-  
-  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
     age--;
   }
 
   if (age < 1) {
     const months = monthDifference < 0 ? monthDifference + 12 : monthDifference;
-    return `${months} ${months === 1 ? 'mes' : 'meses'}`;
+    return `${months} ${months === 1 ? "mes" : "meses"}`;
   }
 
-  return `${age} ${age === 1 ? 'año' : 'años'}`;
+  return `${age} ${age === 1 ? "año" : "años"}`;
 };
 
 export default function PetDetailsView({ pet }: { pet: Pet }) {
   const [open, setOpen] = useState(false);
   const [isNeutered, setIsNeutered] = useState(pet.isNeutered);
+  const [isDeceased, setIsDeceased] = useState(pet.isDeceased);
   const params = useParams();
   const pathname = usePathname();
 
@@ -86,8 +94,25 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
     if (result.success) {
       console.log("Estado de esterilización actualizado correctamente");
     } else {
-      console.error("Error al actualizar el estado de esterilización:", result.error);
+      console.error(
+        "Error al actualizar el estado de esterilización:",
+        result.error
+      );
       setIsNeutered(!checked);
+    }
+  };
+
+  const handleDeceasedChange = async (checked: boolean) => {
+    setIsDeceased(checked);
+    const result = await updatePetDeceasedStatus(pet.id, checked);
+    if (result.success) {
+      console.log("Estado de fallecimiento actualizado correctamente");
+    } else {
+      console.error(
+        "Error al actualizar el estado de fallecimiento:",
+        result.error
+      );
+      setIsDeceased(!checked);
     }
   };
 
@@ -108,12 +133,25 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
   };
 
   const getBackLink = () => {
-    if (pathname.includes('/admin/clientes/')) {
+    if (pathname.includes("/admin/clientes/")) {
       return `/admin/clientes/${params.id}`;
     } else {
-      return '/admin/mascotas';
+      return "/admin/mascotas";
     }
   };
+
+  const infoItems = [
+    { label: "Especie", value: pet.species },
+    { label: "Raza", value: pet.breed },
+    {
+      label: "Fecha de Nacimiento",
+      value: pet.dateOfBirth.toLocaleDateString(),
+    },
+    { label: "Edad", value: calculateAge(pet.dateOfBirth) },
+    { label: "Género", value: pet.gender },
+    { label: "Peso", value: `${pet.weight} kg` },
+    { label: "Número de Microchip", value: pet.microchipNumber || "N/A" },
+  ];
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
@@ -124,7 +162,10 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
               <ArrowLeftIcon className="mr-2 h-4 w-4" /> Volver
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold">Detalles de {pet.name}</h1>
+          <h1 className="text-2xl font-bold">
+            Detalles de {pet.name}
+            {isDeceased ? " (Finado)" : ""}
+          </h1>{" "}
         </div>
         <div className="w-full sm:w-auto mt-4 sm:mt-0">
           <PetForm
@@ -141,38 +182,47 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {[
-              { label: "Especie", value: pet.species },
-              { label: "Raza", value: pet.breed },
-              { label: "Fecha de Nacimiento", value: pet.dateOfBirth.toLocaleDateString() },
-              { label: "Edad", value: calculateAge(pet.dateOfBirth) },
-              { label: "Género", value: pet.gender },
-              { label: "Peso", value: `${pet.weight} kg` },
-              { label: "Número de Microchip", value: pet.microchipNumber || "N/A" },
-            ].map(({ label, value }, index) => (
+            {infoItems.map(({ label, value }, index) => (
               <div key={index} className="space-y-1">
-                <p className="font-semibold text-sm text-muted-foreground">{label}</p>
+                <p className="font-semibold text-sm text-muted-foreground">
+                  {label}
+                </p>
                 <p className="text-base">{value}</p>
               </div>
             ))}
           </div>
-          <div className="mt-6">
+          <div className="mt-6 space-y-4">
+            <div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isNeutered"
+                  checked={isNeutered}
+                  onCheckedChange={handleNeuteredChange}
+                />
+                <label
+                  htmlFor="isNeutered"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Esterilizado/a
+                </label>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Indica si la mascota ha sido esterilizada o castrada.
+              </p>
+            </div>
             <div className="flex items-center space-x-2">
               <Switch
-                id="isNeutered"
-                checked={isNeutered}
-                onCheckedChange={handleNeuteredChange}
+                id="isDeceased"
+                checked={isDeceased}
+                onCheckedChange={handleDeceasedChange}
               />
               <label
-                htmlFor="isNeutered"
+                htmlFor="isDeceased"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Esterilizado/a
+                Fallecido/a
               </label>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Indica si la mascota ha sido esterilizada o castrada.
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -214,7 +264,9 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                             existingRecord={{
                               id: record.id,
                               petId: record.petId,
-                              visitDate: record.visitDate.toISOString().split("T")[0],
+                              visitDate: record.visitDate
+                                .toISOString()
+                                .split("T")[0],
                               reasonForVisit: record.reasonForVisit,
                               diagnosis: record.diagnosis,
                               treatment: record.treatment,

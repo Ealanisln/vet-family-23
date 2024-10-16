@@ -141,7 +141,7 @@ export default function ClientDetails({ user }: { user: User }) {
         <Card>
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
-              Próximas Citas
+              Próximas Vacunas
               <DialogoReservaMejorado />
             </CardTitle>
           </CardHeader>

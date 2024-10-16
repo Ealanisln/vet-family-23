@@ -58,6 +58,7 @@ model Pet {
   weight          Float
   microchipNumber String?
   isNeutered      Boolean          @default(false)
+  isDeceased      Boolean          @default(false)
   medicalHistory  MedicalHistory[]
   vaccinations    Vaccination[]
   appointments    Appointment[]

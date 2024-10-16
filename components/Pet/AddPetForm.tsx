@@ -1,6 +1,7 @@
 // components/Pet/AddPetForm.tsx
 
 import React, { useState, ChangeEvent, FormEvent } from "react";
+import { updatePetNeuteredStatus } from "@/app/actions/add-edit-pet";
 import {
   Card,
   CardContent,
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { ArrowLeftIcon, PlusIcon } from "lucide-react";
 
 interface PetFormData {
@@ -30,6 +32,7 @@ interface PetFormData {
   weight: string;
   microchipNumber?: string;
   medicalHistory?: string;
+  isNeutered: boolean; // Añadimos esta propiedad
 }
 
 interface PetDataForSubmit {
@@ -41,6 +44,7 @@ interface PetDataForSubmit {
   weight: number;
   microchipNumber?: string;
   medicalHistory?: string;
+  isNeutered: boolean; // Añadimos esta propiedad
 }
 
 interface AddPetFormProps {
@@ -63,7 +67,13 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
     weight: "",
     microchipNumber: "",
     medicalHistory: "",
+    isNeutered: false, // Inicializamos con false
   });
+  const [isNeutered, setIsNeutered] = useState(pet.isNeutered);
+
+  const handleNeuteredChange = (checked: boolean) => {
+    setPet((prevState) => ({ ...prevState, isNeutered: checked }));
+  };
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -178,6 +188,14 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                 maxLength={15} // Limita a 15 caracteres
                 inputMode="numeric" // Sugerencia de teclado numérico en móviles
                 pattern="\d*" // Acepta solo números
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="weight">Esta esterilizado?</Label>
+              <Switch
+                id="isNeutered"
+                checked={isNeutered}
+                onCheckedChange={handleNeuteredChange}
               />
             </div>
 

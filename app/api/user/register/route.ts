@@ -85,71 +85,61 @@ async function getKindeToken() {
 }
 
 async function createOrUpdateUser(user: any) {
-  const userHash = generateUserHash(user);
+  console.log("Starting createOrUpdateUser with user data:", JSON.stringify(user, null, 2));
 
-  console.log(
-    "Starting createOrUpdateUser with user data:",
-    JSON.stringify(user, null, 2)
-  );
+  const userData = {
+    kindeId: user.id as string,
+    email: user.email as string | null,
+    phone: user.phone as string | null,
+    firstName: user.given_name as string | null,
+    lastName: user.family_name as string | null,
+    name: user.given_name && user.family_name 
+      ? `${user.given_name} ${user.family_name}` as string 
+      : null,
+    roles: user.roles as string[] | [],
+    internalId: user.internalId as string | null,
+  };
+
+  console.log("Prepared user data for database:", JSON.stringify(userData, null, 2));
 
   try {
-    const dbUser = await prisma.user.upsert({
-      where: { kindeId: user.id },
-      update: {
-        email: user.email || undefined,
-        phone: user.phone || undefined,
-        firstName: user.given_name || undefined,
-        lastName: user.family_name || undefined,
-        name:
-          user.given_name && user.family_name
-            ? `${user.given_name} ${user.family_name}`
-            : user.given_name || user.family_name || undefined,
-        roles: user.roles || [],
-        internalId: user.internalId || undefined,
-      },
-      create: {
-        kindeId: user.id,
-        email: user.email || null,
-        phone: user.phone || null,
-        firstName: user.given_name || null,
-        lastName: user.family_name || null,
-        name:
-          user.given_name && user.family_name
-            ? `${user.given_name} ${user.family_name}`
-            : user.given_name || user.family_name || null,
-        roles: user.roles || [],
-        visits: 0,
-        nextVisitFree: false,
-        internalId: user.internalId || null,
-      },
+    const result = await prisma.$transaction(async (prisma) => {
+      const dbUser = await prisma.user.upsert({
+        where: { kindeId: userData.kindeId },
+        update: {
+          email: userData.email,
+          phone: userData.phone,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          name: userData.name,
+          roles: userData.roles,
+          internalId: userData.internalId,
+        },
+        create: {
+          ...userData,
+          visits: 0,
+          nextVisitFree: false,
+        },
+      });
+
+      console.log("User operation completed. Returned user data:", JSON.stringify(dbUser, null, 2));
+
+      // Immediate verification within the same transaction
+      const verifiedUser = await prisma.user.findUnique({
+        where: { kindeId: userData.kindeId },
+      });
+
+      console.log("Verified user data from database:", JSON.stringify(verifiedUser, null, 2));
+
+      if (JSON.stringify(dbUser) !== JSON.stringify(verifiedUser)) {
+        console.warn("Warning: Discrepancy between upserted user and database record");
+        console.log("Differences:", JSON.stringify(diffObjects(dbUser, verifiedUser), null, 2));
+      }
+
+      return { dbUser, verifiedUser };
     });
 
-    console.log(
-      "User operation completed. Returned user data:",
-      JSON.stringify(dbUser, null, 2)
-    );
-
-    // Additional verification step
-    const verifiedUser = await prisma.user.findUnique({
-      where: { kindeId: user.id },
-    });
-
-    console.log(
-      "Verified user data from database:",
-      JSON.stringify(verifiedUser, null, 2)
-    );
-
-    if (JSON.stringify(dbUser) !== JSON.stringify(verifiedUser)) {
-      console.warn(
-        "Warning: Discrepancy between upserted user and database record"
-      );
-      console.log(
-        "Differences:",
-        JSON.stringify(diffObjects(dbUser, verifiedUser), null, 2)
-      );
-    }
-
-    return dbUser;
+    return result.dbUser;
   } catch (dbError) {
     console.error("Error in createOrUpdateUser:", dbError);
     throw dbError;

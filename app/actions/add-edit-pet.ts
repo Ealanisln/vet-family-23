@@ -23,7 +23,6 @@ export async function addPet(
   try {
     const newPet = await prisma.pet.create({
       data: {
-        userId,
         name: petData.name,
         species: petData.species,
         breed: petData.breed,
@@ -33,6 +32,9 @@ export async function addPet(
         microchipNumber: petData.microchipNumber,
         isNeutered: petData.isNeutered || false,
         isDeceased: petData.isDeceased || false,
+        user: {
+          connect: { id: userId }
+        }
       },
     });
 

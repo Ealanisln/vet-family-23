@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import jwksClient from "jwks-rsa";
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const client = jwksClient({
@@ -18,10 +18,11 @@ interface KindeRole {
 
 interface KindeUser {
   id: string;
-  email: string;
+  email?: string;
   given_name?: string;
   family_name?: string;
   roles?: KindeRole[];
+  phone_number?: string;
 }
 
 interface KindeEvent extends JwtPayload {
@@ -44,32 +45,38 @@ export async function POST(req: Request) {
         statusText: "error decoding jwt",
       });
     }
-    
+
     console.log("JWT decoded successfully");
     const header = jwtDecoded.header;
     const kid = header.kid;
-    
+
     const key = await client.getSigningKey(kid);
     const signingKey = key.getPublicKey();
     const event = jwt.verify(token, signingKey) as KindeEvent;
-    
+
     console.log("Event type:", event?.type);
-    
+
     switch (event?.type) {
       case "user.created":
       case "user.updated":
         const user = event.data.user;
         console.log("User data received:", JSON.stringify(user, null, 2));
-        
+
         const kindeId = user.id;
         const email = user.email;
         const firstName = user.given_name ?? null;
         const lastName = user.family_name ?? null;
-        const name = firstName && lastName ? `${firstName} ${lastName}` : (firstName || lastName || null);
-        const roles = user.roles?.map((role: KindeRole) => role.key) || ['user'];
-        
+        const name =
+          firstName && lastName
+            ? `${firstName} ${lastName}`
+            : firstName || lastName || null;
+        const roles = user.roles?.map((role: KindeRole) => role.key) || [
+          "user",
+        ];
+        const phoneNumber = user.phone_number ?? null;
+
         const updatedUser = await prisma.user.upsert({
-          where: { email: email },
+          where: { kindeId: kindeId },
           create: {
             kindeId,
             email,
@@ -77,30 +84,38 @@ export async function POST(req: Request) {
             lastName,
             name,
             roles,
+            phone: phoneNumber, // Cambiado de phoneNumber a phone
           },
           update: {
-            kindeId,
+            email,
             firstName,
             lastName,
             name,
             roles,
+            phone: phoneNumber,
           },
         });
-        
-        console.log("User upserted in database:", JSON.stringify(updatedUser, null, 2));
+
+        console.log(
+          "User upserted in database:",
+          JSON.stringify(updatedUser, null, 2)
+        );
         break;
       default:
         console.log("Event not handled:", event.type);
         break;
     }
-    
+
     return NextResponse.json({ status: 200, statusText: "success" });
   } catch (err) {
     console.error("Error in webhook:", err);
     if (err instanceof Error) {
       return NextResponse.json({ message: err.message }, { status: 500 });
     }
-    return NextResponse.json({ message: "An unknown error occurred" }, { status: 500 });
+    return NextResponse.json(
+      { message: "An unknown error occurred" },
+      { status: 500 }
+    );
   } finally {
     await prisma.$disconnect();
   }

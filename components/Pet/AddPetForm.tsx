@@ -67,7 +67,7 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
     weight: "",
     microchipNumber: "",
     medicalHistory: "",
-    isNeutered: false, // Inicializamos con false
+    isNeutered: false, 
   });
   const [isNeutered, setIsNeutered] = useState(pet.isNeutered);
 
@@ -92,6 +92,7 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
       ...pet,
       dateOfBirth: new Date(pet.dateOfBirth),
       weight: parseFloat(pet.weight),
+      isNeutered: pet.isNeutered, 
     };
     onSubmit(userId, petDataForSubmit);
   };
@@ -191,13 +192,17 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="weight">Esta esterilizado?</Label>
-              <Switch
-                id="isNeutered"
-                checked={isNeutered}
-                onCheckedChange={handleNeuteredChange}
-              />
-            </div>
+          <div>
+            <Label htmlFor="isNeutered">Esta esterilizado?</Label>
+          </div>
+          <div className="pt-2">
+            <Switch
+              id="isNeutered"
+              checked={pet.isNeutered}
+              onCheckedChange={handleNeuteredChange}
+            />
+          </div>
+        </div>
 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="medicalHistory">Historia Médica</Label>

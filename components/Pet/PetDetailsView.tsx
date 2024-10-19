@@ -43,6 +43,7 @@ interface Vaccination {
 
 interface Pet {
   id: string;
+  internalId: string | null; 
   name: string;
   species: string;
   breed: string;
@@ -55,6 +56,7 @@ interface Pet {
   medicalHistory: MedicalHistory[];
   vaccinations: Vaccination[];
 }
+
 
 const calculateAge = (dateOfBirth: Date): string => {
   const today = new Date();

@@ -16,7 +16,6 @@ interface KindeUserData {
   }>;
   roles?: string[];
   send_invite?: boolean;
-  internalId?: string;
 }
 
 interface KindePayload {
@@ -100,7 +99,6 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             lastName: user.family_name,
             name: `${user.given_name} ${user.family_name}`.trim(),
             roles: user.roles || ["user"],
-            internalId: user.internalId,
           },
           create: {
             kindeId: user.id,
@@ -112,7 +110,6 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             roles: user.roles || ["user"],
             visits: 0,
             nextVisitFree: false,
-            internalId: user.internalId,
           },
         });
 
@@ -205,7 +202,6 @@ export async function POST(req: NextRequest) {
       given_name: userData.profile.given_name,
       family_name: userData.profile.family_name,
       roles: userData.roles || ["user"],
-      internalId: userData.internalId,
     };
 
     const dbUser = await createOrUpdateUser(userDataForDb);

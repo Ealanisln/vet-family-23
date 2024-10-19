@@ -26,7 +26,6 @@ The database is designed with **MongoDB** using **Prisma ORM** to handle complex
 
 #### `User`
 
-- `internalId`: Optional internal ID.
 - `kindeId`: Unique identifier from Kinde authentication.
 - `email`, `firstName`, `lastName`, `phone`, `address`: Personal details of the user.
 - `pet`: Stores the pet's information.

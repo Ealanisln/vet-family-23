@@ -29,11 +29,31 @@ model User {
   appointments           Appointment[]
   billings               Billing[]
   reminders              Reminder[]
-  roles                  String[] // Nuevo campo para roles
+  userRoles              UserRole[]
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 
   @@map("users")
+}
+
+model Role {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  key       String     @unique
+  name      String
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  roleId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+  @@map("userRoles")
 }
 
 model VisitHistory {

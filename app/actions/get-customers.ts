@@ -1,5 +1,3 @@
-// get-customers.ts
-
 "use server";
 
 import { PrismaClient } from "@prisma/client";
@@ -30,12 +28,27 @@ export async function getUsers(token: string) {
         visits: true,
         nextVisitFree: true,
         lastVisit: true,
-        roles: true,
+        userRoles: {
+          select: {
+            role: {
+              select: {
+                key: true,
+                name: true,
+              },
+            },
+          },
+        },
         createdAt: true,
         updatedAt: true,
       },
     });
-    return users;
+
+    // Transform the userRoles to match the previous format
+    return users.map(user => ({
+      ...user,
+      roles: user.userRoles.map(ur => ur.role),
+      userRoles: undefined, // Remove the userRoles field
+    }));
   } catch (error) {
     console.error("Error fetching users:", error);
     throw new Error("Failed to fetch users");
@@ -51,12 +64,22 @@ export async function getUserById(id: string) {
         appointments: true,
         billings: true,
         reminders: true,
+        userRoles: {
+          include: {
+            role: true,
+          },
+        },
       },
     });
     if (!user) {
       throw new Error("User not found");
     }
-    return user;
+    // Transform the userRoles to match the previous format
+    return {
+      ...user,
+      roles: user.userRoles.map(ur => ur.role),
+      userRoles: undefined, // Remove the userRoles field
+    };
   } catch (error) {
     console.error("Error fetching user:", error);
     throw new Error("Failed to fetch user");
@@ -86,6 +109,13 @@ export async function updateUser(userData: {
         address: userData.address,
         visits: userData.visits,
         nextVisitFree: userData.nextVisitFree,
+      },
+      include: {
+        userRoles: {
+          include: {
+            role: true,
+          },
+        },
       },
     });
 
@@ -118,7 +148,12 @@ export async function updateUser(userData: {
       `Phone number for user ${userData.id} was updated locally but not in Kinde.`
     );
 
-    return updatedUser;
+    // Transform the userRoles to match the previous format
+    return {
+      ...updatedUser,
+      roles: updatedUser.userRoles.map(ur => ur.role),
+      userRoles: undefined, // Remove the userRoles field
+    };
   } catch (error) {
     console.error("Error updating user:", error);
     throw new Error("Failed to update user");

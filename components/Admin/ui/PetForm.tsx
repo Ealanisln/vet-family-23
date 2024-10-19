@@ -39,6 +39,7 @@ interface PetFormProps {
 
 interface Pet {
   id?: string;
+  internalId?: string;
   name: string;
   species: string;
   breed: string;
@@ -57,6 +58,7 @@ const PetForm: React.FC<PetFormProps> = ({
   const params = useParams();
   const router = useRouter();
   const [pet, setPet] = useState<Pet>({
+    internalId: "",
     name: "",
     species: "",
     breed: "",
@@ -69,6 +71,8 @@ const PetForm: React.FC<PetFormProps> = ({
 
   useEffect(() => {
     if (isEditing && initialPet) {
+      console.log("Initial pet data:", initialPet); // Add this line
+
       setPet(initialPet);
     }
   }, [isEditing, initialPet]);
@@ -89,6 +93,7 @@ const PetForm: React.FC<PetFormProps> = ({
     const userId = params.id as string;
     const petData = {
       ...pet,
+      internalId: pet.internalId || undefined,
       dateOfBirth: new Date(pet.dateOfBirth),
       weight: parseFloat(pet.weight),
     };
@@ -107,10 +112,22 @@ const PetForm: React.FC<PetFormProps> = ({
       console.error(result.error);
     }
   };
+
   const formContent = (
     <>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="internalId">ID Interno</Label>
+            <Input
+              id="internalId"
+              name="internalId"
+              value={pet.internalId || ""}
+              onChange={handleInputChange}
+              placeholder="ID Interno (opcional)"
+              onFocus={() => console.log("internalId value:", pet.internalId)} // Add this line
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="name">Nombre</Label>
             <Input
@@ -136,7 +153,7 @@ const PetForm: React.FC<PetFormProps> = ({
                 <SelectItem value="gato">Gato</SelectItem>
                 <SelectItem value="ave">Ave</SelectItem>
                 <SelectItem value="huron">Hurón</SelectItem>
-                <SelectItem value="huron">Conejo</SelectItem>
+                <SelectItem value="conejo">Conejo</SelectItem>
                 <SelectItem value="otro">Otro</SelectItem>
               </SelectContent>
             </Select>
@@ -194,9 +211,9 @@ const PetForm: React.FC<PetFormProps> = ({
               name="microchipNumber"
               value={pet.microchipNumber}
               onChange={handleInputChange}
-              maxLength={15} // Limita a 15 caracteres
-              inputMode="numeric" // Sugerencia de teclado numérico en móviles
-              pattern="\d*" // Acepta solo números
+              maxLength={15}
+              inputMode="numeric"
+              pattern="\d*"
             />
           </div>
         </div>

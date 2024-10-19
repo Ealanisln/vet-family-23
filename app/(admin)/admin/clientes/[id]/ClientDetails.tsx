@@ -25,7 +25,8 @@ interface Pet {
   id: string | number;
   name: string;
   species: string;
-  isDeceased: boolean; // Nueva propiedad añadida
+  isDeceased: boolean;
+  internalId?: string;
 }
 
 const formatPhoneNumber = (phone: string | null): string => {
@@ -111,6 +112,7 @@ export default function ClientDetails({ user }: { user: any }) {
                   <TableHead className="w-[50px]"></TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Especie</TableHead>
+                  <TableHead>ID Interno</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -132,12 +134,13 @@ export default function ClientDetails({ user }: { user: any }) {
                       <TableCell>
                         <Badge variant="outline">{pet.species}</Badge>
                       </TableCell>
+                      <TableCell>{pet.internalId || "N/A"}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={3}
+                      colSpan={4}
                       className="text-center text-muted-foreground"
                     >
                       No hay mascotas registradas

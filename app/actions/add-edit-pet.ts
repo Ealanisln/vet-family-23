@@ -18,6 +18,7 @@ export async function addPet(
     medicalHistory?: string;
     isNeutered?: boolean;
     isDeceased?: boolean;
+    internalId?: string;  
   }
 ) {
   try {
@@ -32,6 +33,7 @@ export async function addPet(
         microchipNumber: petData.microchipNumber,
         isNeutered: petData.isNeutered || false,
         isDeceased: petData.isDeceased || false,
+        internalId: petData.internalId, 
         user: {
           connect: { id: userId }
         }
@@ -75,6 +77,7 @@ export async function updatePet(
     medicalHistory?: string;
     isNeutered?: boolean;
     isDeceased?: boolean;
+    internalId?: string;  
   }
 ) {
   try {
@@ -90,6 +93,7 @@ export async function updatePet(
         microchipNumber: petData.microchipNumber,
         isNeutered: petData.isNeutered,
         isDeceased: petData.isDeceased,
+        internalId: petData.internalId,  
       },
     });
 

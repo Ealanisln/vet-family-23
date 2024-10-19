@@ -98,7 +98,17 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             firstName: user.given_name,
             lastName: user.family_name,
             name: `${user.given_name} ${user.family_name}`.trim(),
-            roles: user.roles || ["user"],
+            userRoles: {
+              deleteMany: {}, // Remove existing roles
+              create: (user.roles || ["user"]).map((role: string) => ({
+                role: {
+                  connectOrCreate: {
+                    where: { key: role },
+                    create: { key: role, name: role },
+                  },
+                },
+              })),
+            },
           },
           create: {
             kindeId: user.id,
@@ -107,9 +117,25 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             firstName: user.given_name,
             lastName: user.family_name,
             name: `${user.given_name} ${user.family_name}`.trim(),
-            roles: user.roles || ["user"],
             visits: 0,
             nextVisitFree: false,
+            userRoles: {
+              create: (user.roles || ["user"]).map((role: string) => ({
+                role: {
+                  connectOrCreate: {
+                    where: { key: role },
+                    create: { key: role, name: role },
+                  },
+                },
+              })),
+            },
+          },
+          include: {
+            userRoles: {
+              include: {
+                role: true,
+              },
+            },
           },
         });
 
@@ -121,6 +147,13 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
         // Immediate verification
         const verifiedUser = await prisma.user.findUnique({
           where: { kindeId: user.id },
+          include: {
+            userRoles: {
+              include: {
+                role: true,
+              },
+            },
+          },
         });
         console.log(
           `Attempt ${attempt}: Verified user data from database:`,
@@ -130,7 +163,10 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
         if (
           !verifiedUser ||
           verifiedUser.firstName !== user.given_name ||
-          verifiedUser.lastName !== user.family_name
+          verifiedUser.lastName !== user.family_name ||
+          !verifiedUser.userRoles.some((ur) =>
+            (user.roles || ["user"]).includes(ur.role.key)
+          )
         ) {
           throw new Error("User data not saved correctly");
         }
@@ -141,6 +177,13 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
       // Final verification (without delay)
       const finalVerifiedUser = await prisma.user.findUnique({
         where: { kindeId: user.id },
+        include: {
+          userRoles: {
+            include: {
+              role: true,
+            },
+          },
+        },
       });
       console.log(
         `Attempt ${attempt}: Final verified user data:`,
@@ -150,7 +193,10 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
       if (
         !finalVerifiedUser ||
         finalVerifiedUser.firstName !== user.given_name ||
-        finalVerifiedUser.lastName !== user.family_name
+        finalVerifiedUser.lastName !== user.family_name ||
+        !finalVerifiedUser.userRoles.some((ur) =>
+          (user.roles || ["user"]).includes(ur.role.key)
+        )
       ) {
         throw new Error("User data not consistent after final verification");
       }

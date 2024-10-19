@@ -43,7 +43,7 @@ interface Vaccination {
 
 interface Pet {
   id: string;
-  internalId: string | null; 
+  internalId?: string | null;
   name: string;
   species: string;
   breed: string;
@@ -56,7 +56,6 @@ interface Pet {
   medicalHistory: MedicalHistory[];
   vaccinations: Vaccination[];
 }
-
 
 const calculateAge = (dateOfBirth: Date): string => {
   const today = new Date();
@@ -128,6 +127,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       gender: pet.gender,
       weight: pet.weight.toString(),
       microchipNumber: pet.microchipNumber || undefined,
+      internalId: pet.internalId || undefined,
       isNeutered: pet.isNeutered,
       medicalHistory:
         pet.medicalHistory.length > 0 ? pet.medicalHistory[0].notes || "" : "",
@@ -153,6 +153,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
     { label: "Género", value: pet.gender },
     { label: "Peso", value: `${pet.weight} kg` },
     { label: "Número de Microchip", value: pet.microchipNumber || "N/A" },
+    { label: "ID Interno", value: pet.internalId || "N/A" },
   ];
 
   return (

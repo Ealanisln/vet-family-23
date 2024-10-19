@@ -36,6 +36,7 @@ interface Vaccination {
 
 interface Pet {
   id: string;
+  internalId: string | null;
   name: string;
   species: string;
   breed: string;
@@ -81,7 +82,6 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         </div>
       </div>
 
-      
       {/* Basic Information Card */}
       <Card className="mb-6 sm:mb-8">
         <CardHeader>
@@ -90,15 +90,24 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[
-              { label: 'Especie', value: pet.species },
-              { label: 'Raza', value: pet.breed },
-              { label: 'Fecha de Nacimiento', value: pet.dateOfBirth.toLocaleDateString() },
-              { label: 'Género', value: pet.gender },
-              { label: 'Peso', value: `${pet.weight} kg` },
-              { label: 'Número de Microchip', value: pet.microchipNumber || 'N/A' },
+              { label: "ID Interno", value: pet.internalId },
+              { label: "Especie", value: pet.species },
+              { label: "Raza", value: pet.breed },
+              {
+                label: "Fecha de Nacimiento",
+                value: pet.dateOfBirth.toLocaleDateString(),
+              },
+              { label: "Género", value: pet.gender },
+              { label: "Peso", value: `${pet.weight} kg` },
+              {
+                label: "Número de Microchip",
+                value: pet.microchipNumber || "N/A",
+              },
             ].map(({ label, value }, index) => (
               <div key={index} className="space-y-1">
-                <p className="font-semibold text-sm text-muted-foreground">{label}</p>
+                <p className="font-semibold text-sm text-muted-foreground">
+                  {label}
+                </p>
                 <p className="text-base">{value}</p>
               </div>
             ))}
@@ -128,7 +137,9 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                   <TableBody>
                     {pet.medicalHistory.map((record) => (
                       <TableRow key={record.id}>
-                        <TableCell className="font-medium">{record.visitDate.toLocaleDateString()}</TableCell>
+                        <TableCell className="font-medium">
+                          {record.visitDate.toLocaleDateString()}
+                        </TableCell>
                         <TableCell>{record.reasonForVisit}</TableCell>
                         <TableCell>{record.diagnosis}</TableCell>
                         <TableCell>{record.treatment}</TableCell>
@@ -167,7 +178,9 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                   <TableBody>
                     {pet.vaccinations.map((vaccination) => (
                       <TableRow key={vaccination.id}>
-                        <TableCell className="font-medium">{vaccination.vaccineType}</TableCell>
+                        <TableCell className="font-medium">
+                          {vaccination.vaccineType}
+                        </TableCell>
                         <TableCell>
                           {vaccination.administrationDate.toLocaleDateString()}
                         </TableCell>

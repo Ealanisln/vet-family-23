@@ -35,6 +35,7 @@ export default function AddPetView() {
     gender: "",
     microchipNumber: "",
     isNeutered: false,
+    internalId: "",
   });
 
   const handleInputChange = (
@@ -91,7 +92,9 @@ export default function AddPetView() {
                 <Label htmlFor="species">Especie</Label>
                 <Select
                   name="species"
-                  onValueChange={(value) => handleSelectChange(value, "species")}
+                  onValueChange={(value) =>
+                    handleSelectChange(value, "species")
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar especie" />
@@ -161,6 +164,18 @@ export default function AddPetView() {
                   maxLength={15}
                   inputMode="numeric"
                   pattern="\d*"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="internalId">ID Interno (opcional)</Label>
+                <Input
+                  id="internalId"
+                  name="internalId"
+                  type="number"
+                  value={pet.internalId ?? ""}
+                  onChange={handleInputChange}
+                  className="w-full sm:w-1/2"
+                  min="0"
                 />
               </div>
               <div className="space-y-2">

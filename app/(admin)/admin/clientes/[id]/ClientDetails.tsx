@@ -3,7 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, PlusIcon, EditIcon, PawPrintIcon, SyringeIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  PlusIcon,
+  EditIcon,
+  PawPrintIcon,
+  SyringeIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -71,10 +77,6 @@ export default function ClientDetails({ user }: { user: any }) {
               <div>
                 <p className="font-semibold">Dirección:</p>
                 <p>{user.address || "N/A"}</p>
-              </div>
-              <div>
-                <p className="font-semibold">ID Interno:</p>
-                <p>{user.internalId || "N/A"}</p>
               </div>
             </div>
             <div className="mt-4">
@@ -146,7 +148,6 @@ export default function ClientDetails({ user }: { user: any }) {
             </Table>
           </CardContent>
         </Card>
-        
       </div>
     </div>
   );

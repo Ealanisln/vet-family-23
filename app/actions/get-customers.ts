@@ -20,7 +20,6 @@ export async function getUsers(token: string) {
         id: true,
         firstName: true,
         lastName: true,
-        internalId: true,
         phone: true,
         email: true,
         kindeId: true,
@@ -87,7 +86,6 @@ export async function updateUser(userData: {
         address: userData.address,
         visits: userData.visits,
         nextVisitFree: userData.nextVisitFree,
-        internalId: userData.internalId,
       },
     });
 

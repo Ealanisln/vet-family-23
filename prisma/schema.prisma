@@ -12,7 +12,6 @@ generator client {
 
 model User {
   id                     String         @id @default(auto()) @map("_id") @db.ObjectId
-  internalId             String?
   kindeId                String         @unique
   email                  String?        @unique
   firstName              String?
@@ -48,6 +47,7 @@ model VisitHistory {
 
 model Pet {
   id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  internalId      String?
   userId          String           @db.ObjectId
   user            User             @relation(fields: [userId], references: [id])
   name            String

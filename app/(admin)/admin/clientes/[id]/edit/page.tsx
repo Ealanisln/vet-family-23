@@ -21,7 +21,6 @@ type ClientData = {
   address: string;
   visits: number;
   nextVisitFree: boolean;
-  internalId?: string;
 }
 
 export default function EditClientPage({ params }: { params: { id: string } }) {
@@ -36,7 +35,6 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
     address: '',
     visits: 0,
     nextVisitFree: false,
-    internalId: undefined
   })
 
   const fetchUser = useCallback(async () => {
@@ -51,7 +49,6 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
         address: userData.address ?? '',
         visits: userData.visits ?? 0,
         nextVisitFree: userData.nextVisitFree ?? false,
-        internalId: userData.internalId ?? undefined
       })
     } catch (error) {
       console.error('Error fetching user data:', error)
@@ -177,18 +174,6 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                 onChange={handleInputChange}
                 min="0"
                 className="w-full sm:w-1/2"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="internalId">ID Interno (opcional)</Label>
-              <Input
-                id="internalId"
-                name="internalId"
-                type="number"
-                value={client.internalId ?? ''}
-                onChange={handleInputChange}
-                className="w-full sm:w-1/2"
-                min="0"
               />
             </div>
             <div className="flex items-center space-x-2">

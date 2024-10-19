@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import "./globals.css";
 import { FacebookPixelEvents } from "@/components/Facebook/FacebookPixel";
-import dynamic from "next/dynamic";
-import GoogleAnalytics from "@/components/GoogleAnalytics/";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata = {
@@ -24,10 +23,10 @@ export default function RootLayout({
         {children}
         <Toaster />
         <Suspense fallback={null}>
-          <GoogleAnalytics GA_MEASUREMENT_ID="G-PXSVH1SGKW" />
           <FacebookPixelEvents />
         </Suspense>
       </body>
+      <GoogleAnalytics gaId="G-PXSVH1SGKW" />
     </html>
   );
 }

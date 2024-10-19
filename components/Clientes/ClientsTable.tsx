@@ -29,11 +29,10 @@ import {
 } from "@/components/ui/table";
 import { getUsers } from "@/app/actions/get-customers";
 import Loader from "@/components/ui/loader";
-import Actions from './ClientActions';
+import Actions from "./ClientActions";
 
 export interface User {
   id: string;
-  internalId: string | null;
   kindeId: string;
   email: string | null;
   firstName: string | null;
@@ -53,15 +52,15 @@ export interface User {
 
 async function renewKindeToken() {
   try {
-    const response = await fetch('/api/kinde-token');
+    const response = await fetch("/api/kinde-token");
     if (!response.ok) {
       throw new Error(`Failed to renew Kinde token: ${response.statusText}`);
     }
     const data = await response.json();
-    console.log('Renewed Kinde token:', data.access_token);
+    console.log("Renewed Kinde token:", data.access_token);
     return data.access_token;
   } catch (error) {
-    console.error('Error renewing Kinde token:', error);
+    console.error("Error renewing Kinde token:", error);
     throw error;
   }
 }
@@ -69,11 +68,11 @@ async function renewKindeToken() {
 const formatPhoneNumber = (phone: string | null): string => {
   if (!phone) return "N/A";
   // Eliminar todos los caracteres no numéricos
-  const digits = phone.replace(/\D/g, '');
+  const digits = phone.replace(/\D/g, "");
   // Tomar los últimos 10 dígitos
   const last10Digits = digits.slice(-10);
   // Formatear como (XXX) XXX-XXXX
-  return last10Digits.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+  return last10Digits.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
 };
 
 export default function ClientsTable() {
@@ -91,41 +90,51 @@ export default function ClientsTable() {
       console.log(`Attempting to delete user with ID: ${userId}`);
       try {
         let token = await renewKindeToken();
-        console.log('Using token for delete request:', token);
-        
+        console.log("Using token for delete request:", token);
+
         const response = await fetch(`/api/user/delete`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ userId, isDeleteProfile: true }),
         });
-  
-        console.log('Delete request response:', response.status, await response.text());
-  
+
+        console.log(
+          "Delete request response:",
+          response.status,
+          await response.text()
+        );
+
         if (response.status === 401) {
-          console.log('Received 401, attempting to renew token and retry');
+          console.log("Received 401, attempting to renew token and retry");
           token = await renewKindeToken();
-          console.log('Using renewed token for retry:', token);
+          console.log("Using renewed token for retry:", token);
           const retryResponse = await fetch(`/api/user/delete`, {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ userId, isDeleteProfile: true }),
           });
-  
-          console.log('Retry response:', retryResponse.status, await retryResponse.text());
-  
+
+          console.log(
+            "Retry response:",
+            retryResponse.status,
+            await retryResponse.text()
+          );
+
           if (!retryResponse.ok) {
-            throw new Error(`Failed to delete user: ${retryResponse.statusText}`);
+            throw new Error(
+              `Failed to delete user: ${retryResponse.statusText}`
+            );
           }
         } else if (!response.ok) {
           throw new Error(`Failed to delete user: ${response.statusText}`);
         }
-  
+
         console.log(`User with ID ${userId} deleted successfully`);
         setData((prevData) => prevData.filter((user) => user.id !== userId));
         toast({
@@ -137,14 +146,17 @@ export default function ClientsTable() {
         console.error("Error deleting user:", error);
         toast({
           title: "Error",
-          description: error instanceof Error ? error.message : "Error al eliminar el usuario.",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Error al eliminar el usuario.",
           variant: "destructive",
         });
       }
     },
     [toast]
   );
-  
+
   const columns = useMemo<ColumnDef<User>[]>(
     () => [
       {
@@ -185,12 +197,7 @@ export default function ClientsTable() {
         id: "actions",
         cell: ({ row }) => {
           console.log(`Rendering Actions for user: ${row.original.id}`);
-          return (
-            <Actions
-              user={row.original}
-              onDelete={handleDeleteUser}
-            />
-          );
+          return <Actions user={row.original} onDelete={handleDeleteUser} />;
         },
       },
     ],
@@ -224,7 +231,6 @@ export default function ClientsTable() {
         const users = await getUsers(token);
         const transformedUsers: User[] = users.map((user: any) => ({
           id: user.id,
-          internalId: user.internalId || null,
           kindeId: user.kindeId,
           email: user.email || null,
           firstName: user.firstName || null,
@@ -267,7 +273,9 @@ export default function ClientsTable() {
       <div className="flex items-center py-4">
         <Input
           placeholder="Filtrar por nombre..."
-          value={(table.getColumn("firstName")?.getFilterValue() as string) ?? ""}
+          value={
+            (table.getColumn("firstName")?.getFilterValue() as string) ?? ""
+          }
           onChange={(event) =>
             table.getColumn("firstName")?.setFilterValue(event.target.value)
           }
@@ -295,7 +303,10 @@ export default function ClientsTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   <Loader size={32} className="mx-auto" />
                   <p className="mt-2">Cargando resultados...</p>
                 </TableCell>
@@ -308,14 +319,20 @@ export default function ClientsTable() {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No se encontraron resultados.
                 </TableCell>
               </TableRow>

@@ -32,7 +32,6 @@ const formSchema = z
       .optional()
       .or(z.literal("")),
     phone: z.string().min(10, "Invalid phone number").optional(),
-    internalId: z.string().optional(),
   })
   .refine((data) => data.email || data.phone, {
     message: "Either email or phone is required",
@@ -54,7 +53,6 @@ export default function UserRegistrationForm() {
       provided_id: "",
       email: "",
       phone: "",
-      internalId: undefined,
     },
   });
 
@@ -83,7 +81,6 @@ export default function UserRegistrationForm() {
               },
             },
           ],
-          internalId: data.internalId,
         }),
       });
 
@@ -165,28 +162,6 @@ export default function UserRegistrationForm() {
                   <FormLabel>Teléfono</FormLabel>
                   <FormControl>
                     <Input type="tel" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="internalId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ID Interno (opcional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? e.target.value : undefined
-                        )
-                      }
-                      pattern="\d*" // Optional: ensures only numeric input
-                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -138,7 +138,7 @@ export default function ClientDetails({ user }: { user: User }) {
             </Table>
           </CardContent>
         </Card>
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               Próximas Vacunas
@@ -159,7 +159,7 @@ export default function ClientDetails({ user }: { user: User }) {
               <p className="text-muted-foreground">No hay citas próximas</p>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );

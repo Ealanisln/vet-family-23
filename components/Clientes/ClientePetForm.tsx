@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeftIcon, PlusIcon, Edit } from "lucide-react";
 import { addPet, updatePet } from "@/app/actions/add-edit-pet";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PetFormProps {
   isEditing?: boolean;
@@ -42,6 +43,7 @@ interface Pet {
   dateOfBirth: string;
   gender: string;
   weight: string;
+  isNeutered: boolean;
   microchipNumber?: string;
 }
 
@@ -59,6 +61,7 @@ const ClientePetForm: React.FC<PetFormProps> = ({
     dateOfBirth: "",
     weight: "",
     gender: "",
+    isNeutered: false,
     microchipNumber: "",
   });
 
@@ -77,6 +80,10 @@ const ClientePetForm: React.FC<PetFormProps> = ({
     setPet((prevState) => ({ ...prevState, [name]: value }));
   };
 
+  const handleCheckboxChange = (checked: boolean) => {
+    setPet((prevState) => ({ ...prevState, isNeutered: checked }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const userId = params.id as string;
@@ -84,6 +91,7 @@ const ClientePetForm: React.FC<PetFormProps> = ({
       ...pet,
       dateOfBirth: new Date(pet.dateOfBirth),
       weight: parseFloat(pet.weight),
+      isNeutered: pet.isNeutered,
     };
 
     let result;
@@ -130,7 +138,7 @@ const ClientePetForm: React.FC<PetFormProps> = ({
                 <SelectItem value="gato">Gato</SelectItem>
                 <SelectItem value="ave">Ave</SelectItem>
                 <SelectItem value="huron">Hurón</SelectItem>
-                <SelectItem value="huron">Conejo</SelectItem>
+                <SelectItem value="conejo">Conejo</SelectItem>
                 <SelectItem value="otro">Otro</SelectItem>
               </SelectContent>
             </Select>
@@ -188,10 +196,18 @@ const ClientePetForm: React.FC<PetFormProps> = ({
               name="microchipNumber"
               value={pet.microchipNumber}
               onChange={handleInputChange}
-              maxLength={15} // Limita a 15 caracteres
-              inputMode="numeric" // Sugerencia de teclado numérico en móviles
-              pattern="\d*" // Acepta solo números
+              maxLength={15}
+              inputMode="numeric"
+              pattern="\d*"
             />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="isNeutered"
+              checked={pet.isNeutered}
+              onCheckedChange={(checked) => handleCheckboxChange(checked as boolean)}
+            />
+            <Label htmlFor="isNeutered">Esterilizado/Castrado</Label>
           </div>
         </div>
       </CardContent>

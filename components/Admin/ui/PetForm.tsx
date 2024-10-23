@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeftIcon, PlusIcon, Edit } from "lucide-react";
 import { addPet, updatePet } from "@/app/actions/add-edit-pet";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PetFormProps {
   isEditing?: boolean;
@@ -46,6 +47,7 @@ interface Pet {
   dateOfBirth: string;
   gender: string;
   weight: string;
+  isNeutered: boolean;
   microchipNumber?: string;
   medicalHistory?: string;
 }
@@ -65,14 +67,13 @@ const PetForm: React.FC<PetFormProps> = ({
     dateOfBirth: "",
     weight: "",
     gender: "",
+    isNeutered: false,
     microchipNumber: "",
     medicalHistory: "",
   });
 
   useEffect(() => {
     if (isEditing && initialPet) {
-      console.log("Initial pet data:", initialPet); // Add this line
-
       setPet(initialPet);
     }
   }, [isEditing, initialPet]);
@@ -88,6 +89,10 @@ const PetForm: React.FC<PetFormProps> = ({
     setPet((prevState) => ({ ...prevState, [name]: value }));
   };
 
+  const handleCheckboxChange = (checked: boolean, name: string) => {
+    setPet((prevState) => ({ ...prevState, [name]: checked }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const userId = params.id as string;
@@ -96,6 +101,7 @@ const PetForm: React.FC<PetFormProps> = ({
       internalId: pet.internalId || undefined,
       dateOfBirth: new Date(pet.dateOfBirth),
       weight: parseFloat(pet.weight),
+      isNeutered: pet.isNeutered,
     };
 
     let result;
@@ -125,7 +131,6 @@ const PetForm: React.FC<PetFormProps> = ({
               value={pet.internalId || ""}
               onChange={handleInputChange}
               placeholder="ID Interno (opcional)"
-              onFocus={() => console.log("internalId value:", pet.internalId)} // Add this line
             />
           </div>
           <div className="space-y-2">
@@ -215,6 +220,16 @@ const PetForm: React.FC<PetFormProps> = ({
               inputMode="numeric"
               pattern="\d*"
             />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="isNeutered"
+              checked={pet.isNeutered}
+              onCheckedChange={(checked) => 
+                handleCheckboxChange(checked as boolean, "isNeutered")
+              }
+            />
+            <Label htmlFor="isNeutered">Esterilizado/Castrado</Label>
           </div>
         </div>
         <div className="space-y-2">

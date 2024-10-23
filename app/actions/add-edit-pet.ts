@@ -5,22 +5,30 @@ import { revalidatePath } from "next/cache";
 
 const prisma = new PrismaClient();
 
+interface PetDataForSubmit {
+  name: string;
+  species: string;
+  breed: string;
+  dateOfBirth: Date;
+  gender: string;
+  weight: number;
+  microchipNumber?: string;
+  medicalHistory?: string;
+  isNeutered: boolean;
+  isDeceased?: boolean;
+  internalId?: string;
+}
+
+interface ActionResult<T> {
+  success: boolean;
+  error?: string;
+  pet?: T;
+}
+
 export async function addPet(
   userId: string,
-  petData: {
-    name: string;
-    species: string;
-    breed: string;
-    dateOfBirth: Date;
-    gender: string;
-    weight: number;
-    microchipNumber?: string;
-    medicalHistory?: string;
-    isNeutered?: boolean;
-    isDeceased?: boolean;
-    internalId?: string;  
-  }
-) {
+  petData: PetDataForSubmit
+): Promise<ActionResult<any>> {
   try {
     const newPet = await prisma.pet.create({
       data: {
@@ -31,9 +39,9 @@ export async function addPet(
         gender: petData.gender,
         weight: petData.weight,
         microchipNumber: petData.microchipNumber,
-        isNeutered: petData.isNeutered || false,
-        isDeceased: petData.isDeceased || false,
-        internalId: petData.internalId, 
+        isNeutered: petData.isNeutered,
+        isDeceased: false, // Valor por defecto para mascotas nuevas
+        internalId: petData.internalId,
         user: {
           connect: { id: userId }
         }
@@ -57,7 +65,10 @@ export async function addPet(
     return { success: true, pet: newPet };
   } catch (error) {
     console.error("Failed to add pet:", error);
-    return { success: false, error: "Failed to add pet" };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to add pet" 
+    };
   } finally {
     await prisma.$disconnect();
   }

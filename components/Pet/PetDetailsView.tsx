@@ -21,6 +21,7 @@ import {
   updatePetNeuteredStatus,
   updatePetDeceasedStatus,
 } from "@/app/actions/add-edit-pet";
+// import VaccinationTable from "../Vaccination";
 
 interface MedicalHistory {
   id: string;
@@ -292,7 +293,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         </CardContent>
       </Card>
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <CardTitle>Vacunas</CardTitle>
@@ -302,48 +303,9 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
           </div>
         </CardHeader>
         <CardContent>
-          {pet.vaccinations.length > 0 ? (
-            <div className="overflow-x-auto -mx-4 sm:-mx-6">
-              <div className="inline-block min-w-full align-middle">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Fecha de Administración</TableHead>
-                      <TableHead>Próxima Dosis</TableHead>
-                      <TableHead className="w-[80px]">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pet.vaccinations.map((vaccination) => (
-                      <TableRow key={vaccination.id}>
-                        <TableCell className="font-medium">
-                          {vaccination.vaccineType}
-                        </TableCell>
-                        <TableCell>
-                          {vaccination.administrationDate.toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          {vaccination.nextDoseDate.toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon">
-                            <EditIcon className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">
-              No hay registros de vacunación disponibles.
-            </p>
-          )}
+         <VaccinationTable />
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

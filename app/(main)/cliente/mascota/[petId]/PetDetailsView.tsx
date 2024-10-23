@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,7 @@ interface Pet {
   dateOfBirth: Date;
   gender: string;
   weight: number;
+  isNeutered: boolean;
   microchipNumber: string | null;
   medicalHistory: MedicalHistory[];
   vaccinations: Vaccination[];
@@ -59,6 +61,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       dateOfBirth: pet.dateOfBirth.toISOString().split("T")[0],
       weight: pet.weight.toString(),
       microchipNumber: pet.microchipNumber || undefined,
+      isNeutered: pet.isNeutered,
     };
   };
 
@@ -102,6 +105,10 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
               {
                 label: "Número de Microchip",
                 value: pet.microchipNumber || "N/A",
+              },
+              {
+                label: "Esterilizado/Castrado",
+                value: pet.isNeutered ? "Sí" : "No",
               },
             ].map(({ label, value }, index) => (
               <div key={index} className="space-y-1">
@@ -153,49 +160,6 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
           ) : (
             <p className="text-muted-foreground">
               No hay registros médicos disponibles.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Vaccinations Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Vacunas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {pet.vaccinations.length > 0 ? (
-            <div className="overflow-x-auto -mx-4 sm:-mx-6">
-              <div className="inline-block min-w-full align-middle">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Fecha de Administración</TableHead>
-                      <TableHead>Próxima Dosis</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pet.vaccinations.map((vaccination) => (
-                      <TableRow key={vaccination.id}>
-                        <TableCell className="font-medium">
-                          {vaccination.vaccineType}
-                        </TableCell>
-                        <TableCell>
-                          {vaccination.administrationDate.toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          {vaccination.nextDoseDate.toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">
-              No hay registros de vacunación disponibles.
             </p>
           )}
         </CardContent>

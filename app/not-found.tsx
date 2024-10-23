@@ -28,7 +28,7 @@ const Custom404: React.FC = () => {
           </div>
 
           <div className="text-center space-y-2">
-            <h1 className="text-6xl font-bold text-gray-800">404</h1>
+            <h1 className="text-6xl font-bold text-gray-800">error 404</h1>
             <p className="text-gray-600">Página no encontrada</p>
           </div>
 

@@ -142,17 +142,27 @@ async function deleteUserFromDatabase(userId: string): Promise<void> {
   const userPets = await prisma.pet.findMany({ where: { userId } });
 
   await prisma.$transaction([
+    // Delete all medical records
     prisma.medicalHistory.deleteMany({
       where: { petId: { in: userPets.map((pet) => pet.id) } },
     }),
+    // Delete all vaccinations
     prisma.vaccination.deleteMany({
       where: { petId: { in: userPets.map((pet) => pet.id) } },
     }),
+    // Delete user's visit history
     prisma.visitHistory.deleteMany({ where: { userId } }),
+    // Delete appointments
     prisma.appointment.deleteMany({ where: { userId } }),
+    // Delete billing records
     prisma.billing.deleteMany({ where: { userId } }),
+    // Delete reminders
     prisma.reminder.deleteMany({ where: { userId } }),
+    // Delete pets
     prisma.pet.deleteMany({ where: { userId } }),
+    // Delete user roles - Added this line to fix the error
+    prisma.userRole.deleteMany({ where: { userId } }),
+    // Finally delete the user
     prisma.user.delete({ where: { id: userId } }),
   ]);
 }

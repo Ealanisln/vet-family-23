@@ -61,7 +61,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 w-full max-w-7xl"> {/* Added w-full and max-w-7xl */}
       <div className="mb-8">
         <div className="relative w-full h-64 rounded-lg overflow-hidden mb-4">
           <Image

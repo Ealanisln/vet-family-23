@@ -1,108 +1,52 @@
-import { Button } from "@/components/ui/button";
+import { AppSidebar } from "@/components/Admin/Sidebar/app-sidebar"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import Link from "next/link";
-import { ClientComponentUser } from "./ClientComponentUser";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { redirect } from "next/navigation";
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
-export default async function Dashboard() {
-  const { getUser, isAuthenticated } = getKindeServerSession();
-  const user = await getUser();
-  const isAuthed = await isAuthenticated();
-
-  if (!isAuthed) {
-    redirect("/not-authorized");
-  }
-
+export default function Page() {
   return (
-    <main className="max-w-7xl w-full mx-auto">
-      <Card className="rounded-2xl bg-slate-950 shadow-2xl text-white text-center">
-        <div className="mx-auto max-w-[550px] p-10">
-          <p className="text-2xl mb-2">Welcome, {user?.given_name}</p>
-          <h1 className="text-4xl font-bold leading-normal">
-            Today is an important day. Today you start.
-          </h1>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="#">
+                    Building Your Application
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+            <div className="aspect-video rounded-xl bg-muted/50" />
+            <div className="aspect-video rounded-xl bg-muted/50" />
+            <div className="aspect-video rounded-xl bg-muted/50" />
+          </div>
+          <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
         </div>
-      </Card>
-
-      <h2 className="text-xl font-medium mt-10">Next steps for you</h2>
-
-      <div className="grid grid-cols-4 gap-5 mt-10">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Token data access</CardTitle>
-            <CardDescription>
-              Get Kinde data from the server and on the client side.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="server">
-              <TabsList>
-                <TabsTrigger value="server">Server component</TabsTrigger>
-                <TabsTrigger value="client">Client component</TabsTrigger>
-              </TabsList>
-              <TabsContent value="server">
-                <div className="border border-slate-200 rounded-lg p-4 overflow-auto mb-4">
-                  <pre className="text-sm text-slate-700">
-                    <code>{JSON.stringify(user, null, 2)}</code>
-                  </pre>
-                </div>
-              </TabsContent>
-              <TabsContent value="client">
-                <ClientComponentUser />
-              </TabsContent>
-            </Tabs>
-            <Link href="https://kinde.notion.site/Next-js-App-Router-v2-e7a16d8ae38e45b6ad052910075e24ef?pvs=4">
-              <Button variant="secondary">View docs</Button>
-            </Link>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Protecting routes</CardTitle>
-            <CardDescription>
-              Authenticate users and protect your routes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="https://kinde.notion.site/Next-js-App-Router-v2-e7a16d8ae38e45b6ad052910075e24ef?pvs=4">
-              <Button variant="secondary">View docs</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Management API</CardTitle>
-            <CardDescription>Access the Kinde Management API.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="https://kinde.notion.site/Next-js-App-Router-v2-e7a16d8ae38e45b6ad052910075e24ef?pvs=4">
-              <Button variant="secondary">View docs</Button>
-            </Link>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Organizations</CardTitle>
-            <CardDescription>
-              Create and log into organizations.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="https://kinde.notion.site/Next-js-App-Router-v2-e7a16d8ae38e45b6ad052910075e24ef?pvs=4">
-              <Button variant="secondary">View docs</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
-  );
+      </SidebarInset>
+    </SidebarProvider>
+  )
 }

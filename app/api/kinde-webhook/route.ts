@@ -31,6 +31,146 @@ interface KindeEvent extends JwtPayload {
   };
 }
 
+async function createOrUpdateUser(user: any, maxRetries = 5) {
+  console.log(
+    "Starting createOrUpdateUser with user data:",
+    JSON.stringify(user, null, 2)
+  );
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await prisma.$transaction(async (prisma) => {
+        // First, ensure roles exist
+        const rolePromises = (user.roles || ["user"]).map(
+          async (role: string) => {
+            return prisma.role.upsert({
+              where: { key: role },
+              create: { key: role, name: role },
+              update: { name: role },
+            });
+          }
+        );
+
+        const roles = await Promise.all(rolePromises);
+        console.log(
+          `Roles ensured:`,
+          roles.map((r) => r.key)
+        );
+
+        // Then create or update the user
+        const dbUser = await prisma.user.upsert({
+          where: { kindeId: user.id },
+          update: {
+            email: user.email,
+            phone: user.phone,
+            firstName: user.given_name,
+            lastName: user.family_name,
+            name:
+              `${user.given_name || ""} ${user.family_name || ""}`.trim() ||
+              null,
+            userRoles: {
+              deleteMany: {}, // Remove existing roles
+              create: roles.map((role) => ({
+                roleId: role.id,
+              })),
+            },
+          },
+          create: {
+            kindeId: user.id,
+            email: user.email,
+            phone: user.phone,
+            firstName: user.given_name,
+            lastName: user.family_name,
+            name:
+              `${user.given_name || ""} ${user.family_name || ""}`.trim() ||
+              null,
+            visits: 0,
+            nextVisitFree: false,
+            userRoles: {
+              create: roles.map((role) => ({
+                roleId: role.id,
+              })),
+            },
+          },
+          include: {
+            userRoles: {
+              include: {
+                role: true,
+              },
+            },
+          },
+        });
+
+        // Verification logic
+        const verifyUserData = (dbUser: any) => {
+          if (!dbUser) {
+            throw new Error("User not found after operation");
+          }
+
+          // Handle null/undefined firstName/lastName
+          const expectedFirstName = user.given_name || null;
+          const expectedLastName = user.family_name || null;
+
+          if (dbUser.firstName !== expectedFirstName) {
+            console.error(
+              `FirstName mismatch: expected ${expectedFirstName}, got ${dbUser.firstName}`
+            );
+            return false;
+          }
+
+          if (dbUser.lastName !== expectedLastName) {
+            console.error(
+              `LastName mismatch: expected ${expectedLastName}, got ${dbUser.lastName}`
+            );
+            return false;
+          }
+
+          // Verify roles
+          const expectedRoles = new Set(user.roles || ["user"]);
+          const actualRoles = new Set(
+            dbUser.userRoles.map((ur: any) => ur.role.key)
+          );
+
+          const missingRoles = [...expectedRoles].filter(
+            (r) => !actualRoles.has(r)
+          );
+          const extraRoles = [...actualRoles].filter(
+            (r) => !expectedRoles.has(r)
+          );
+
+          if (missingRoles.length > 0 || extraRoles.length > 0) {
+            console.error(
+              `Role mismatch: missing ${missingRoles.join(", ")}, extra ${extraRoles.join(", ")}`
+            );
+            return false;
+          }
+
+          return true;
+        };
+
+        if (!verifyUserData(dbUser)) {
+          throw new Error("User data not saved correctly");
+        }
+
+        return dbUser;
+      });
+
+      return result;
+    } catch (dbError) {
+      console.error(
+        `Attempt ${attempt}: Error in createOrUpdateUser:`,
+        dbError
+      );
+      if (attempt === maxRetries) {
+        throw dbError;
+      }
+      // Add a small delay between retries
+      await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+    }
+  }
+  throw new Error("Failed to create or update user after max retries");
+}
+
 export async function POST(req: Request) {
   try {
     const token = await req.text();
@@ -71,7 +211,6 @@ export async function POST(req: Request) {
         };
 
         const updatedUser = await createOrUpdateUser(userDataForDb);
-
         console.log(
           "User upserted in database:",
           JSON.stringify(updatedUser, null, 2)
@@ -95,135 +234,4 @@ export async function POST(req: Request) {
   } finally {
     await prisma.$disconnect();
   }
-}
-
-async function createOrUpdateUser(user: any, maxRetries = 5) {
-  console.log(
-    "Starting createOrUpdateUser with user data:",
-    JSON.stringify(user, null, 2)
-  );
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const result = await prisma.$transaction(async (prisma) => {
-        const dbUser = await prisma.user.upsert({
-          where: { kindeId: user.id },
-          update: {
-            email: user.email,
-            phone: user.phone,
-            firstName: user.given_name,
-            lastName: user.family_name,
-            name: `${user.given_name} ${user.family_name}`.trim(),
-            userRoles: {
-              deleteMany: {}, // Remove existing roles
-              create: (user.roles || ["user"]).map((role: string) => ({
-                role: {
-                  connectOrCreate: {
-                    where: { key: role },
-                    create: { key: role, name: role }
-                  }
-                }
-              }))
-            }
-          },
-          create: {
-            kindeId: user.id,
-            email: user.email,
-            phone: user.phone,
-            firstName: user.given_name,
-            lastName: user.family_name,
-            name: `${user.given_name} ${user.family_name}`.trim(),
-            visits: 0,
-            nextVisitFree: false,
-            userRoles: {
-              create: (user.roles || ["user"]).map((role: string) => ({
-                role: {
-                  connectOrCreate: {
-                    where: { key: role },
-                    create: { key: role, name: role }
-                  }
-                }
-              }))
-            }
-          },
-          include: {
-            userRoles: {
-              include: {
-                role: true
-              }
-            }
-          }
-        });
-
-        console.log(
-          `Attempt ${attempt}: User operation completed. Returned user data:`,
-          JSON.stringify(dbUser, null, 2)
-        );
-
-        // Immediate verification
-        const verifiedUser = await prisma.user.findUnique({
-          where: { kindeId: user.id },
-          include: {
-            userRoles: {
-              include: {
-                role: true
-              }
-            }
-          }
-        });
-        console.log(
-          `Attempt ${attempt}: Verified user data from database:`,
-          JSON.stringify(verifiedUser, null, 2)
-        );
-
-        if (
-          !verifiedUser ||
-          verifiedUser.firstName !== user.given_name ||
-          verifiedUser.lastName !== user.family_name ||
-          !verifiedUser.userRoles.some(ur => (user.roles || ["user"]).includes(ur.role.key))
-        ) {
-          throw new Error("User data not saved correctly");
-        }
-
-        return verifiedUser;
-      });
-
-      // Final verification (without delay)
-      const finalVerifiedUser = await prisma.user.findUnique({
-        where: { kindeId: user.id },
-        include: {
-          userRoles: {
-            include: {
-              role: true
-            }
-          }
-        }
-      });
-      console.log(
-        `Attempt ${attempt}: Final verified user data:`,
-        JSON.stringify(finalVerifiedUser, null, 2)
-      );
-
-      if (
-        !finalVerifiedUser ||
-        finalVerifiedUser.firstName !== user.given_name ||
-        finalVerifiedUser.lastName !== user.family_name ||
-        !finalVerifiedUser.userRoles.some(ur => (user.roles || ["user"]).includes(ur.role.key))
-      ) {
-        throw new Error("User data not consistent after final verification");
-      }
-
-      return finalVerifiedUser;
-    } catch (dbError) {
-      console.error(
-        `Attempt ${attempt}: Error in createOrUpdateUser:`,
-        dbError
-      );
-      if (attempt === maxRetries) {
-        throw dbError;
-      }
-      // No delay between retries
-    }
-  }
-  throw new Error("Failed to create or update user after max retries");
 }

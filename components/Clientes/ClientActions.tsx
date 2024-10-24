@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { User } from "./ClientsTable";  // Make sure this path is correct
+import { User } from "@/types/user";  
 
 interface ActionsProps {
   user: User;

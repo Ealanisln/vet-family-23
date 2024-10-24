@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
         if (!dbUser && user.email) {
           console.log("Checking if user exists with email");
-          dbUser = await prisma.user.findUnique({
+          dbUser = await prisma.user.findFirst({  // Changed from findUnique to findFirst
             where: { email: user.email },
             include: { userRoles: { include: { role: true } } },
           });
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        // Obtener roles del token de acceso
+        // Get roles from access token
         const accessToken = await getAccessToken();
 
         if (
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
           userRoles = Array.isArray(accessToken.roles) ? accessToken.roles : [];
         }
 
-        // Actualizar roles solo si han cambiado
+        // Update roles only if they've changed
         if (dbUser) {
           const currentRoles = dbUser.userRoles.map((ur) => ur.role.key);
           const newRoles = userRoles.filter(

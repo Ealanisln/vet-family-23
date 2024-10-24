@@ -13,7 +13,7 @@ generator client {
 model User {
   id                     String         @id @default(auto()) @map("_id") @db.ObjectId
   kindeId                String         @unique
-  email                  String?        @unique
+  email                  String?        // Removed @unique since we have multiple null values
   firstName              String?
   lastName               String?
   name                   String?
@@ -27,13 +27,15 @@ model User {
   visitHistory           VisitHistory[]
   pets                   Pet[]
   appointments           Appointment[]
-  billings               Billing[]
-  reminders              Reminder[]
-  userRoles              UserRole[]
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
+  billings              Billing[]
+  reminders             Reminder[]
+  userRoles             UserRole[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   @@map("users")
+  @@index([firstName, lastName, phone])
+  @@index([email]) // Add a non-unique index for email searches
 }
 
 model Role {

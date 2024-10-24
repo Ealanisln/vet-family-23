@@ -1,14 +1,9 @@
+// components/ClientsTable.tsx
 "use client";
 
 import * as React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
+import { useEffect } from "react";
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -27,186 +22,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getUsers } from "@/app/actions/get-customers";
-import Loader from "@/components/ui/loader";
-import Actions from "./ClientActions";
 
-export interface User {
-  id: string;
-  kindeId: string;
-  email: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  name: string | null;
-  phone: string | null;
-  address: string | null;
-  preferredContactMethod: string | null;
-  pet: string | null;
-  visits: number;
-  nextVisitFree: boolean;
-  lastVisit: Date | null;
-  roles: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-async function renewKindeToken() {
-  try {
-    const response = await fetch("/api/kinde-token");
-    if (!response.ok) {
-      throw new Error(`Failed to renew Kinde token: ${response.statusText}`);
-    }
-    const data = await response.json();
-    console.log("Renewed Kinde token:", data.access_token);
-    return data.access_token;
-  } catch (error) {
-    console.error("Error renewing Kinde token:", error);
-    throw error;
-  }
-}
-
-const formatPhoneNumber = (phone: string | null): string => {
-  if (!phone) return "N/A";
-  // Eliminar todos los caracteres no numéricos
-  const digits = phone.replace(/\D/g, "");
-  // Tomar los últimos 10 dígitos
-  const last10Digits = digits.slice(-10);
-  // Formatear como (XXX) XXX-XXXX
-  return last10Digits.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
-};
+import { useClientTable } from "@/hooks/useClientTable";
+import { createColumns } from "./TableColumns";
+import { LoadingTableRow } from "./LoadingTableRow";
+import { EmptyTableRow } from "./EmptyTableRow";
 
 export default function ClientsTable() {
-  const [data, setData] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
+  const {
+    data,
+    loading,
+    sorting,
+    setSorting,
+    columnFilters,
+    setColumnFilters,
+    columnVisibility,
+    setColumnVisibility,
+    rowSelection,
+    setRowSelection,
+    pagination,
+    setPagination,
+    handleDeleteUser,
+    loadUsers,
+  } = useClientTable();
 
-  const { toast } = useToast();
-
-  const handleDeleteUser = useCallback(
-    async (userId: string) => {
-      console.log(`Attempting to delete user with ID: ${userId}`);
-      try {
-        let token = await renewKindeToken();
-        console.log("Using token for delete request:", token);
-
-        const response = await fetch(`/api/user/delete`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ userId, isDeleteProfile: true }),
-        });
-
-        console.log(
-          "Delete request response:",
-          response.status,
-          await response.text()
-        );
-
-        if (response.status === 401) {
-          console.log("Received 401, attempting to renew token and retry");
-          token = await renewKindeToken();
-          console.log("Using renewed token for retry:", token);
-          const retryResponse = await fetch(`/api/user/delete`, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ userId, isDeleteProfile: true }),
-          });
-
-          console.log(
-            "Retry response:",
-            retryResponse.status,
-            await retryResponse.text()
-          );
-
-          if (!retryResponse.ok) {
-            throw new Error(
-              `Failed to delete user: ${retryResponse.statusText}`
-            );
-          }
-        } else if (!response.ok) {
-          throw new Error(`Failed to delete user: ${response.statusText}`);
-        }
-
-        console.log(`User with ID ${userId} deleted successfully`);
-        setData((prevData) => prevData.filter((user) => user.id !== userId));
-        toast({
-          title: "Éxito",
-          description: "Usuario eliminado exitosamente.",
-          variant: "default",
-        });
-      } catch (error) {
-        console.error("Error deleting user:", error);
-        toast({
-          title: "Error",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Error al eliminar el usuario.",
-          variant: "destructive",
-        });
-      }
-    },
-    [toast]
-  );
-
-  const columns = useMemo<ColumnDef<User>[]>(
-    () => [
-      {
-        accessorKey: "firstName",
-        header: "Nombre",
-        cell: ({ row }) => {
-          const firstName = row.getValue("firstName") as string | null;
-          const lastName = row.original.lastName as string | null;
-          const fullName = [firstName, lastName].filter(Boolean).join(" ");
-          return (
-            <Link
-              href={`/admin/clientes/${row.original.id}`}
-              className="hover:underline"
-            >
-              <div className="capitalize">
-                {fullName || row.original.name || "N/A"}
-              </div>
-            </Link>
-          );
-        },
-      },
-      {
-        accessorKey: "email",
-        header: "Correo",
-        cell: ({ row }) => (
-          <div className="lowercase">{row.getValue("email") || "N/A"}</div>
-        ),
-      },
-      {
-        accessorKey: "phone",
-        header: "Teléfono",
-        cell: ({ row }) => {
-          const phone = row.getValue("phone") as string | null;
-          return <div>{formatPhoneNumber(phone)}</div>;
-        },
-      },
-      {
-        id: "actions",
-        cell: ({ row }) => {
-          console.log(`Rendering Actions for user: ${row.original.id}`);
-          return <Actions user={row.original} onDelete={handleDeleteUser} />;
-        },
-      },
-    ],
+  const columns = React.useMemo(
+    () => createColumns(handleDeleteUser),
     [handleDeleteUser]
   );
 
   const table = useReactTable({
     data,
     columns,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      pagination,
+    },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -215,58 +69,13 @@ export default function ClientsTable() {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
+    onPaginationChange: setPagination,
+    manualPagination: false,
   });
 
   useEffect(() => {
-    async function fetchUsers() {
-      try {
-        setLoading(true);
-        const token = await renewKindeToken();
-        const users = await getUsers(token);
-        const transformedUsers: User[] = users.map((user: any) => ({
-          id: user.id,
-          kindeId: user.kindeId,
-          email: user.email || null,
-          firstName: user.firstName || null,
-          lastName: user.lastName || null,
-          name: user.name || null,
-          phone: user.phone || null,
-          address: user.address || null,
-          preferredContactMethod: user.preferredContactMethod || null,
-          pet: user.pet || null,
-          visits: user.visits || 0,
-          nextVisitFree: user.nextVisitFree || false,
-          lastVisit: user.lastVisit ? new Date(user.lastVisit) : null,
-          roles: user.roles || [],
-          createdAt: new Date(user.createdAt),
-          updatedAt: new Date(user.updatedAt),
-        }));
-        setData(transformedUsers);
-        console.log(`Fetched ${transformedUsers.length} users`);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch users. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchUsers();
-  }, [toast]);
-
-  const rowCount = table.getRowModel().rows.length;
-  useEffect(() => {
-    console.log(`Table data updated. Current row count: ${rowCount}`);
-  }, [rowCount]);
+    loadUsers();
+  }, [loadUsers]);
 
   return (
     <div className="w-full">
@@ -302,15 +111,7 @@ export default function ClientsTable() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  <Loader size={32} className="mx-auto" />
-                  <p className="mt-2">Cargando resultados...</p>
-                </TableCell>
-              </TableRow>
+              <LoadingTableRow colSpan={columns.length} />
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -328,14 +129,7 @@ export default function ClientsTable() {
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No se encontraron resultados.
-                </TableCell>
-              </TableRow>
+              <EmptyTableRow colSpan={columns.length} />
             )}
           </TableBody>
         </Table>

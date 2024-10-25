@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { PrismaClient } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
@@ -26,7 +28,8 @@ export async function GET(req: NextRequest) {
 
         if (!dbUser && user.email) {
           console.log("Checking if user exists with email");
-          dbUser = await prisma.user.findFirst({  // Changed from findUnique to findFirst
+          dbUser = await prisma.user.findFirst({
+            // Changed from findUnique to findFirst
             where: { email: user.email },
             include: { userRoles: { include: { role: true } } },
           });

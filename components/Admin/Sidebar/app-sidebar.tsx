@@ -74,17 +74,17 @@ const data = {
         // },
       ],
     },
-    {
-      title: "Historial Médico",
-      url: "#",
-      icon: FileText,
-      items: [
-        {
-          title: "Ver historiales",
-          url: "/admin/historiales",
-        },
-      ],
-    },
+    // {
+    //   title: "Historial Médico",
+    //   url: "#",
+    //   icon: FileText,
+    //   items: [
+    //     {
+    //       title: "Ver historiales",
+    //       url: "/admin/historiales",
+    //     },
+    //   ],
+    // },
     // {
     //   title: "Configuración",
     //   url: "/admin/configuracion",

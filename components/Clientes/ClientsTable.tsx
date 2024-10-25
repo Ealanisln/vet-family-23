@@ -1,4 +1,3 @@
-// components/ClientsTable.tsx
 "use client";
 
 import * as React from "react";
@@ -27,6 +26,7 @@ import { useClientTable } from "@/hooks/useClientTable";
 import { createColumns } from "./TableColumns";
 import { LoadingTableRow } from "./LoadingTableRow";
 import { EmptyTableRow } from "./EmptyTableRow";
+import { Search } from "lucide-react";
 
 export default function ClientsTable() {
   const {
@@ -46,10 +46,18 @@ export default function ClientsTable() {
     loadUsers,
   } = useClientTable();
 
+  // Add global search state
+  const [globalFilter, setGlobalFilter] = React.useState("");
+
   const columns = React.useMemo(
     () => createColumns(handleDeleteUser),
     [handleDeleteUser]
   );
+
+  // Function to handle global search
+  const handleSearch = React.useCallback((value: string) => {
+    setGlobalFilter(value);
+  }, []);
 
   const table = useReactTable({
     data,
@@ -60,6 +68,7 @@ export default function ClientsTable() {
       columnVisibility,
       rowSelection,
       pagination,
+      globalFilter, // Add global filter to table state
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -71,6 +80,19 @@ export default function ClientsTable() {
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     manualPagination: false,
+    // Add global filter function
+    globalFilterFn: (row, columnId, filterValue) => {
+      const searchValue = filterValue.toLowerCase();
+      const searchableColumns = ["firstName", "lastName", "email"];
+      
+      return searchableColumns.some((column) => {
+        const value = row.getValue(column);
+        return value
+          ? String(value).toLowerCase().includes(searchValue)
+          : false;
+      });
+    },
+    onGlobalFilterChange: setGlobalFilter,
   });
 
   useEffect(() => {
@@ -79,17 +101,16 @@ export default function ClientsTable() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filtrar por nombre..."
-          value={
-            (table.getColumn("firstName")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("firstName")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+      <div className="flex items-center gap-4 py-4">
+        <div className="relative flex-1 max-w-sm left-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar clientes..."
+            value={globalFilter}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-8"
+          />
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>

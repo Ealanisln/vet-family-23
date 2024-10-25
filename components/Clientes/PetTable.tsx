@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LucideCircleEllipsis } from "lucide-react";
+import { LucideCircleEllipsis, Search } from "lucide-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -46,7 +46,7 @@ export type Pet = {
   breed: string;
   userId: string;
   ownerName: string;
-  isDeceased: boolean;  // Añadimos esta propiedad
+  isDeceased: boolean;
 };
 
 export const columns: ColumnDef<Pet>[] = [
@@ -110,15 +110,13 @@ export const columns: ColumnDef<Pet>[] = [
 export default function PetsTable() {
   const [data, setData] = React.useState<Pet[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   const [showDeceased, setShowDeceased] = React.useState(false);
-
+  // Add global search state
+  const [globalFilter, setGlobalFilter] = React.useState("");
 
   React.useEffect(() => {
     async function fetchPets() {
@@ -143,6 +141,11 @@ export default function PetsTable() {
     return showDeceased ? data : data.filter(pet => !pet.isDeceased);
   }, [data, showDeceased]);
 
+  // Function to handle global search
+  const handleSearch = React.useCallback((value: string) => {
+    setGlobalFilter(value);
+  }, []);
+
   const table = useReactTable({
     data: filteredData,
     columns,
@@ -159,21 +162,36 @@ export default function PetsTable() {
       columnFilters,
       columnVisibility,
       rowSelection,
+      globalFilter,
     },
+    // Add global filter function
+    globalFilterFn: (row, columnId, filterValue) => {
+      const searchValue = filterValue.toLowerCase();
+      const searchableColumns = ["name", "species", "breed", "ownerName"];
+      
+      return searchableColumns.some((column) => {
+        const value = row.getValue(column);
+        return value
+          ? String(value).toLowerCase().includes(searchValue)
+          : false;
+      });
+    },
+    onGlobalFilterChange: setGlobalFilter,
   });
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filtrar por nombre de mascota..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <div className="ml-4 flex items-center space-x-2">
+      <div className="flex items-center gap-4 py-4">
+        <div className="relative flex-1 max-w-sm left-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar mascotas..."
+            value={globalFilter}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
           <Checkbox
             id="show-deceased"
             checked={showDeceased}
@@ -205,10 +223,7 @@ export default function PetsTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   <Loader size={32} className="mx-auto" />
                   <p className="mt-2">Cargando mascotas...</p>
                 </TableCell>
@@ -231,10 +246,7 @@ export default function PetsTable() {
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   No se encontraron mascotas.
                 </TableCell>
               </TableRow>

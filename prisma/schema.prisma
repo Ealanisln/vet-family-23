@@ -13,7 +13,7 @@ generator client {
 model User {
   id                     String         @id @default(auto()) @map("_id") @db.ObjectId
   kindeId                String         @unique
-  email                  String?        // Removed @unique since we have multiple null values
+  email                  String? // Removed @unique since we have multiple null values
   firstName              String?
   lastName               String?
   name                   String?
@@ -27,15 +27,15 @@ model User {
   visitHistory           VisitHistory[]
   pets                   Pet[]
   appointments           Appointment[]
-  billings              Billing[]
-  reminders             Reminder[]
-  userRoles             UserRole[]
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  billings               Billing[]
+  reminders              Reminder[]
+  userRoles              UserRole[]
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
 
-  @@map("users")
   @@index([firstName, lastName, phone])
   @@index([email]) // Add a non-unique index for email searches
+  @@map("users")
 }
 
 model Role {
@@ -68,24 +68,25 @@ model VisitHistory {
 }
 
 model Pet {
-  id              String           @id @default(auto()) @map("_id") @db.ObjectId
-  internalId      String?
-  userId          String           @db.ObjectId
-  user            User             @relation(fields: [userId], references: [id])
-  name            String
-  species         String
-  breed           String
-  dateOfBirth     DateTime
-  gender          String
-  weight          Float
-  microchipNumber String?
-  isNeutered      Boolean          @default(false)
-  isDeceased      Boolean          @default(false)
-  medicalHistory  MedicalHistory[]
-  vaccinations    Vaccination[]
-  appointments    Appointment[]
-  billings        Billing[]
-  reminders       Reminder[]
+  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
+  internalId          String?
+  userId              String                @db.ObjectId
+  user                User                  @relation(fields: [userId], references: [id])
+  name                String
+  species             String
+  breed               String
+  dateOfBirth         DateTime
+  gender              String
+  weight              Float
+  microchipNumber     String?
+  isNeutered          Boolean               @default(false)
+  isDeceased          Boolean               @default(false)
+  medicalHistory      MedicalHistory[]
+  vaccinations        Vaccination[]
+  appointments        Appointment[]
+  billings            Billing[]
+  reminders           Reminder[]
+  VaccinationSchedule VaccinationSchedule[]
 }
 
 model MedicalHistory {
@@ -104,9 +105,37 @@ model Vaccination {
   id                 String   @id @default(auto()) @map("_id") @db.ObjectId
   petId              String   @db.ObjectId
   pet                Pet      @relation(fields: [petId], references: [id])
-  vaccineType        String
+  vaccineType        String // Será uno de los valores del enum VaccineType
+  stage              String // Será "PUPPY" o "ADULT"
+  status             String // Será uno de los valores del enum VaccinationStatus
   administrationDate DateTime
   nextDoseDate       DateTime
+  batchNumber        String?
+  manufacturer       String?
+  veterinarianName   String?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([petId, vaccineType])
+  @@index([nextDoseDate, status])
+  @@map("vaccinations")
+}
+
+model VaccinationSchedule {
+  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  petId         String            @db.ObjectId
+  pet           Pet               @relation(fields: [petId], references: [id])
+  vaccineType   VaccineType
+  stage         VaccinationStage
+  scheduledDate DateTime
+  status        VaccinationStatus @default(PENDING)
+  reminderSent  Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([petId, scheduledDate, status])
+  @@map("vaccination_schedules")
 }
 
 model Appointment {
@@ -148,4 +177,27 @@ model Staff {
   name               String
   position           String
   contactInformation String
+}
+
+enum VaccineType {
+  DP_PUPPY // Doble Puppy
+  DHPPI // Quíntuple
+  DHPPI_L // Quíntuple + Leptospira
+  DHPPI_RL // Quíntuple + Rabia + Leptospira
+  BORDETELLA // Bordetella individual
+  SEXTUPLE // Sextuple Quantum (sin rabia)
+  SEXTUPLE_R // Sextuple con rabia
+  RABIES // Rabia individual
+}
+
+enum VaccinationStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  SCHEDULED
+}
+
+enum VaccinationStage {
+  PUPPY // Esquema de cachorro
+  ADULT // Esquema de adulto (revacunación)
 }

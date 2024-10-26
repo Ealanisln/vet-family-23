@@ -21,7 +21,7 @@ import {
   updatePetNeuteredStatus,
   updatePetDeceasedStatus,
 } from "@/app/actions/add-edit-pet";
-// import VaccinationTable from "../Vaccination";
+import { VaccinationContainer } from '@/components/Vaccination/VaccinationContainer';
 
 interface MedicalHistory {
   id: string;
@@ -292,6 +292,10 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
           )}
         </CardContent>
       </Card>
+
+      <VaccinationContainer petId={pet.id} vaccinations={pet.vaccinations} />
+
+
 
       {/* <Card>
         <CardHeader>

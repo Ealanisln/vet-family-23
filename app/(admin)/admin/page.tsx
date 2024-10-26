@@ -2,10 +2,13 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";
 import AdminDashboard from './AdminDashboard';
 
+export const dynamic = "force-dynamic"
+
 export default async function Component() {
   const { getUser, getRoles } = getKindeServerSession();
   const user = await getUser();
   const roles = await getRoles();
+
 
   const isAdmin = roles?.some((role) => role.key === "admin");
 

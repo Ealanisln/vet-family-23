@@ -23,7 +23,6 @@ const nextConfig = {
         },
       ]
     },
-    // ...other config settings
   };
   
   module.exports = nextConfig;

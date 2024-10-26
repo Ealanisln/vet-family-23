@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import ClientDetails from '@/components/Clientes/ClientDetails';
 import { getClientData } from '@/app/actions/get-client-data';
 
+export const dynamic = "force-dynamic"
+
+
 export default async function ClientProfilePage() {
   const user = await getClientData(); // Obtener los datos completos
 

@@ -107,20 +107,23 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             throw new Error("User not found after operation");
           }
 
-          // Handle null/undefined firstName/lastName
-          const expectedFirstName = user.given_name || null;
-          const expectedLastName = user.family_name || null;
-
-          if (dbUser.firstName !== expectedFirstName) {
+          // Solo verificar si hay valores nuevos que actualizar
+          if (
+            user.given_name !== undefined &&
+            user.given_name !== dbUser.firstName
+          ) {
             console.error(
-              `FirstName mismatch: expected ${expectedFirstName}, got ${dbUser.firstName}`
+              `FirstName mismatch: expected ${user.given_name}, got ${dbUser.firstName}`
             );
             return false;
           }
 
-          if (dbUser.lastName !== expectedLastName) {
+          if (
+            user.family_name !== undefined &&
+            user.family_name !== dbUser.lastName
+          ) {
             console.error(
-              `LastName mismatch: expected ${expectedLastName}, got ${dbUser.lastName}`
+              `LastName mismatch: expected ${user.family_name}, got ${dbUser.lastName}`
             );
             return false;
           }

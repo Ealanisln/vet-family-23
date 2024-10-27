@@ -1,13 +1,34 @@
-// components/TableColumns.tsx
 import { ColumnDef } from "@tanstack/react-table";
 import { User } from "@/types/user";
 import { formatPhoneNumber } from "@/utils/format";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
 import Actions from "./ClientActions";
 
 export const createColumns = (
   handleDeleteUser: (userId: string) => Promise<void>
 ): ColumnDef<User>[] => [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Seleccionar todo"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Seleccionar fila"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "firstName",
     header: "Nombre",
@@ -44,6 +65,7 @@ export const createColumns = (
   },
   {
     id: "actions",
+    header: "Acciones",
     cell: ({ row }) => (
       <Actions user={row.original} onDelete={handleDeleteUser} />
     ),

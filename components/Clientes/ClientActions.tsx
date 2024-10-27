@@ -1,6 +1,8 @@
-import React, { useState, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { LucideCircleEllipsis, Trash2 } from "lucide-react";
+import * as React from "react";
+import { MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { User } from "@/types/user";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,22 +22,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { User } from "@/types/user";  
 
 interface ActionsProps {
   user: User;
   onDelete: (userId: string) => Promise<void>;
 }
 
-const Actions: React.FC<ActionsProps> = React.memo(({ user, onDelete }) => {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+export default function ClientActions({ user, onDelete }: ActionsProps) {
+  const router = useRouter();
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
-  console.log(`Actions component rendered for user: ${user.id}`);
-
-  const handleDelete = useCallback(() => {
-    onDelete(user.id);
-    setShowDeleteDialog(false);
-  }, [user.id, onDelete]);
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await onDelete(user.id);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -42,26 +51,30 @@ const Actions: React.FC<ActionsProps> = React.memo(({ user, onDelete }) => {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
             <span className="sr-only">Abrir menú</span>
-            <LucideCircleEllipsis className="h-4 w-4" />
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => navigator.clipboard.writeText(user.id)}
+            onClick={() => router.push(`/admin/clientes/${user.id}`)}
           >
-            Copiar ID del usuario
+            <Eye className="mr-2 h-4 w-4" />
+            Ver detalles
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Ver detalles</DropdownMenuItem>
-          <DropdownMenuItem>Editar usuario</DropdownMenuItem>
-          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => router.push(`/admin/clientes/${user.id}/edit`)}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setShowDeleteDialog(true)}
-            className="text-red-600"
+            className="text-red-600 focus:text-red-600"
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Eliminar usuario
+            Eliminar
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -71,25 +84,25 @@ const Actions: React.FC<ActionsProps> = React.memo(({ user, onDelete }) => {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente la
-              cuenta del usuario y todos los datos asociados.
+              Esta acción no se puede deshacer. Se eliminará permanentemente el
+              cliente {user.firstName} {user.lastName} y todos sus datos
+              asociados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
             >
-              Eliminar
+              {isDeleting ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
   );
-});
-
-Actions.displayName = 'Actions';
-
-export default Actions;
+}

@@ -17,14 +17,6 @@ import {
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -38,18 +30,19 @@ import {
 import { getPets } from "@/app/actions/get-pets";
 import Loader from "@/components/ui/loader";
 import { Checkbox } from "../ui/checkbox";
+import PetActions from "./PetActions";
 
-export type Pet = {
+// Define a simplified Pet type for the table
+interface TablePet {
   id: string;
   name: string;
   species: string;
   breed: string;
-  userId: string;
   ownerName: string;
   isDeceased: boolean;
-};
+}
 
-export const columns: ColumnDef<Pet>[] = [
+export const columns: ColumnDef<TablePet>[] = [
   {
     accessorKey: "name",
     header: "Nombre",
@@ -86,36 +79,19 @@ export const columns: ColumnDef<Pet>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const pet = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menú</span>
-              <LucideCircleEllipsis className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Ver detalles</DropdownMenuItem>
-            <DropdownMenuItem>Editar mascota</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <PetActions pet={pet} />;
     },
   },
 ];
 
 export default function PetsTable() {
-  const [data, setData] = React.useState<Pet[]>([]);
+  const [data, setData] = React.useState<TablePet[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   const [showDeceased, setShowDeceased] = React.useState(false);
-  // Add global search state
   const [globalFilter, setGlobalFilter] = React.useState("");
 
   React.useEffect(() => {
@@ -124,7 +100,16 @@ export default function PetsTable() {
         setLoading(true);
         const result = await getPets();
         if (result.success) {
-          setData(result.pets);
+          // Transform the pets data to match TablePet type
+          const tablePets = result.pets.map(pet => ({
+            id: pet.id,
+            name: pet.name,
+            species: pet.species,
+            breed: pet.breed,
+            ownerName: pet.ownerName,
+            isDeceased: pet.isDeceased,
+          }));
+          setData(tablePets);
         } else {
           console.error("Failed to fetch pets:", result.error);
         }
@@ -141,7 +126,6 @@ export default function PetsTable() {
     return showDeceased ? data : data.filter(pet => !pet.isDeceased);
   }, [data, showDeceased]);
 
-  // Function to handle global search
   const handleSearch = React.useCallback((value: string) => {
     setGlobalFilter(value);
   }, []);
@@ -164,7 +148,6 @@ export default function PetsTable() {
       rowSelection,
       globalFilter,
     },
-    // Add global filter function
     globalFilterFn: (row, columnId, filterValue) => {
       const searchValue = filterValue.toLowerCase();
       const searchableColumns = ["name", "species", "breed", "ownerName"];

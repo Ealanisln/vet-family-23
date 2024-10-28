@@ -9,6 +9,9 @@ import {
   UserX,
   LucideIcon,
   UserPlus,
+  FolderCheck,
+  FolderArchive,
+  FolderClock,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
@@ -47,6 +50,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { title: "Propietarios", icon: User, href: "/admin/clientes" },
     { title: "Nuevo Propietario", icon: UserPlus, href: "/admin/clientes/nuevo-cliente" },
     { title: "Mascotas", icon: PawPrint, href: "/admin/mascotas" },
+    { title: "Lista clientes (Archivo histórico)", icon: FolderClock, href: "/admin/archivo-historico" },
     {
       title: "Reportar un Problema",
       icon: AlertCircle,

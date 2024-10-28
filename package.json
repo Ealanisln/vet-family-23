@@ -102,6 +102,7 @@
     "@types/mongoose": "^5.11.97",
     "@types/node": "^22.8.1",
     "@types/nodemailer": "^6.4.16",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }
 }

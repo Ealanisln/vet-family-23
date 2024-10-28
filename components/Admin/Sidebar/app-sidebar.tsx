@@ -11,7 +11,8 @@ import {
   PlusCircle,
   Settings2,
   FileText,
-  Dog
+  Dog,
+  History
 } from "lucide-react";
 
 import { NavMain } from "@/components/Admin/Sidebar/nav-main";
@@ -68,38 +69,8 @@ const data = {
           title: "Ver todas",
           url: "/admin/mascotas",
         },
-        // {
-        //   title: "Agregar nueva",
-        //   url: "/admin/mascotas/nueva",
-        // },
       ],
     },
-    // {
-    //   title: "Historial Médico",
-    //   url: "#",
-    //   icon: FileText,
-    //   items: [
-    //     {
-    //       title: "Ver historiales",
-    //       url: "/admin/historiales",
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: "Configuración",
-    //   url: "/admin/configuracion",
-    //   icon: Settings2,
-    //   items: [
-    //     {
-    //       title: "General",
-    //       url: "/admin/configuracion/general",
-    //     },
-    //     {
-    //       title: "Perfil",
-    //       url: "/admin/configuracion/perfil",
-    //     },
-    //   ],
-    // },
   ],
 };
 
@@ -121,6 +92,26 @@ const AddMedicalRecordButton = React.forwardRef<
 ));
 AddMedicalRecordButton.displayName = "AddMedicalRecordButton";
 
+const HistoricalArchiveButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<"button">
+>((props, ref) => (
+  <SidebarMenuButton
+    ref={ref}
+    asChild
+    tooltip="Archivo Histórico"
+    className="group-data-[collapsible=icon]:justify-center"
+  >
+    <Link href="/admin/archivo-historico">
+      <History className="h-4 w-4" />
+      <span className="group-data-[collapsible=icon]:hidden">
+        Archivo Histórico
+      </span>
+    </Link>
+  </SidebarMenuButton>
+));
+HistoricalArchiveButton.displayName = "HistoricalArchiveButton";
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" className="border-r bg-background" {...props}>
@@ -134,6 +125,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <MedicalRecordDialog
               triggerButton={<AddMedicalRecordButton />}
             />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <HistoricalArchiveButton />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>

@@ -1,4 +1,3 @@
-// UserRegistrationForm.tsx
 "use client";
 
 import React from "react";
@@ -92,10 +91,7 @@ export default function UserRegistrationForm() {
       const responseData = await response.json();
       console.log("User registered:", responseData);
 
-      // Extract the userId from the response
       const userId = responseData.dbUser.id;
-
-      // Redirect to the success page with the userId
       router.push(`/admin/clientes/registro-exitoso?userId=${userId}`);
     } catch (err) {
       setError(
@@ -108,49 +104,63 @@ export default function UserRegistrationForm() {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Datos generales</CardTitle>
+    <Card className="w-full max-w-2xl mx-auto bg-gradient-to-br from-white via-white to-blue-50 border-none shadow-lg">
+      <CardHeader className="p-6">
+        <CardTitle className="text-2xl font-semibold text-gray-800">
+          Datos generales
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="given_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nombre</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="family_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Apellido</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="given_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700">Nombre</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        className="h-11 border-[#47b3b6]/20 focus:border-[#47b3b6]/50 rounded-xl bg-white"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red-500" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="family_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700">Apellido</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        className="h-11 border-[#47b3b6]/20 focus:border-[#47b3b6]/50 rounded-xl bg-white"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red-500" />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Correo electrónico</FormLabel>
+                  <FormLabel className="text-gray-700">Correo electrónico</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} />
+                    <Input 
+                      type="email" 
+                      {...field} 
+                      className="h-11 border-[#47b3b6]/20 focus:border-[#47b3b6]/50 rounded-xl bg-white"
+                    />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -159,21 +169,30 @@ export default function UserRegistrationForm() {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Teléfono</FormLabel>
+                  <FormLabel className="text-gray-700">Teléfono</FormLabel>
                   <FormControl>
-                    <Input type="tel" {...field} />
+                    <Input 
+                      type="tel" 
+                      {...field} 
+                      className="h-11 border-[#47b3b6]/20 focus:border-[#47b3b6]/50 rounded-xl bg-white"
+                    />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
             {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+              <Alert variant="destructive" className="bg-red-50 border-red-200">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-600">
+                  {error}
+                </AlertDescription>
               </Alert>
             )}
-            <Button type="submit" className="w-full">
+            <Button 
+              type="submit" 
+              className="w-full bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white rounded-xl h-11"
+            >
               Registrar usuario
             </Button>
           </form>

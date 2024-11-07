@@ -27,7 +27,7 @@ export default function AdminLayout({
           {" "}
           {/* Added w-full */}
           {!isHomePage && (
-            <header className="sticky top-0 z-10 border-b bg-background px-4 py-2 sm:px-6 lg:px-8">
+            <header className="sticky top-0 z-10 border-b bg-background px-4 py-4 sm:px-6 lg:px-8">
               <SidebarTrigger />
 
               <div className="flex items-center justify-between">

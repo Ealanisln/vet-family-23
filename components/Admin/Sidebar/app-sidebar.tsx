@@ -3,16 +3,20 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  Home,
   Users,
   PawPrint,
   AlertCircle,
-  LogOut,
   PlusCircle,
-  Settings2,
-  FileText,
   Dog,
-  History
+  History,
+  Package,
+  Calendar,
+  Pill,
+  Syringe,
+  CircleDollarSign,
+  ClipboardList,
+  Settings,
+  LogOut
 } from "lucide-react";
 
 import { NavMain } from "@/components/Admin/Sidebar/nav-main";
@@ -46,17 +50,19 @@ const data = {
   ],
   navMain: [
     {
-      title: "Propietarios",
+      title: "Clientes",
       url: "/admin/clientes",
       icon: Users,
       items: [
         {
           title: "Ver todos",
           url: "/admin/clientes",
+          icon: Users,
         },
         {
           title: "Agregar nuevo",
           url: "/admin/clientes/nuevo-cliente",
+          icon: PlusCircle,
         },
       ],
     },
@@ -68,9 +74,54 @@ const data = {
         {
           title: "Ver todas",
           url: "/admin/mascotas",
+          icon: PawPrint,
+        },
+        {
+          title: "Historial Médico",
+          url: "/admin/mascotas/historial",
+          icon: ClipboardList,
         },
       ],
     },
+    {
+      title: "Inventario",
+      url: "/admin/inventario",
+      icon: Package,
+      items: [
+        {
+          title: "Productos",
+          url: "/admin/inventario",
+          icon: Package,
+        },
+        {
+          title: "Medicamentos",
+          url: "/admin/inventario/medicamentos",
+          icon: Pill,
+        },
+        {
+          title: "Vacunas",
+          url: "/admin/inventario/vacunas",
+          icon: Syringe,
+        },
+      ],
+    },
+    // {
+    //   title: "Agenda",
+    //   url: "/admin/agenda",
+    //   icon: Calendar,
+    //   items: [
+    //     {
+    //       title: "Citas",
+    //       url: "/admin/agenda/citas",
+    //       icon: Calendar,
+    //     },
+    //     {
+    //       title: "Pagos",
+    //       url: "/admin/agenda/pagos",
+    //       icon: CircleDollarSign,
+    //     },
+    //   ],
+    // },
   ],
 };
 
@@ -81,7 +132,7 @@ const AddMedicalRecordButton = React.forwardRef<
   <SidebarMenuButton
     ref={ref}
     tooltip="Agregar Historial Médico"
-    className="group-data-[collapsible=icon]:justify-center"
+    className="group-data-[collapsible=icon]:justify-center hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200"
     {...props}
   >
     <PlusCircle className="h-4 w-4" />
@@ -100,7 +151,7 @@ const HistoricalArchiveButton = React.forwardRef<
     ref={ref}
     asChild
     tooltip="Archivo Histórico"
-    className="group-data-[collapsible=icon]:justify-center"
+    className="group-data-[collapsible=icon]:justify-center hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200"
   >
     <Link href="/admin/archivo-historico">
       <History className="h-4 w-4" />
@@ -114,16 +165,35 @@ HistoricalArchiveButton.displayName = "HistoricalArchiveButton";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" className="border-r bg-background" {...props}>
-      <SidebarHeader>
+    <Sidebar 
+      collapsible="icon" 
+      className="border-r bg-gradient-to-b from-white to-blue-50 border-r-[#47b3b6]/20" 
+      {...props}
+    >
+      <SidebarHeader className="border-b border-[#47b3b6]/20">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="py-4">
+        {/* Removemos las props que causaban el error */}
         <NavMain items={data.navMain} />
-        <SidebarMenu>
+        <style jsx global>{`
+          /* Estilos globales para los elementos del NavMain */
+          .sidebar-menu-button {
+            @apply hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200;
+          }
+          .sidebar-menu-button[data-active="true"] {
+            @apply bg-[#47b3b6]/15 text-[#47b3b6] font-medium;
+          }
+          .sidebar-menu {
+            @apply space-y-1;
+          }
+        `}</style>
+        <SidebarMenu className="mt-6 px-2">
           <SidebarMenuItem>
             <MedicalRecordDialog
-              triggerButton={<AddMedicalRecordButton />}
+              triggerButton={
+                <AddMedicalRecordButton className="hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200" />
+              }
             />
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -131,13 +201,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
+      <SidebarFooter className="border-t border-[#47b3b6]/20">
+        <SidebarMenu className="px-2">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Configuración"
+              className="group-data-[collapsible=icon]:justify-center hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200"
+            >
+              <Link href="/admin/configuracion">
+                <Settings className="h-4 w-4" />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  Configuración
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               tooltip="Reportar un problema"
-              className="group-data-[collapsible=icon]:justify-center"
+              className="group-data-[collapsible=icon]:justify-center hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200"
             >
               <Link href="mailto:emmanuel@alanis.dev">
                 <AlertCircle className="h-4 w-4" />
@@ -147,10 +231,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Cerrar Sesión"
+              className="group-data-[collapsible=icon]:justify-center hover:bg-red-100 hover:text-red-600 transition-colors duration-200"
+            >
+              <Link href="/api/auth/logout">
+                <LogOut className="h-4 w-4" />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  Cerrar Sesión
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
+        {/* Removemos la prop className del NavUser */}
         <NavUser user={data.user} />
       </SidebarFooter>
-      <SidebarRail />
+      <SidebarRail className="bg-[#47b3b6]/5" />
     </Sidebar>
   );
 }

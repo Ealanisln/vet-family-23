@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
@@ -10,10 +7,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Existing models remain exactly the same
 model User {
   id                     String         @id @default(auto()) @map("_id") @db.ObjectId
   kindeId                String         @unique
-  email                  String? // Removed @unique since we have multiple null values
+  email                  String?
   firstName              String?
   lastName               String?
   name                   String?
@@ -27,14 +25,15 @@ model User {
   visitHistory           VisitHistory[]
   pets                   Pet[]
   appointments           Appointment[]
-  billings               Billing[]
-  reminders              Reminder[]
-  userRoles              UserRole[]
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
+  billings              Billing[]
+  reminders             Reminder[]
+  userRoles             UserRole[]
+  inventoryMovements    InventoryMovement[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   @@index([firstName, lastName, phone])
-  @@index([email]) // Add a non-unique index for email searches
+  @@index([email])
   @@map("users")
 }
 
@@ -105,9 +104,9 @@ model Vaccination {
   id                 String   @id @default(auto()) @map("_id") @db.ObjectId
   petId              String   @db.ObjectId
   pet                Pet      @relation(fields: [petId], references: [id])
-  vaccineType        String // Será uno de los valores del enum VaccineType
-  stage              String // Será "PUPPY" o "ADULT"
-  status             String // Será uno de los valores del enum VaccinationStatus
+  vaccineType        String
+  stage              String
+  status             String
   administrationDate DateTime
   nextDoseDate       DateTime
   batchNumber        String?
@@ -179,15 +178,16 @@ model Staff {
   contactInformation String
 }
 
+// Existing enums
 enum VaccineType {
-  DP_PUPPY // Doble Puppy
-  DHPPI // Quíntuple
-  DHPPI_L // Quíntuple + Leptospira
-  DHPPI_RL // Quíntuple + Rabia + Leptospira
-  BORDETELLA // Bordetella individual
-  SEXTUPLE // Sextuple Quantum (sin rabia)
-  SEXTUPLE_R // Sextuple con rabia
-  RABIES // Rabia individual
+  DP_PUPPY
+  DHPPI
+  DHPPI_L
+  DHPPI_RL
+  BORDETELLA
+  SEXTUPLE
+  SEXTUPLE_R
+  RABIES
 }
 
 enum VaccinationStatus {
@@ -198,6 +198,77 @@ enum VaccinationStatus {
 }
 
 enum VaccinationStage {
-  PUPPY // Esquema de cachorro
-  ADULT // Esquema de adulto (revacunación)
+  PUPPY
+  ADULT
+}
+
+// New inventory models and enums
+enum InventoryCategory {
+  MEDICINE
+  SURGICAL_MATERIAL
+  VACCINE
+  FOOD
+  ACCESSORY
+  CONSUMABLE
+}
+
+enum InventoryStatus {
+  ACTIVE
+  INACTIVE
+  LOW_STOCK
+  OUT_OF_STOCK
+  EXPIRED
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  RETURN
+  EXPIRED
+}
+
+model InventoryItem {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  category        InventoryCategory
+  description     String?
+  activeCompound  String?
+  presentation    String?
+  measure         String?
+  brand           String?
+  quantity        Int               @default(0)
+  minStock        Int?
+  location        String?
+  expirationDate  DateTime?
+  status          InventoryStatus   @default(ACTIVE)
+  batchNumber     String?
+  specialNotes    String?
+  movements       InventoryMovement[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([category])
+  @@index([name])
+  @@index([status])
+  @@index([expirationDate])
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  itemId          String         @db.ObjectId
+  item            InventoryItem  @relation(fields: [itemId], references: [id])
+  type            MovementType
+  quantity        Int
+  date            DateTime       @default(now())
+  reason          String?
+  userId          String         @db.ObjectId
+  user            User           @relation(fields: [userId], references: [id])
+  relatedRecordId String?        @db.ObjectId
+  notes           String?
+
+  @@index([itemId, date])
+  @@index([userId])
+  @@map("inventory_movements")
 }

@@ -7,15 +7,11 @@ interface CustomLayoutProps {
 }
 
 export default async function MainLayout({ children }: CustomLayoutProps) {
-;
-
   return (
-    <div className="">
-        <div className="">
-          <Navbar />
-          <main className="">{children}</main>
-        </div>
-        <Footer />
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }

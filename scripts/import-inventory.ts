@@ -5,80 +5,51 @@ import path from 'path'
 
 const prisma = new PrismaClient()
 
-interface VaccineData {
+interface AccessoryData {
   CANTIDAD: string
-  'NOMBRE VACUNA': string
-  FORMULA: string
-  'FECHA CAD DILUENTE': string
-  'CAD VAC': string
+  NOMBRE: string
   SALIDA: string
   TOTAL: string
+  'No.'?: string // Para los collares isabelinos
 }
 
-const parseDate = (dateStr: string): Date | null => {
-  if (!dateStr || dateStr.trim() === '') return null
-  
-  const months: { [key: string]: string } = {
-    'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04', 
-    'may': '05', 'jun': '06', 'jul': '07', 'ago': '08',
-    'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12'
-  }
-
-  // Normalizar el string de fecha
-  dateStr = dateStr.toLowerCase().trim()
-
-  // Formato: mm/dd/yyyy
-  if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-    return new Date(dateStr)
-  }
-
-  // Formato: d-mmm-yy
-  const monthFormat = /^(\d{1,2})-([a-zá-ú]{3})-(\d{2})$/
-  const monthMatch = dateStr.match(monthFormat)
-  if (monthMatch) {
-    const [_, day, month, year] = monthMatch
-    const monthNum = months[month] || '01'
-    return new Date(`20${year}-${monthNum}-${day.padStart(2, '0')}`)
-  }
-
-  // Formato: mmm-yy
-  const shortFormat = /^([a-zá-ú]{3})-(\d{2})$/
-  const shortMatch = dateStr.match(shortFormat)
-  if (shortMatch) {
-    const [_, month, year] = shortMatch
-    const monthNum = months[month] || '01'
-    return new Date(`20${year}-${monthNum}-01`)
-  }
-
-  return null
-}
-
-async function getOrCreateSystemUser() {
-  const systemUser = await prisma.user.findFirst({
+async function getAdminUser() {
+  const adminUser = await prisma.user.findFirst({
     where: {
-      email: 'system@veterinaria.local'
+      id: '66f6148b4cd23e60e0bffb49'
     }
   })
 
-  if (systemUser) return systemUser.id
+  if (!adminUser) {
+    throw new Error('No se encontró el usuario administrador')
+  }
 
-  const newSystemUser = await prisma.user.create({
-    data: {
-      kindeId: 'system-user',
-      email: 'system@veterinaria.local',
-      name: 'System',
-    }
-  })
-
-  return newSystemUser.id
+  return adminUser.id
 }
 
-async function importInventory() {
+function processIsabelineCollars(records: any[]): AccessoryData[] {
+  const isabelineCollars: AccessoryData[] = []
+  
+  records.forEach(record => {
+    if (record['NOMBRE']?.includes('COLLAR ISABELINO') && record['No.']) {
+      isabelineCollars.push({
+        CANTIDAD: record.CANTIDAD || '0',
+        NOMBRE: `COLLAR ISABELINO #${record['No.']}`,
+        SALIDA: record.SALIDA || '0',
+        TOTAL: record.TOTAL || record.CANTIDAD || '0'
+      })
+    }
+  })
+  
+  return isabelineCollars
+}
+
+async function importAccessoryInventory() {
   try {
-    console.log('Iniciando proceso de importación...')
+    console.log('Iniciando proceso de importación de accesorios...')
     
     // Leer el archivo
-    const filePath = path.join(process.cwd(), 'scripts/data.csv')
+    const filePath = path.join(process.cwd(), 'scripts/accesorios.csv')
     console.log('Buscando archivo en:', filePath)
     
     if (!fs.existsSync(filePath)) {
@@ -89,8 +60,8 @@ async function importInventory() {
 
     // Leer y preprocesar el contenido
     let fileContent = fs.readFileSync(filePath, 'utf-8')
-    // Eliminar la primera línea que contiene ",,VACUNAS,,,,"
-    fileContent = fileContent.split('\n').slice(1).join('\n')
+    // Eliminar las primeras líneas que contienen ",,,,", ",,ACCESORIOS ,,"
+    fileContent = fileContent.split('\n').slice(2).join('\n')
 
     // Parsear el CSV
     const records = parse(fileContent, {
@@ -98,51 +69,51 @@ async function importInventory() {
       skip_empty_lines: true,
       trim: true,
       relaxColumnCount: true
-    }) as VaccineData[]
+    })
 
-    console.log(`\nRegistros encontrados: ${records.length}`)
+    // Procesar los collares isabelinos por separado
+    const isabelineCollars = processIsabelineCollars(records)
     
-    const systemUserId = await getOrCreateSystemUser()
-    console.log('ID de usuario del sistema:', systemUserId)
+    // Combinar registros normales (excluyendo collares isabelinos duplicados) con los collares isabelinos procesados
+    const allRecords = [
+      ...records.filter((r: any) => !r['NOMBRE']?.includes('COLLAR ISABELINO')),
+      ...isabelineCollars
+    ] as AccessoryData[]
 
-    for (const record of records) {
-      if (!record['NOMBRE VACUNA'] || record['NOMBRE VACUNA'].trim() === '') {
-        console.log('Saltando registro sin nombre de vacuna')
+    console.log(`\nRegistros encontrados: ${allRecords.length}`)
+    
+    const adminId = await getAdminUser()
+    console.log('ID del administrador:', adminId)
+
+    for (const record of allRecords) {
+      if (!record.NOMBRE || record.NOMBRE.trim() === '') {
+        console.log('Saltando registro sin nombre')
         continue
       }
 
-      const vaccineName = record['NOMBRE VACUNA'].trim()
-      console.log('\nProcesando vacuna:', vaccineName)
+      const productName = record.NOMBRE.trim()
+      console.log('\nProcesando producto:', productName)
 
       const initialQuantity = parseInt(record.CANTIDAD) || 0
       const outQuantity = parseInt(record.SALIDA) || 0
       const currentQuantity = record.TOTAL ? parseInt(record.TOTAL) : (initialQuantity - outQuantity)
 
       console.log({
-        nombre: vaccineName,
+        nombre: productName,
         cantidadInicial: initialQuantity,
         salidas: outQuantity,
-        total: currentQuantity,
-        fechaCaducidad: record['CAD VAC'],
-        fechaDiluente: record['FECHA CAD DILUENTE']
+        total: currentQuantity
       })
 
       try {
-        const expirationDate = parseDate(record['CAD VAC'])
-        const diluentDate = parseDate(record['FECHA CAD DILUENTE'])
-
         // Crear item de inventario
         const inventoryItem = await prisma.inventoryItem.create({
           data: {
-            name: vaccineName,
-            category: 'VACCINE',
-            description: record.FORMULA || null,
+            name: productName,
+            category: 'ACCESSORY' as InventoryCategory,
             quantity: currentQuantity,
             status: currentQuantity <= 0 ? 'OUT_OF_STOCK' : 
                    currentQuantity <= 2 ? 'LOW_STOCK' : 'ACTIVE',
-            expirationDate,
-            specialNotes: diluentDate ? 
-              `Diluente caduca: ${diluentDate.toLocaleDateString('es-ES')}` : null,
             minStock: 2,
           },
         })
@@ -156,8 +127,8 @@ async function importInventory() {
               itemId: inventoryItem.id,
               type: 'IN',
               quantity: initialQuantity,
-              reason: 'Importación inicial del inventario',
-              userId: systemUserId,
+              reason: 'Importación inicial del inventario de accesorios',
+              userId: adminId,
             },
           })
           console.log('Movimiento de entrada creado:', movement.id)
@@ -171,14 +142,14 @@ async function importInventory() {
               type: 'OUT',
               quantity: outQuantity,
               reason: 'Salida registrada en importación inicial',
-              userId: systemUserId,
+              userId: adminId,
             },
           })
           console.log('Movimiento de salida creado:', movement.id)
         }
 
       } catch (error) {
-        console.error('Error al procesar la vacuna:', vaccineName, error)
+        console.error('Error al procesar el producto:', productName, error)
       }
     }
 
@@ -191,7 +162,7 @@ async function importInventory() {
   }
 }
 
-importInventory()
+importAccessoryInventory()
   .catch((error) => {
     console.error('Error al importar el inventario:', error)
     process.exit(1)

@@ -1,8 +1,9 @@
-// app/inventory/page.tsx
-'use client';
+//components/Inventory/Products.tsx
 
-import * as React from 'react';
-import { Search, AlertTriangle, Plus } from 'lucide-react';
+"use client";
+
+import * as React from "react";
+import { Search, AlertTriangle, Plus } from "lucide-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -14,10 +15,10 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
+} from "@tanstack/react-table";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -25,140 +26,135 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Card } from '@/components/ui/card';
+} from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
-  DialogFooter
-} from '@/components/ui/dialog';
-import Loader from '@/components/ui/loader';
-import { Badge, BadgeProps } from '@/components/ui/custom-badge';
-import { getInventory, updateInventoryItem } from '@/app/actions/inventory';
+  DialogFooter,
+} from "@/components/ui/dialog";
+import Loader from "@/components/ui/loader";
+import { Badge, BadgeProps } from "@/components/ui/custom-badge";
+import {
+  createInventoryItem,
+  getInventory,
+  updateInventoryItem,
+} from "@/app/actions/inventory";
 import { toast, useToast } from "@/components/ui/use-toast";
-import { UpdateInventoryData } from './types';
+import {
+  InventoryItem,
+  InventoryItemFormData,
+  UpdateInventoryData,
+} from "./types";
+import InventoryItemForm from "./ui/InventoryItemForm";
+import { useState } from "react";
 
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  quantity: number;
-  minStock: number | null;
-  status: string;
-  expirationDate: string | null;
-  location: string | null;
-  description: string | null;
-  activeCompound: string | null;
-  presentation: string | null;
-  measure: string | null;
-  brand: string | null;
-  movements: Array<{
-    type: string;
-    quantity: number;
-    date: string;
-    user: {
-      name: string | null;
-    } | null;
-  }>;
-}
-
-const getStatusBadgeVariant = (status: string): BadgeProps['variant'] => {
-  const statusMap: Record<string, BadgeProps['variant']> = {
-    ACTIVE: 'success',
-    INACTIVE: 'secondary',
-    LOW_STOCK: 'warning',
-    OUT_OF_STOCK: 'destructive',
-    EXPIRED: 'destructive',
+const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
+  const statusMap: Record<string, BadgeProps["variant"]> = {
+    ACTIVE: "success",
+    INACTIVE: "secondary",
+    LOW_STOCK: "warning",
+    OUT_OF_STOCK: "destructive",
+    EXPIRED: "destructive",
   };
   return statusMap[status];
 };
 
 const formatDate = (date: string | null) => {
-  if (!date) return '-';
-  return new Date(date).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
 export default function Inventory() {
   const [data, setData] = React.useState<InventoryItem[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = React.useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = React.useState<string | null>(null);
-  const [globalFilter, setGlobalFilter] = React.useState('');
-  const [selectedItem, setSelectedItem] = React.useState<InventoryItem | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [isNewItemFormOpen, setIsNewItemFormOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const columns: ColumnDef<InventoryItem>[] = [
     {
-      accessorKey: 'name',
-      header: 'Nombre',
+      accessorKey: "name",
+      header: "Nombre",
       cell: ({ row }) => {
-        const isLowStock = ['LOW_STOCK', 'OUT_OF_STOCK'].includes(row.original.status);
+        const isLowStock = ["LOW_STOCK", "OUT_OF_STOCK"].includes(
+          row.original.status
+        );
         return (
-          <button 
+          <button
             onClick={() => {
               setSelectedItem(row.original);
               setIsDialogOpen(true);
             }}
             className="flex items-center gap-2 hover:text-[#47b3b6] transition-colors"
           >
-            <span className="font-medium">{row.getValue('name')}</span>
-            {isLowStock && <AlertTriangle className="h-4 w-4 text-orange-500" />}
+            <span className="font-medium">{row.getValue("name")}</span>
+            {isLowStock && (
+              <AlertTriangle className="h-4 w-4 text-orange-500" />
+            )}
           </button>
         );
       },
     },
     {
-      accessorKey: 'category',
-      header: 'Categoría',
+      accessorKey: "category",
+      header: "Categoría",
       cell: ({ row }) => {
         const categoryMap: Record<string, string> = {
-          MEDICINE: 'Medicina',
-          SURGICAL_MATERIAL: 'Material Quirúrgico',
-          VACCINE: 'Vacuna',
-          FOOD: 'Alimento',
-          ACCESSORY: 'Accesorio',
-          CONSUMABLE: 'Consumible',
+          MEDICINE: "Medicina",
+          SURGICAL_MATERIAL: "Material Quirúrgico",
+          VACCINE: "Vacuna",
+          FOOD: "Alimento",
+          ACCESSORY: "Accesorio",
+          CONSUMABLE: "Consumible",
         };
         return <div>{categoryMap[row.original.category]}</div>;
       },
     },
     {
-      accessorKey: 'quantity',
-      header: 'Cantidad',
+      accessorKey: "quantity",
+      header: "Cantidad",
       cell: ({ row }) => (
-        <div className="text-right">{row.getValue('quantity')}</div>
+        <div className="text-right">{row.getValue("quantity")}</div>
       ),
     },
     {
-      accessorKey: 'status',
-      header: 'Estado',
+      accessorKey: "status",
+      header: "Estado",
       cell: ({ row }) => {
-        const status = row.getValue('status') as string;
+        const status = row.getValue("status") as string;
         const statusMap: Record<string, string> = {
-          ACTIVE: 'Activo',
-          INACTIVE: 'Inactivo',
-          LOW_STOCK: 'Stock Bajo',
-          OUT_OF_STOCK: 'Sin Stock',
-          EXPIRED: 'Expirado',
+          ACTIVE: "Activo",
+          INACTIVE: "Inactivo",
+          LOW_STOCK: "Stock Bajo",
+          OUT_OF_STOCK: "Sin Stock",
+          EXPIRED: "Expirado",
         };
         return (
           <Badge variant={getStatusBadgeVariant(status)}>
@@ -168,27 +164,33 @@ export default function Inventory() {
       },
     },
     {
-      accessorKey: 'location',
-      header: 'Ubicación',
-      cell: ({ row }) => row.getValue('location') || '-',
+      accessorKey: "location",
+      header: "Ubicación",
+      cell: ({ row }) => row.getValue("location") || "-",
     },
     {
-      accessorKey: 'expirationDate',
-      header: 'Fecha de Expiración',
-      cell: ({ row }) => formatDate(row.getValue('expirationDate') as string | null),
+      accessorKey: "expirationDate",
+      header: "Fecha de Expiración",
+      cell: ({ row }) =>
+        formatDate(row.getValue("expirationDate") as string | null),
     },
     {
-      accessorKey: 'movements',
-      header: 'Último Movimiento',
+      accessorKey: "movements",
+      header: "Último Movimiento",
       cell: ({ row }) => {
         const movements = row.original.movements;
-        if (!movements?.length) return '-';
-        
+        if (!movements?.length) return "-";
+
         const lastMovement = movements[0];
         return (
           <div className="text-sm">
-            <span className={lastMovement.type === 'IN' ? 'text-green-600' : 'text-red-600'}>
-              {lastMovement.type === 'IN' ? '+' : '-'}{lastMovement.quantity}
+            <span
+              className={
+                lastMovement.type === "IN" ? "text-green-600" : "text-red-600"
+              }
+            >
+              {lastMovement.type === "IN" ? "+" : "-"}
+              {lastMovement.quantity}
             </span>
             <span className="text-gray-500 ml-2">
               {formatDate(lastMovement.date)}
@@ -212,11 +214,11 @@ export default function Inventory() {
       if (result.success && result.items) {
         setData(result.items);
       } else {
-        setError(result.error || 'Failed to fetch inventory');
+        setError(result.error || "Failed to fetch inventory");
         setData([]);
       }
     } catch (error) {
-      setError('An unexpected error occurred');
+      setError("An unexpected error occurred");
       setData([]);
     } finally {
       setLoading(false);
@@ -230,38 +232,96 @@ export default function Inventory() {
   const handleUpdateItem = async (id: string, newData: UpdateInventoryData) => {
     try {
       const result = await updateInventoryItem(
-        id, 
-        newData, 
-        'current-user-id', // Deberías obtener esto de tu sistema de autenticación
-        'Manual update'
+        id,
+        newData,
+        "current-user-id",
+        "Manual update"
       );
-      
+
       if (result.success) {
         toast({
           title: "Éxito",
-          description: "Item actualizado correctamente"
+          description: "Item actualizado correctamente",
         });
         fetchInventory();
       } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: result.error || "Error al actualizar item"
+          description: result.error || "Error al actualizar item",
         });
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error inesperado al actualizar"
+        description: "Error inesperado al actualizar",
       });
     }
   };
 
+  const handleEditSubmit = async (formData: InventoryItemFormData) => {
+    if (!selectedItem) return;
+
+    try {
+      // Convertir los datos del formulario al formato esperado por UpdateInventoryData
+      const updateData: UpdateInventoryData = {
+        quantity: formData.quantity,
+        minStock: formData.minStock || undefined,
+        location: formData.location || undefined,
+        status: selectedItem.status, // Mantener el status actual
+      };
+
+      await handleUpdateItem(selectedItem.id, updateData);
+
+      setIsEditFormOpen(false);
+      setIsDialogOpen(false);
+      await fetchInventory(); // Recargar datos
+
+      toast({
+        title: "Éxito",
+        description: "Item actualizado correctamente",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error al actualizar el item",
+      });
+    }
+  };
+
+  const handleNewItemSubmit = async (formData: InventoryItemFormData) => {
+    setIsSubmitting(true);
+    try {
+      const response = await createInventoryItem(formData, "Creación inicial");
+
+      if (!response.success) {
+        throw new Error(response.error);
+      }
+
+      setIsNewItemFormOpen(false);
+
+      toast({
+        title: "Éxito",
+        description: "Item creado correctamente",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Error al crear el item",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const filteredData = React.useMemo(() => {
     return data.filter((item) => {
-      const matchesCategory = !categoryFilter || item.category === categoryFilter;
+      const matchesCategory =
+        !categoryFilter || item.category === categoryFilter;
       const matchesStatus = !statusFilter || item.status === statusFilter;
       return matchesCategory && matchesStatus;
     });
@@ -285,7 +345,7 @@ export default function Inventory() {
     },
     globalFilterFn: (row, columnId, filterValue) => {
       const searchValue = filterValue.toLowerCase();
-      const searchableColumns = ['name', 'category', 'location'];
+      const searchableColumns = ["name", "category", "location"];
 
       return searchableColumns.some((column) => {
         const value = row.getValue(column);
@@ -306,30 +366,53 @@ export default function Inventory() {
           <div>
             <h4 className="font-medium text-gray-500">Detalles Básicos</h4>
             <div className="mt-2 space-y-2">
-              <p><span className="font-medium">Nombre:</span> {selectedItem.name}</p>
-              <p><span className="font-medium">Categoría:</span> {selectedItem.category}</p>
-              <p><span className="font-medium">Cantidad:</span> {selectedItem.quantity}</p>
-              <p><span className="font-medium">Stock Mínimo:</span> {selectedItem.minStock || '-'}</p>
+              <p>
+                <span className="font-medium">Nombre:</span> {selectedItem.name}
+              </p>
+              <p>
+                <span className="font-medium">Categoría:</span>{" "}
+                {selectedItem.category}
+              </p>
+              <p>
+                <span className="font-medium">Cantidad:</span>{" "}
+                {selectedItem.quantity}
+              </p>
+              <p>
+                <span className="font-medium">Stock Mínimo:</span>{" "}
+                {selectedItem.minStock || "-"}
+              </p>
             </div>
           </div>
           <div>
             <h4 className="font-medium text-gray-500">Información Adicional</h4>
             <div className="mt-2 space-y-2">
-              <p><span className="font-medium">Ubicación:</span> {selectedItem.location || '-'}</p>
-              <p><span className="font-medium">Presentación:</span> {selectedItem.presentation || '-'}</p>
-              <p><span className="font-medium">Medida:</span> {selectedItem.measure || '-'}</p>
-              <p><span className="font-medium">Marca:</span> {selectedItem.brand || '-'}</p>
+              <p>
+                <span className="font-medium">Ubicación:</span>{" "}
+                {selectedItem.location || "-"}
+              </p>
+              <p>
+                <span className="font-medium">Presentación:</span>{" "}
+                {selectedItem.presentation || "-"}
+              </p>
+              <p>
+                <span className="font-medium">Medida:</span>{" "}
+                {selectedItem.measure || "-"}
+              </p>
+              <p>
+                <span className="font-medium">Marca:</span>{" "}
+                {selectedItem.brand || "-"}
+              </p>
             </div>
           </div>
         </div>
-        
+
         {selectedItem.description && (
           <div>
             <h4 className="font-medium text-gray-500">Descripción</h4>
             <p className="mt-1">{selectedItem.description}</p>
           </div>
         )}
-        
+
         {selectedItem.activeCompound && (
           <div>
             <h4 className="font-medium text-gray-500">Compuesto Activo</h4>
@@ -338,25 +421,32 @@ export default function Inventory() {
         )}
 
         <div>
-          <h4 className="font-medium text-gray-500 mb-2">Últimos Movimientos</h4>
+          <h4 className="font-medium text-gray-500 mb-2">
+            Últimos Movimientos
+          </h4>
           <div className="space-y-2">
             {selectedItem.movements.map((movement, index) => (
-              <div 
+              <div
                 key={index}
                 className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
               >
-                <span className={movement.type === 'IN' ? 'text-green-600' : 'text-red-600'}>
-                  {movement.type === 'IN' ? '+' : '-'}{movement.quantity}
+                <span
+                  className={
+                    movement.type === "IN" ? "text-green-600" : "text-red-600"
+                  }
+                >
+                  {movement.type === "IN" ? "+" : "-"}
+                  {movement.quantity}
                 </span>
-                <span className="text-gray-500">{formatDate(movement.date)}</span>
+                <span className="text-gray-500">
+                  {formatDate(movement.date)}
+                </span>
                 {movement.user?.name && (
-                  <span className="text-gray-400">por {movement.user.name}</span>
+                  <span className="text-gray-400">
+                    por {movement.user.name}
+                  </span>
                 )}
-
-
-
-
-</div>
+              </div>
             ))}
           </div>
         </div>
@@ -383,12 +473,12 @@ export default function Inventory() {
             </div>
             <div className="flex gap-2">
               <Select
-                value={categoryFilter || 'all_categories'}
+                value={categoryFilter || "all_categories"}
                 onValueChange={(value) =>
-                  setCategoryFilter(value === 'all_categories' ? null : value)
+                  setCategoryFilter(value === "all_categories" ? null : value)
                 }
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] h-10">
                   <SelectValue placeholder="Categoría" />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,7 +486,9 @@ export default function Inventory() {
                     Todas las categorías
                   </SelectItem>
                   <SelectItem value="MEDICINE">Medicina</SelectItem>
-                  <SelectItem value="SURGICAL_MATERIAL">Material Quirúrgico</SelectItem>
+                  <SelectItem value="SURGICAL_MATERIAL">
+                    Material Quirúrgico
+                  </SelectItem>
                   <SelectItem value="VACCINE">Vacuna</SelectItem>
                   <SelectItem value="FOOD">Alimento</SelectItem>
                   <SelectItem value="ACCESSORY">Accesorio</SelectItem>
@@ -405,16 +497,18 @@ export default function Inventory() {
               </Select>
 
               <Select
-                value={statusFilter || 'all_statuses'}
+                value={statusFilter || "all_statuses"}
                 onValueChange={(value) =>
-                  setStatusFilter(value === 'all_statuses' ? null : value)
+                  setStatusFilter(value === "all_statuses" ? null : value)
                 }
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] h-10">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all_statuses">Todos los estados</SelectItem>
+                  <SelectItem value="all_statuses">
+                    Todos los estados
+                  </SelectItem>
                   <SelectItem value="ACTIVE">Activo</SelectItem>
                   <SelectItem value="INACTIVE">Inactivo</SelectItem>
                   <SelectItem value="LOW_STOCK">Stock Bajo</SelectItem>
@@ -425,14 +519,24 @@ export default function Inventory() {
 
               <Button
                 variant="outline"
-                size="icon"
-                className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6]"
+                size="default"
+                className="h-10 border-teal-200 hover:bg-teal-50 hover:text-teal-600"
+                onClick={() => setIsNewItemFormOpen(true)} // Agregar este onClick
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4 mr-2" />
+                <span>Nuevo registro</span>
               </Button>
             </div>
           </div>
         </div>
+
+        <InventoryItemForm
+          open={isNewItemFormOpen}
+          onOpenChange={setIsNewItemFormOpen}
+          initialData={null}
+          onSubmit={handleNewItemSubmit}
+          isSubmitting={isSubmitting}
+        />
 
         {/* Tabla */}
         <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
@@ -556,7 +660,7 @@ export default function Inventory() {
             {selectedItem && (
               <Button
                 onClick={() => {
-                  // Aquí iría la lógica para editar el item
+                  setIsEditFormOpen(true);
                   setIsDialogOpen(false);
                 }}
                 className="bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white"
@@ -567,6 +671,15 @@ export default function Inventory() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Formulario de Edición */}
+      <InventoryItemForm
+        open={isEditFormOpen}
+        onOpenChange={setIsEditFormOpen}
+        initialData={selectedItem}
+        onSubmit={handleEditSubmit}
+        isSubmitting={false} // Puedes añadir un estado para controlar esto si lo deseas
+      />
     </Card>
   );
 }

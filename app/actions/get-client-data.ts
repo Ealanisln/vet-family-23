@@ -1,3 +1,5 @@
+// app/actions/get-client-data.ts
+
 import { PrismaClient } from "@prisma/client";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";

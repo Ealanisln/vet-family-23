@@ -61,6 +61,7 @@ interface AdminDashboardProps {
   isAdmin: boolean;
 }
 
+// Componente MenuOption mejorado
 const MenuOption: React.FC<MenuOptionProps> = ({
   href,
   icon: Icon,
@@ -68,12 +69,8 @@ const MenuOption: React.FC<MenuOptionProps> = ({
   description,
   className,
   onClick,
-}) => (
-  <Link
-    href={href}
-    className={cn("block transition-all duration-300", className)}
-    onClick={onClick}
-  >
+}) => {
+  const cardContent = (
     <Card className="group relative overflow-hidden h-full hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-white to-blue-50 border-none">
       <div className="absolute inset-0 bg-gradient-to-br from-[#47b3b6]/5 to-[#47b3b6]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       <CardContent className="flex flex-col items-center justify-center p-8 h-full min-h-[200px] relative z-10">
@@ -90,8 +87,32 @@ const MenuOption: React.FC<MenuOptionProps> = ({
         )}
       </CardContent>
     </Card>
-  </Link>
-);
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "block w-full transition-all duration-300 cursor-pointer",
+          className
+        )}
+      >
+        {cardContent}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className={cn("block w-full transition-all duration-300", className)}
+    >
+      {cardContent}
+    </Link>
+  );
+};
 
 const Section: React.FC<SectionProps> = ({ icon: Icon, title, children }) => (
   <AccordionItem value={title.toLowerCase()} className="border-none">
@@ -138,12 +159,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       href: "/admin/mascotas",
       description: "Gestionar registro de mascotas",
     },
-    {
-      title: "Historial Médico",
-      icon: ClipboardList,
-      href: "/admin/historial-medico",
-      description: "Ver historiales clínicos",
-    },
+    // {
+    //   title: "Historial Médico",
+    //   icon: ClipboardList,
+    //   href: "/admin/historial-medico",
+    //   description: "Ver historiales clínicos",
+    // },
   ];
 
   const inventoryOptions: MenuOptionProps[] = [
@@ -165,12 +186,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       href: "/admin/inventario/vacunas",
       description: "Control de vacunas",
     },
-    {
-      title: "Movimientos",
-      icon: History,
-      href: "/admin/inventario/movimientos",
-      description: "Registro de movimientos",
-    },
+    // {
+    //   title: "Movimientos",
+    //   icon: History,
+    //   href: "/admin/inventario/movimientos",
+    //   description: "Registro de movimientos",
+    // },
   ];
 
   const appointmentOptions: MenuOptionProps[] = [
@@ -186,27 +207,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       href: "/admin/vacunacion",
       description: "Calendario de vacunación",
     },
-    // {
-    //   title: "Facturación",
-    //   icon: CircleDollarSign,
-    //   href: "/admin/facturacion",
-    //   description: "Gestionar pagos y cobros"
-    // },
   ];
 
   const administrationOptions: MenuOptionProps[] = [
     {
       title: "Archivo",
       icon: FolderClock,
-      href: "/admin/archivo",
+      href: "/admin/archivo-historico",
       description: "Archivo histórico",
     },
-    {
-      title: "Stock Bajo",
-      icon: AlertTriangle,
-      href: "/admin/inventario/bajo-stock",
-      description: "Productos por reordenar",
-    },
+    // {
+    //   title: "Stock Bajo",
+    //   icon: AlertTriangle,
+    //   href: "/admin/inventario/bajo-stock",
+    //   description: "Productos por reordenar",
+    // },
   ];
 
   const quickActions: MenuOptionProps[] = [
@@ -286,11 +301,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ))}
           </Section>
 
-          <Section title="Citas y Agenda" icon={Calendar}>
+          {/* <Section title="Citas y Agenda" icon={Calendar}>
             {appointmentOptions.map((option, index) => (
               <MenuOption key={index} {...option} />
             ))}
-          </Section>
+          </Section> */}
 
           <Section title="Administración" icon={UserCog}>
             {administrationOptions.map((option, index) => (

@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import Loader from "@/components/ui/loader";
 import { Badge, type BadgeProps } from "@/components/ui/custom-badge";
+import { getInventory } from "@/app/actions/inventory";
 
 interface MedicineItem {
   id: string;
@@ -50,6 +51,12 @@ interface MedicineItem {
   status: 'ACTIVE' | 'INACTIVE' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'EXPIRED';
   batchNumber: string | null;
   specialNotes: string | null;
+  movements: {
+    date: string;
+    user: {
+      name: string | null;
+    };
+  }[];
 }
 
 interface FetchMedicineResult {
@@ -59,15 +66,15 @@ interface FetchMedicineResult {
 }
 
 const getStatusBadgeVariant = (status: MedicineItem['status']): BadgeProps['variant'] => {
-    const statusMap: Record<MedicineItem['status'], BadgeProps['variant']> = {
-      ACTIVE: "success",
-      INACTIVE: "secondary",
-      LOW_STOCK: "warning",
-      OUT_OF_STOCK: "destructive",
-      EXPIRED: "destructive"
-    };
-    return statusMap[status];
+  const statusMap: Record<MedicineItem['status'], BadgeProps['variant']> = {
+    ACTIVE: "success",
+    INACTIVE: "secondary",
+    LOW_STOCK: "warning",
+    OUT_OF_STOCK: "destructive",
+    EXPIRED: "destructive"
   };
+  return statusMap[status];
+};
 
 const formatDate = (date: string | null) => {
   if (!date) return '-';
@@ -152,18 +159,6 @@ const columns: ColumnDef<MedicineItem>[] = [
   },
 ];
 
-async function getMedicines(): Promise<FetchMedicineResult> {
-  try {
-    const response = await fetch('/api/inventory/medicines');
-    if (!response.ok) throw new Error('Failed to fetch medicines');
-    const data = await response.json();
-    return { success: true, items: data as MedicineItem[] };
-  } catch (error) {
-    console.error('Error fetching medicines:', error);
-    return { success: false, error: 'Failed to fetch medicines' };
-  }
-}
-
 export default function MedicineInventory() {
   const [data, setData] = React.useState<MedicineItem[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -179,7 +174,7 @@ export default function MedicineInventory() {
       try {
         setLoading(true);
         setError(null);
-        const result = await getMedicines();
+        const result = await getInventory();
         if (result.success && result.items) {
           setData(result.items);
         } else {

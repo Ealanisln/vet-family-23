@@ -1,155 +1,111 @@
-import { prisma } from '@/lib/prismaDB';
-import { MedicalHistory, InventoryItem } from '@prisma/client';
+// app/actions/inventory-actions.ts
+"use server";
 
-// Get medicine with its movements and related prescriptions
-export async function getMedicineWithPrescriptions(id: string) {
-  const medicine = await prisma.inventoryItem.findUnique({
-    where: { 
-      id,
-      category: 'MEDICINE'  // Ensure we're only getting medicine items
-    },
-    include: {
-      movements: true
-    }
-  });
+import { prisma } from "@/lib/prismaDB";
+import { revalidatePath } from "next/cache";
+import {
+  InventoryStatus,
+  MovementType,
+  InventoryCategory,
+} from "@prisma/client";
 
-  if (!medicine) return null;
-
-  // Get medical histories where this medicine was prescribed
-  const prescriptions = await prisma.medicalHistory.findMany({
-    where: {
-      prescriptions: {
-        has: medicine.name // Using medicine name since it's stored in prescriptions array
-      }
-    },
-    include: {
-      pet: true // Include pet information for context
-    }
-  });
-
-  return {
-    ...medicine,
-    prescriptions
-  };
-}
-
-// Add a prescription to medical history
-export async function addPrescription(
-  medicineId: string, 
-  historyId: string,
-  prescription: string
-) {
-  // First verify the medicine exists
-  const medicine = await prisma.inventoryItem.findUnique({
-    where: { 
-      id: medicineId,
-      category: 'MEDICINE'
-    }
-  });
-
-  if (!medicine) {
-    throw new Error('Medicine not found');
-  }
-
-  // Update the medical history with the new prescription
-  const updatedHistory = await prisma.medicalHistory.update({
-    where: { id: historyId },
-    data: {
-      prescriptions: {
-        push: prescription // Add the prescription details
-      }
-    }
-  });
-
-  // Create an inventory movement to track the prescription
-  await prisma.inventoryMovement.create({
-    data: {
-      itemId: medicineId,
-      type: 'OUT',
-      quantity: 1, // Adjust based on prescription quantity
-      reason: `Prescribed in medical history: ${historyId}`,
-      userId: updatedHistory.petId, // You might want to pass the actual userId
-      relatedRecordId: historyId
-    }
-  });
-
-  return updatedHistory;
-}
-
-// Get medical history with related medicines
-export async function getMedicalHistoryWithMedicines(historyId: string) {
-  const history = await prisma.medicalHistory.findUnique({
-    where: { id: historyId },
-    include: {
-      pet: true
-    }
-  });
-
-  if (!history) return null;
-
-  // Get all medicines mentioned in prescriptions
-  const medicines = await prisma.inventoryItem.findMany({
-    where: {
-      category: 'MEDICINE',
-      name: {
-        in: history.prescriptions // Assuming prescriptions array contains medicine names
-      }
-    },
-    include: {
-      movements: {
-        where: {
-          relatedRecordId: historyId
+export async function getInventory() {
+  try {
+    const items = await prisma.inventoryItem.findMany({
+      orderBy: {
+        updatedAt: 'desc'
+      },
+      include: {
+        movements: {
+          orderBy: {
+            date: 'desc'
+          },
+          take: 1,
+          include: {
+            user: {
+              select: {
+                name: true
+              }
+            }
+          }
         }
       }
-    }
-  });
+    });
 
-  return {
-    ...history,
-    medicines
-  };
+    // Convertir fechas a strings para serialización
+    const serializedItems = items.map(item => ({
+      ...item,
+      expirationDate: item.expirationDate?.toISOString() || null,
+      movements: item.movements.map(movement => ({
+        ...movement,
+        date: movement.date.toISOString()
+      }))
+    }));
+
+    return { success: true, items: serializedItems };
+  } catch (error) {
+    console.error('Error fetching inventory:', error);
+    return { success: false, error: 'Failed to fetch inventory' };
+  }
 }
 
-// Helper function to update inventory quantity
-export async function updateMedicineInventory(
-  medicineId: string,
-  quantity: number,
-  type: 'IN' | 'OUT',
+interface UpdateInventoryData {
+  quantity?: number;
+  status?: InventoryStatus;
+  location?: string;
+  minStock?: number;
+}
+
+export async function updateInventoryItem(
+  id: string,
+  data: UpdateInventoryData,
   userId: string,
   reason?: string
 ) {
-  const medicine = await prisma.inventoryItem.findUnique({
-    where: { id: medicineId }
-  });
+  try {
+    const currentItem = await prisma.inventoryItem.findUnique({
+      where: { id }
+    });
 
-  if (!medicine) {
-    throw new Error('Medicine not found');
-  }
+    if (!currentItem) {
+      throw new Error('Item not found');
+    }
 
-  const [updatedInventory, movement] = await prisma.$transaction([
-    // Update inventory quantity
-    prisma.inventoryItem.update({
-      where: { id: medicineId },
-      data: {
-        quantity: {
-          [type === 'IN' ? 'increment' : 'decrement']: Math.abs(quantity)
-        },
-        status: {
-          set: medicine.quantity <= (medicine.minStock || 0) ? 'LOW_STOCK' : 'ACTIVE'
+    const [updatedItem] = await prisma.$transaction([
+      prisma.inventoryItem.update({
+        where: { id },
+        data: {
+          ...data,
+          status: data.quantity !== undefined ? 
+            data.quantity <= (data.minStock || currentItem.minStock || 0) 
+              ? InventoryStatus.LOW_STOCK 
+              : data.quantity === 0 
+                ? InventoryStatus.OUT_OF_STOCK 
+                : InventoryStatus.ACTIVE
+            : data.status
         }
-      }
-    }),
-    // Create movement record
-    prisma.inventoryMovement.create({
-      data: {
-        itemId: medicineId,
-        type,
-        quantity: Math.abs(quantity),
-        userId,
-        reason
-      }
-    })
-  ]);
+      }),
+      ...(data.quantity !== undefined 
+        ? [
+            prisma.inventoryMovement.create({
+              data: {
+                itemId: id,
+                type: data.quantity > (currentItem.quantity || 0) 
+                  ? MovementType.IN 
+                  : MovementType.OUT,
+                quantity: Math.abs(data.quantity - (currentItem.quantity || 0)),
+                userId,
+                reason: reason || 'Manual adjustment'
+              }
+            })
+          ]
+        : [])
+    ]);
 
-  return { updatedInventory, movement };
+    revalidatePath('/inventory');
+    return { success: true, item: updatedItem };
+  } catch (error) {
+    console.error('Error updating inventory:', error);
+    return { success: false, error: 'Failed to update inventory' };
+  }
 }

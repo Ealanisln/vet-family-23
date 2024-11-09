@@ -1,7 +1,8 @@
-"use client";
+// app/inventory/page.tsx
+'use client';
 
-import * as React from "react";
-import { Search, AlertTriangle } from "lucide-react";
+import * as React from 'react';
+import { Search, AlertTriangle, Plus } from 'lucide-react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -13,10 +14,10 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -24,196 +25,243 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
+} from '@/components/ui/table';
+import { Card } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import Loader from "@/components/ui/loader";
-import { Badge, BadgeProps } from "@/components/ui/custom-badge";
-
-type InventoryCategory =
-  | "MEDICINE"
-  | "SURGICAL_MATERIAL"
-  | "VACCINE"
-  | "FOOD"
-  | "ACCESSORY"
-  | "CONSUMABLE";
-type InventoryStatus =
-  | "ACTIVE"
-  | "INACTIVE"
-  | "LOW_STOCK"
-  | "OUT_OF_STOCK"
-  | "EXPIRED";
+} from '@/components/ui/select';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogFooter
+} from '@/components/ui/dialog';
+import Loader from '@/components/ui/loader';
+import { Badge, BadgeProps } from '@/components/ui/custom-badge';
+import { getInventory, updateInventoryItem } from '@/app/actions/inventory';
+import { toast, useToast } from "@/components/ui/use-toast";
+import { UpdateInventoryData } from './types';
 
 interface InventoryItem {
   id: string;
   name: string;
-  category: InventoryCategory;
+  category: string;
   quantity: number;
   minStock: number | null;
-  status: InventoryStatus;
+  status: string;
   expirationDate: string | null;
   location: string | null;
+  description: string | null;
+  activeCompound: string | null;
+  presentation: string | null;
+  measure: string | null;
+  brand: string | null;
+  movements: Array<{
+    type: string;
+    quantity: number;
+    date: string;
+    user: {
+      name: string | null;
+    } | null;
+  }>;
 }
 
-interface FetchInventoryResult {
-  success: boolean;
-  items?: InventoryItem[];
-  error?: string;
-}
-
-const getStatusBadgeVariant = (
-  status: InventoryStatus
-): BadgeProps["variant"] => {
-  const statusMap: Record<InventoryStatus, BadgeProps["variant"]> = {
-    ACTIVE: "success",
-    INACTIVE: "secondary",
-    LOW_STOCK: "warning",
-    OUT_OF_STOCK: "destructive",
-    EXPIRED: "destructive",
+const getStatusBadgeVariant = (status: string): BadgeProps['variant'] => {
+  const statusMap: Record<string, BadgeProps['variant']> = {
+    ACTIVE: 'success',
+    INACTIVE: 'secondary',
+    LOW_STOCK: 'warning',
+    OUT_OF_STOCK: 'destructive',
+    EXPIRED: 'destructive',
   };
   return statusMap[status];
 };
 
 const formatDate = (date: string | null) => {
-  if (!date) return "-";
-  return new Date(date).toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 };
-
-const columns: ColumnDef<InventoryItem>[] = [
-  {
-    accessorKey: "name",
-    header: "Nombre",
-    cell: ({ row }) => {
-      const isLowStock =
-        row.original.status === "LOW_STOCK" ||
-        row.original.status === "OUT_OF_STOCK";
-      return (
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{row.getValue("name")}</span>
-          {isLowStock && <AlertTriangle className="h-4 w-4 text-orange-500" />}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "category",
-    header: "Categoría",
-    cell: ({ row }) => {
-      const categoryMap: Record<InventoryCategory, string> = {
-        MEDICINE: "Medicina",
-        SURGICAL_MATERIAL: "Material Quirúrgico",
-        VACCINE: "Vacuna",
-        FOOD: "Alimento",
-        ACCESSORY: "Accesorio",
-        CONSUMABLE: "Consumible",
-      };
-      const category = row.getValue("category") as InventoryCategory;
-      return <div>{categoryMap[category]}</div>;
-    },
-  },
-  {
-    accessorKey: "quantity",
-    header: "Cantidad",
-    cell: ({ row }) => (
-      <div className="text-right">{row.getValue("quantity")}</div>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Estado",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as InventoryStatus;
-      const statusMap: Record<InventoryStatus, string> = {
-        ACTIVE: "Activo",
-        INACTIVE: "Inactivo",
-        LOW_STOCK: "Stock Bajo",
-        OUT_OF_STOCK: "Sin Stock",
-        EXPIRED: "Expirado",
-      };
-      return (
-        <Badge variant={getStatusBadgeVariant(status)}>
-          {statusMap[status]}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "location",
-    header: "Ubicación",
-    cell: ({ row }) => row.getValue("location") || "-",
-  },
-  {
-    accessorKey: "expirationDate",
-    header: "Fecha de Expiración",
-    cell: ({ row }) =>
-      formatDate(row.getValue("expirationDate") as string | null),
-  },
-];
-
-async function getInventory(): Promise<FetchInventoryResult> {
-  try {
-    const response = await fetch("/api/inventory");
-    if (!response.ok) throw new Error("Failed to fetch inventory");
-    const data = await response.json();
-    return { success: true, items: data as InventoryItem[] };
-  } catch (error) {
-    console.error("Error fetching inventory:", error);
-    return { success: false, error: "Failed to fetch inventory" };
-  }
-}
 
 export default function Inventory() {
   const [data, setData] = React.useState<InventoryItem[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = React.useState<string | null>(
-    null
-  );
+  const [categoryFilter, setCategoryFilter] = React.useState<string | null>(null);
   const [statusFilter, setStatusFilter] = React.useState<string | null>(null);
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [globalFilter, setGlobalFilter] = React.useState('');
+  const [selectedItem, setSelectedItem] = React.useState<InventoryItem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
+  const columns: ColumnDef<InventoryItem>[] = [
+    {
+      accessorKey: 'name',
+      header: 'Nombre',
+      cell: ({ row }) => {
+        const isLowStock = ['LOW_STOCK', 'OUT_OF_STOCK'].includes(row.original.status);
+        return (
+          <button 
+            onClick={() => {
+              setSelectedItem(row.original);
+              setIsDialogOpen(true);
+            }}
+            className="flex items-center gap-2 hover:text-[#47b3b6] transition-colors"
+          >
+            <span className="font-medium">{row.getValue('name')}</span>
+            {isLowStock && <AlertTriangle className="h-4 w-4 text-orange-500" />}
+          </button>
+        );
+      },
+    },
+    {
+      accessorKey: 'category',
+      header: 'Categoría',
+      cell: ({ row }) => {
+        const categoryMap: Record<string, string> = {
+          MEDICINE: 'Medicina',
+          SURGICAL_MATERIAL: 'Material Quirúrgico',
+          VACCINE: 'Vacuna',
+          FOOD: 'Alimento',
+          ACCESSORY: 'Accesorio',
+          CONSUMABLE: 'Consumible',
+        };
+        return <div>{categoryMap[row.original.category]}</div>;
+      },
+    },
+    {
+      accessorKey: 'quantity',
+      header: 'Cantidad',
+      cell: ({ row }) => (
+        <div className="text-right">{row.getValue('quantity')}</div>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Estado',
+      cell: ({ row }) => {
+        const status = row.getValue('status') as string;
+        const statusMap: Record<string, string> = {
+          ACTIVE: 'Activo',
+          INACTIVE: 'Inactivo',
+          LOW_STOCK: 'Stock Bajo',
+          OUT_OF_STOCK: 'Sin Stock',
+          EXPIRED: 'Expirado',
+        };
+        return (
+          <Badge variant={getStatusBadgeVariant(status)}>
+            {statusMap[status]}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: 'location',
+      header: 'Ubicación',
+      cell: ({ row }) => row.getValue('location') || '-',
+    },
+    {
+      accessorKey: 'expirationDate',
+      header: 'Fecha de Expiración',
+      cell: ({ row }) => formatDate(row.getValue('expirationDate') as string | null),
+    },
+    {
+      accessorKey: 'movements',
+      header: 'Último Movimiento',
+      cell: ({ row }) => {
+        const movements = row.original.movements;
+        if (!movements?.length) return '-';
+        
+        const lastMovement = movements[0];
+        return (
+          <div className="text-sm">
+            <span className={lastMovement.type === 'IN' ? 'text-green-600' : 'text-red-600'}>
+              {lastMovement.type === 'IN' ? '+' : '-'}{lastMovement.quantity}
+            </span>
+            <span className="text-gray-500 ml-2">
+              {formatDate(lastMovement.date)}
+            </span>
+            {lastMovement.user?.name && (
+              <span className="text-gray-400 ml-1">
+                por {lastMovement.user.name}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+
+  const fetchInventory = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await getInventory();
+      if (result.success && result.items) {
+        setData(result.items);
+      } else {
+        setError(result.error || 'Failed to fetch inventory');
+        setData([]);
+      }
+    } catch (error) {
+      setError('An unexpected error occurred');
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   React.useEffect(() => {
-    async function fetchInventory() {
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await getInventory();
-        if (result.success && result.items) {
-          setData(result.items);
-        } else {
-          setError(result.error || "Failed to fetch inventory");
-          setData([]);
-        }
-      } catch (error) {
-        setError("An unexpected error occurred");
-        setData([]);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchInventory();
-  }, []);
+  }, [fetchInventory]);
+
+  const handleUpdateItem = async (id: string, newData: UpdateInventoryData) => {
+    try {
+      const result = await updateInventoryItem(
+        id, 
+        newData, 
+        'current-user-id', // Deberías obtener esto de tu sistema de autenticación
+        'Manual update'
+      );
+      
+      if (result.success) {
+        toast({
+          title: "Éxito",
+          description: "Item actualizado correctamente"
+        });
+        fetchInventory();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error || "Error al actualizar item"
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error inesperado al actualizar"
+      });
+    }
+  };
+
 
   const filteredData = React.useMemo(() => {
     return data.filter((item) => {
-      const matchesCategory =
-        !categoryFilter || item.category === categoryFilter;
+      const matchesCategory = !categoryFilter || item.category === categoryFilter;
       const matchesStatus = !statusFilter || item.status === statusFilter;
       return matchesCategory && matchesStatus;
     });
@@ -237,7 +285,7 @@ export default function Inventory() {
     },
     globalFilterFn: (row, columnId, filterValue) => {
       const searchValue = filterValue.toLowerCase();
-      const searchableColumns = ["name", "category", "location"];
+      const searchableColumns = ['name', 'category', 'location'];
 
       return searchableColumns.some((column) => {
         const value = row.getValue(column);
@@ -248,6 +296,73 @@ export default function Inventory() {
     },
     onGlobalFilterChange: setGlobalFilter,
   });
+
+  const renderItemDetails = () => {
+    if (!selectedItem) return null;
+
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <h4 className="font-medium text-gray-500">Detalles Básicos</h4>
+            <div className="mt-2 space-y-2">
+              <p><span className="font-medium">Nombre:</span> {selectedItem.name}</p>
+              <p><span className="font-medium">Categoría:</span> {selectedItem.category}</p>
+              <p><span className="font-medium">Cantidad:</span> {selectedItem.quantity}</p>
+              <p><span className="font-medium">Stock Mínimo:</span> {selectedItem.minStock || '-'}</p>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-medium text-gray-500">Información Adicional</h4>
+            <div className="mt-2 space-y-2">
+              <p><span className="font-medium">Ubicación:</span> {selectedItem.location || '-'}</p>
+              <p><span className="font-medium">Presentación:</span> {selectedItem.presentation || '-'}</p>
+              <p><span className="font-medium">Medida:</span> {selectedItem.measure || '-'}</p>
+              <p><span className="font-medium">Marca:</span> {selectedItem.brand || '-'}</p>
+            </div>
+          </div>
+        </div>
+        
+        {selectedItem.description && (
+          <div>
+            <h4 className="font-medium text-gray-500">Descripción</h4>
+            <p className="mt-1">{selectedItem.description}</p>
+          </div>
+        )}
+        
+        {selectedItem.activeCompound && (
+          <div>
+            <h4 className="font-medium text-gray-500">Compuesto Activo</h4>
+            <p className="mt-1">{selectedItem.activeCompound}</p>
+          </div>
+        )}
+
+        <div>
+          <h4 className="font-medium text-gray-500 mb-2">Últimos Movimientos</h4>
+          <div className="space-y-2">
+            {selectedItem.movements.map((movement, index) => (
+              <div 
+                key={index}
+                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+              >
+                <span className={movement.type === 'IN' ? 'text-green-600' : 'text-red-600'}>
+                  {movement.type === 'IN' ? '+' : '-'}{movement.quantity}
+                </span>
+                <span className="text-gray-500">{formatDate(movement.date)}</span>
+                {movement.user?.name && (
+                  <span className="text-gray-400">por {movement.user.name}</span>
+                )}
+
+
+
+
+</div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <Card className="w-full bg-gradient-to-br from-white via-white to-blue-50 border-none shadow-lg">
@@ -268,9 +383,9 @@ export default function Inventory() {
             </div>
             <div className="flex gap-2">
               <Select
-                value={categoryFilter || "all_categories"}
+                value={categoryFilter || 'all_categories'}
                 onValueChange={(value) =>
-                  setCategoryFilter(value === "all_categories" ? null : value)
+                  setCategoryFilter(value === 'all_categories' ? null : value)
                 }
               >
                 <SelectTrigger className="w-[180px]">
@@ -281,9 +396,7 @@ export default function Inventory() {
                     Todas las categorías
                   </SelectItem>
                   <SelectItem value="MEDICINE">Medicina</SelectItem>
-                  <SelectItem value="SURGICAL_MATERIAL">
-                    Material Quirúrgico
-                  </SelectItem>
+                  <SelectItem value="SURGICAL_MATERIAL">Material Quirúrgico</SelectItem>
                   <SelectItem value="VACCINE">Vacuna</SelectItem>
                   <SelectItem value="FOOD">Alimento</SelectItem>
                   <SelectItem value="ACCESSORY">Accesorio</SelectItem>
@@ -292,18 +405,16 @@ export default function Inventory() {
               </Select>
 
               <Select
-                value={statusFilter || "all_statuses"}
+                value={statusFilter || 'all_statuses'}
                 onValueChange={(value) =>
-                  setStatusFilter(value === "all_statuses" ? null : value)
+                  setStatusFilter(value === 'all_statuses' ? null : value)
                 }
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all_statuses">
-                    Todos los estados
-                  </SelectItem>
+                  <SelectItem value="all_statuses">Todos los estados</SelectItem>
                   <SelectItem value="ACTIVE">Activo</SelectItem>
                   <SelectItem value="INACTIVE">Inactivo</SelectItem>
                   <SelectItem value="LOW_STOCK">Stock Bajo</SelectItem>
@@ -311,6 +422,14 @@ export default function Inventory() {
                   <SelectItem value="EXPIRED">Expirado</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6]"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -389,27 +508,65 @@ export default function Inventory() {
         </div>
 
         {/* Paginación */}
-        <div className="flex justify-end gap-2 mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-          >
-            Siguiente
-          </Button>
+        <div className="flex items-center justify-between gap-2 mt-4">
+          <div className="text-sm text-gray-500">
+            {table.getFilteredRowModel().rows.length} items encontrados
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
+            >
+              Siguiente
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Modal de Detalles */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Detalles del Item</DialogTitle>
+            <DialogDescription>
+              Información detallada y movimientos del item seleccionado.
+            </DialogDescription>
+          </DialogHeader>
+          {renderItemDetails()}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+              className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6]"
+            >
+              Cerrar
+            </Button>
+            {selectedItem && (
+              <Button
+                onClick={() => {
+                  // Aquí iría la lógica para editar el item
+                  setIsDialogOpen(false);
+                }}
+                className="bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white"
+              >
+                Editar Item
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

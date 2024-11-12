@@ -1,4 +1,3 @@
-import Banner from "../../components/Banner/index";
 import { CarouselSpacing } from "../../components/Caroussel/index";
 import Reviews from "../../components/Reviews/index";
 import Servicios from "../../components/Servicios/index";
@@ -10,12 +9,13 @@ import GaleriaFotos from "@/components/GaleriaFotos/GaleriaFotos";
 // import Specials from "@/components/Specials";
 import FloatingWhatsApp from "@/components/FloatingWhatsapp/FloatingWhatsapp";
 import { AlertBanner } from "@/components/AlertBanner";
+import VetFamilyHero from "@/components/Banner/Banner";
 
 export default async function Home() {
   return (
     <>
       <FloatingWhatsApp />
-      <Banner />
+      {<VetFamilyHero />}
       <AlertBanner />
       <Reviews />
       <Servicios />

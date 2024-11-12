@@ -1,5 +1,7 @@
-import React from "react";
-import Link from "next/link";
+'use client'
+
+import React, { forwardRef } from "react"
+import Link from "next/link"
 import {
   Dialog,
   DialogContent,
@@ -7,46 +9,54 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { FaPhone } from "react-icons/fa";
+} from "@/components/ui/dialog"
+import { FaPhone } from "react-icons/fa"
 
-interface ButtonProps {
-  href?: string;
-  children: React.ReactNode;
-  onClick?: () => void;
-  icon?: React.ReactNode;
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  href?: string
+  children: React.ReactNode
+  onClick?: () => void
+  icon?: React.ReactNode
+  className?: string
 }
 
-export const CustomButton: React.FC<ButtonProps> = ({
-  href,
-  children,
-  onClick,
-  icon,
-}) => {
-  const buttonClass =
-    "text-white text-lg font-medium py-4 px-8 rounded-full transition duration-300 ease-in-out bg-[#8B5CF6] hover:bg-[#7C3AED] shadow-lg hover:shadow-xl transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 flex items-center justify-center";
+export const CustomButton = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ href, children, onClick, icon, className, ...props }, ref) => {
+    const buttonClass = `text-white text-lg font-medium py-4 px-8 rounded-full transition duration-300 ease-in-out bg-[#8B5CF6] hover:bg-[#7C3AED] shadow-lg hover:shadow-xl transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 flex items-center justify-center ${className || ''}`
 
-  const content = (
-    <>
-      {children}
-      {icon && <span className="ml-1.5">{icon}</span>}
-    </>
-  );
+    const content = (
+      <>
+        {children}
+        {icon && <span className="ml-1.5">{icon}</span>}
+      </>
+    )
 
-  if (href) {
+    if (href) {
+      return (
+        <Link href={href} passHref>
+          <button ref={ref} className={buttonClass} onClick={onClick} {...props}>
+            {content}
+          </button>
+        </Link>
+      )
+    }
+
     return (
-      <Link href={href}>
-        <button className={buttonClass}>{content}</button>
-      </Link>
-    );
-  } else {
-    return (
-      <button className={buttonClass} onClick={onClick}>
+      <button
+        ref={ref}
+        className={buttonClass}
+        onClick={onClick}
+        type="button"
+        {...props}
+      >
         {content}
       </button>
-    );
+    )
   }
-};
+)
+
+// Add display name for development tooling
+CustomButton.displayName = 'CustomButton'
 
 const AppointmentDialog = () => {
   return (
@@ -73,7 +83,7 @@ const AppointmentDialog = () => {
         </div>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
-export default AppointmentDialog;
+export default AppointmentDialog

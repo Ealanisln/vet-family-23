@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/table";
 import { Search } from "lucide-react";
 import { createColumns } from "./TableColumns";
-import petsData from '@/public/data/pets.json';
+import petsData from '@/../../public/data/pets.json'
 
 export default function PetsTable() {
   const [globalFilter, setGlobalFilter] = React.useState("");

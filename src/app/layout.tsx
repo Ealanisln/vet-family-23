@@ -6,11 +6,14 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const metadata = {
   title: "Vet Family | Clínica Veterinaria de Confianza",
-  description: "Clínica veterinaria especializada en el cuidado integral de mascotas. Ofrecemos servicios de consultas médicas, vacunación, cirugías, estética canina y hotel para mascotas. ¡Tu mascota merece lo mejor!",
-  keywords: "veterinaria, clínica veterinaria, servicios veterinarios, vacunación mascotas, cirugía veterinaria, hotel para mascotas, estética canina, cuidado animal",
+  description:
+    "Clínica veterinaria especializada en el cuidado integral de mascotas. Ofrecemos servicios de consultas médicas, vacunación, cirugías, estética canina y hotel para mascotas. ¡Tu mascota merece lo mejor!",
+  keywords:
+    "veterinaria, clínica veterinaria, servicios veterinarios, vacunación mascotas, cirugía veterinaria, hotel para mascotas, estética canina, cuidado animal",
   openGraph: {
     title: "Vet Family | Clínica Veterinaria de Confianza",
-    description: "Cuidamos y amamos a tus mascotas como tú. Servicios veterinarios completos: consultas, vacunación, cirugías, hotel y más.",
+    description:
+      "Cuidamos y amamos a tus mascotas como tú. Servicios veterinarios completos: consultas, vacunación, cirugías, hotel y más.",
     type: "website",
     locale: "es_ES",
     siteName: "Vet Family",
@@ -26,11 +29,12 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Vet Family | Clínica Veterinaria de Confianza",
-    description: "Cuidamos y amamos a tus mascotas como tú. Servicios veterinarios completos en un ambiente acogedor.",
+    description:
+      "Cuidamos y amamos a tus mascotas como tú. Servicios veterinarios completos en un ambiente acogedor.",
     images: ["/twitter-image.jpg"],
   },
   alternates: {
-    canonical: "https://www.vetfamily.com",
+    canonical: "https://www.vetforfamily.com",
   },
   robots: {
     index: true,
@@ -51,10 +55,6 @@ export const metadata = {
   },
   authors: [{ name: "Vet Family" }],
   category: "Servicios Veterinarios",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
 };
 
 export default function RootLayout({

@@ -25,27 +25,18 @@ export default defineType({
       type: "image",
       options: {
         hotspot: true,
-      },
-      fields: [
-        {
-          name: "alt",
-          type: "string",
-          title: "Alternative Text",
-        },
-      ],
+      }
+    }),
+    // Campo separado para el texto alternativo de la imagen
+    defineField({
+      name: "imageAlt",
+      title: "Image Alternative Text",
+      type: "string",
     }),
     defineField({
       name: "bio",
       title: "Bio",
-      type: "array",
-      of: [
-        {
-          title: "Block",
-          type: "block",
-          styles: [{ title: "Normal", value: "normal" }],
-          lists: [],
-        },
-      ],
+      type: "blockContent",
     }),
   ],
   preview: {

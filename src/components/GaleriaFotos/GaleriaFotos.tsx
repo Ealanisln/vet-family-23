@@ -129,16 +129,19 @@ export default function App() {
           <PhotoAlbum
             photos={filteredPhotos}
             layout="masonry"
-            targetRowHeight={300}
+            targetRowHeight={250} // Reduced height for better mobile view
             onClick={({ index }) => {
               console.log("Click en imagen:", index);
               setLightboxIndex(index);
             }}
             columns={(containerWidth) => {
-              if (containerWidth < 400) return 1;
+              if (containerWidth < 640) return 2; // Changed from 1 to 2 columns for mobile
               if (containerWidth < 800) return 2;
               if (containerWidth < 1200) return 3;
               return 4;
+            }}
+            spacing={(containerWidth) => {
+              return containerWidth < 640 ? 8 : 16; // Smaller gap for mobile devices
             }}
           />
         </motion.div>

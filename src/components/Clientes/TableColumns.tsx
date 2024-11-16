@@ -61,9 +61,18 @@ export const createColumns = (
       );
     },
     sortingFn: (rowA, rowB) => {
-      const a = [rowA.getValue("firstName"), rowA.original.lastName].filter(Boolean).join(" ").toLowerCase();
-      const b = [rowB.getValue("firstName"), rowB.original.lastName].filter(Boolean).join(" ").toLowerCase();
-      return a.localeCompare(b);
+      // Obtener nombres completos
+      const aFirstName = (rowA.getValue("firstName") as string || "").toLowerCase();
+      const aLastName = (rowA.original.lastName as string || "").toLowerCase();
+      const bFirstName = (rowB.getValue("firstName") as string || "").toLowerCase();
+      const bLastName = (rowB.original.lastName as string || "").toLowerCase();
+      
+      // Combinar nombre y apellido para la comparación
+      const aFullName = `${aFirstName} ${aLastName}`.trim();
+      const bFullName = `${bFirstName} ${bLastName}`.trim();
+      
+      // Ordenar alfabéticamente
+      return aFullName.localeCompare(bFullName);
     },
   },
   {

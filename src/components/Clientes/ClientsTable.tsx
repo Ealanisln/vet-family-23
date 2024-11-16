@@ -47,7 +47,7 @@ export default function ClientsTable() {
     loadUsers,
   } = useClientTable();
 
-  // Add global search state
+  // Agregar estado global de búsqueda
   const [globalFilter, setGlobalFilter] = React.useState("");
 
   const columns = React.useMemo(
@@ -55,7 +55,17 @@ export default function ClientsTable() {
     [handleDeleteUser]
   );
 
-  // Function to handle global search
+  // Configurar ordenamiento inicial alfabético por nombre
+  React.useEffect(() => {
+    setSorting([
+      {
+        id: "firstName",
+        desc: false
+      }
+    ]);
+  }, [setSorting]);
+
+  // Función para manejar la búsqueda global
   const handleSearch = React.useCallback((value: string) => {
     setGlobalFilter(value);
   }, []);
@@ -69,7 +79,7 @@ export default function ClientsTable() {
       columnVisibility,
       rowSelection,
       pagination,
-      globalFilter, // Add global filter to table state
+      globalFilter,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -81,7 +91,7 @@ export default function ClientsTable() {
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     manualPagination: false,
-    // Add global filter function
+    // Función de filtro global
     globalFilterFn: (row, columnId, filterValue) => {
       const searchValue = filterValue.toLowerCase();
       const searchableColumns = ["firstName", "lastName", "email"];
@@ -120,7 +130,7 @@ export default function ClientsTable() {
         
         {/* Contenedor de la tabla con scroll horizontal */}
         <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
-          <div className="min-w-[600px]"> {/* Ancho mínimo para evitar que la tabla se comprima demasiado */}
+          <div className="min-w-[600px]">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (

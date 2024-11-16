@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -25,6 +25,17 @@ const ImageViewer = ({ images, initialIndex = 0, isOpen, onClose }: ImageViewerP
     setScale(1);
   }, [initialIndex, isOpen]);
 
+  const navigate = useCallback((direction: number) => {
+    setCurrentIndex(prevIndex => {
+      const newIndex = prevIndex + direction;
+      if (newIndex >= 0 && newIndex < images.length) {
+        setScale(1);
+        return newIndex;
+      }
+      return prevIndex;
+    });
+  }, [images.length]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -44,15 +55,7 @@ const ImageViewer = ({ images, initialIndex = 0, isOpen, onClose }: ImageViewerP
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, currentIndex]);
-
-  const navigate = (direction: number) => {
-    const newIndex = currentIndex + direction;
-    if (newIndex >= 0 && newIndex < images.length) {
-      setCurrentIndex(newIndex);
-      setScale(1);
-    }
-  };
+  }, [isOpen, navigate, onClose]);
 
   const handleZoom = (factor: number) => {
     const newScale = scale * factor;

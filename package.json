@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "npx prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "import-data": "bun run scripts/import-data.ts"
+
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.7.3",
@@ -46,6 +48,7 @@
     "@sanity/ui": "^2.8.23",
     "@sanity/vision": "^3.63.0",
     "@sendgrid/mail": "^8.1.4",
+    "@types/bun": "^1.1.13",
     "@types/google.maps": "^3.58.1",
     "@types/node-fetch": "^2.6.12",
     "@types/react": "^18.3.12",

@@ -1,0 +1,274 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Existing models remain exactly the same
+model User {
+  id                     String         @id @default(auto()) @map("_id") @db.ObjectId
+  kindeId                String         @unique
+  email                  String?
+  firstName              String?
+  lastName               String?
+  name                   String?
+  phone                  String?
+  address                String?
+  preferredContactMethod String?
+  pet                    String?
+  visits                 Int            @default(0)
+  nextVisitFree          Boolean        @default(false)
+  lastVisit              DateTime?
+  visitHistory           VisitHistory[]
+  pets                   Pet[]
+  appointments           Appointment[]
+  billings              Billing[]
+  reminders             Reminder[]
+  userRoles             UserRole[]
+  inventoryMovements    InventoryMovement[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@index([firstName, lastName, phone])
+  @@index([email])
+  @@map("users")
+}
+
+model Role {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  key       String     @unique
+  name      String
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  roleId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+  @@map("userRoles")
+}
+
+model VisitHistory {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId String   @db.ObjectId
+  user   User     @relation(fields: [userId], references: [id])
+  date   DateTime @default(now())
+  cost   Float
+  isFree Boolean  @default(false)
+}
+
+model Pet {
+  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
+  internalId          String?
+  userId              String                @db.ObjectId
+  user                User                  @relation(fields: [userId], references: [id])
+  name                String
+  species             String
+  breed               String
+  dateOfBirth         DateTime
+  gender              String
+  weight              Float
+  microchipNumber     String?
+  isNeutered          Boolean               @default(false)
+  isDeceased          Boolean               @default(false)
+  medicalHistory      MedicalHistory[]
+  vaccinations        Vaccination[]
+  appointments        Appointment[]
+  billings            Billing[]
+  reminders           Reminder[]
+  VaccinationSchedule VaccinationSchedule[]
+}
+
+model MedicalHistory {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  petId          String   @db.ObjectId
+  pet            Pet      @relation(fields: [petId], references: [id])
+  visitDate      DateTime
+  reasonForVisit String
+  diagnosis      String
+  treatment      String
+  prescriptions  String[]
+  notes          String?
+}
+
+model Vaccination {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  petId              String   @db.ObjectId
+  pet                Pet      @relation(fields: [petId], references: [id])
+  vaccineType        String
+  stage              String
+  status             String
+  administrationDate DateTime
+  nextDoseDate       DateTime
+  batchNumber        String?
+  manufacturer       String?
+  veterinarianName   String?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([petId, vaccineType])
+  @@index([nextDoseDate, status])
+  @@map("vaccinations")
+}
+
+model VaccinationSchedule {
+  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  petId         String            @db.ObjectId
+  pet           Pet               @relation(fields: [petId], references: [id])
+  vaccineType   VaccineType
+  stage         VaccinationStage
+  scheduledDate DateTime
+  status        VaccinationStatus @default(PENDING)
+  reminderSent  Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([petId, scheduledDate, status])
+  @@map("vaccination_schedules")
+}
+
+model Appointment {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String   @db.ObjectId
+  user     User     @relation(fields: [userId], references: [id])
+  petId    String   @db.ObjectId
+  pet      Pet      @relation(fields: [petId], references: [id])
+  dateTime DateTime
+  reason   String
+  status   String
+}
+
+model Billing {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id])
+  petId         String?  @db.ObjectId
+  pet           Pet?     @relation(fields: [petId], references: [id])
+  date          DateTime
+  services      String[]
+  cost          Float
+  paymentStatus String
+}
+
+model Reminder {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id])
+  petId        String   @db.ObjectId
+  pet          Pet      @relation(fields: [petId], references: [id])
+  reminderType String
+  dueDate      DateTime
+  status       String
+}
+
+model Staff {
+  id                 String @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  position           String
+  contactInformation String
+}
+
+// Existing enums
+enum VaccineType {
+  DP_PUPPY
+  DHPPI
+  DHPPI_L
+  DHPPI_RL
+  BORDETELLA
+  SEXTUPLE
+  SEXTUPLE_R
+  RABIES
+}
+
+enum VaccinationStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  SCHEDULED
+}
+
+enum VaccinationStage {
+  PUPPY
+  ADULT
+}
+
+// New inventory models and enums
+enum InventoryCategory {
+  MEDICINE
+  SURGICAL_MATERIAL
+  VACCINE
+  FOOD
+  ACCESSORY
+  CONSUMABLE
+}
+
+enum InventoryStatus {
+  ACTIVE
+  INACTIVE
+  LOW_STOCK
+  OUT_OF_STOCK
+  EXPIRED
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  RETURN
+  EXPIRED
+}
+
+model InventoryItem {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  category        InventoryCategory
+  description     String?
+  activeCompound  String?
+  presentation    String?
+  measure         String?
+  brand           String?
+  quantity        Int               @default(0)
+  minStock        Int?
+  location        String?
+  expirationDate  DateTime?
+  status          InventoryStatus   @default(ACTIVE)
+  batchNumber     String?
+  specialNotes    String?
+  movements       InventoryMovement[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([category])
+  @@index([name])
+  @@index([status])
+  @@index([expirationDate])
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  itemId          String         @db.ObjectId
+  item            InventoryItem  @relation(fields: [itemId], references: [id])
+  type            MovementType
+  quantity        Int
+  date            DateTime       @default(now())
+  reason          String?
+  userId          String         @db.ObjectId
+  user            User           @relation(fields: [userId], references: [id])
+  relatedRecordId String?        @db.ObjectId
+  notes           String?
+
+  @@index([itemId, date])
+  @@index([userId])
+  @@map("inventory_movements")
+}

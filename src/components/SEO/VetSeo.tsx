@@ -8,7 +8,7 @@ const VetSEO = () => {
       "Servicios veterinarios de alta calidad en León: consultas médicas, vacunación, cirugías, estética canina y hotel para mascotas. Atención profesional y dedicada para el bienestar de tu mascota.",
     keywords:
       "veterinaria león, clínica veterinaria, servicios veterinarios, consultas médicas, vacunación mascotas, desparasitación, limpieza dental mascotas, estética canina, hotel para mascotas, cirugía veterinaria, Guanajuato",
-    canonicalUrl: "https://vetforfamily.com",
+    canonicalUrl: "https://www.vetforfamily.com",
     socialMedia: {
       facebook: "https://facebook.com/vet.family.23",
       instagram: "https://instagram.com/vet.family.23",
@@ -108,8 +108,10 @@ const VetSEO = () => {
       <meta property="og:site_name" content="Vet Family" />
       <meta
         property="og:image"
-        content={`${seoData.canonicalUrl}/og-image.png`}
+        content="https://www.vetforfamily.com/og-image.png"
       />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:locale" content="es_MX" />
 
       {/* Twitter Card tags */}
@@ -121,7 +123,7 @@ const VetSEO = () => {
       <meta name="twitter:description" content={seoData.description} />
       <meta
         name="twitter:image"
-        content={`${seoData.canonicalUrl}/og-image.png`}
+        content="https://www.vetforfamily.com/og-image.png"
       />
 
       {/* Meta tags adicionales */}

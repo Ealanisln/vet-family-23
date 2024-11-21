@@ -3,8 +3,14 @@ import "./globals.css";
 import { FacebookPixelEvents } from "@/components/Facebook/FacebookPixel";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Toaster } from "@/components/ui/toaster";
+import { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:3000"
+      : "https://www.vetforfamily.com"
+  ),
   title: "Vet Family | Clínica Veterinaria de Confianza",
   description:
     "Clínica veterinaria especializada en el cuidado integral de mascotas. Ofrecemos servicios de consultas médicas, vacunación, cirugías, estética canina y hotel para mascotas. ¡Tu mascota merece lo mejor!",
@@ -70,8 +76,8 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <FacebookPixelEvents />
         </Suspense>
+        <GoogleAnalytics gaId="G-PXSVH1SGKW" />
       </body>
-      <GoogleAnalytics gaId="G-PXSVH1SGKW" />
     </html>
   );
 }

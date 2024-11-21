@@ -1,47 +1,33 @@
+// components/Navbar/index.tsx
 "use client";
 import Navbar from "./Navbar";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 const Navbarin: React.FC = () => {
+  const [scrolled, setScrolled] = useState(false);
+
   useEffect(() => {
-    // The debounce function receives our function as a parameter
-    const debounce = (fn: Function) => {
-      // This holds the requestAnimationFrame reference, so we can cancel it if we wish
-      let frame: number;
-      // The debounce function returns a new function that can receive a variable number of arguments
-      return (...params: any[]) => {
-        // If the frame variable has been defined, clear it now, and queue for next frame
-        if (frame) {
-          cancelAnimationFrame(frame);
-        }
-        // Queue our function call for the next frame
-        frame = requestAnimationFrame(() => {
-          // Call our function and pass any params we received
-          fn(...params);
-        });
-      };
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 20;
+      setScrolled(isScrolled);
     };
 
-    // Reads out the scroll position and stores it in the data attribute
-    // so we can use it in our stylesheets
-    const storeScroll = () => {
-      document.documentElement.dataset.scroll = window.scrollY.toString();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
     };
-
-    // Listen for new scroll events, here we debounce our `storeScroll` function
-    document.addEventListener("scroll", debounce(storeScroll), {
-      passive: true,
-    });
-
-    // Update scroll position for first time
-    storeScroll();
   }, []);
+  
   return (
-    <>
-      <div className="bg-navbar">
-        <Navbar />
-      </div>
-    </>
+    <div className={`fixed top-0 left-0 right-0 z-30 pt-3 pb-4 transition-all duration-300 ${
+      scrolled 
+        ? 'bg-[#91D8D9] shadow-md' 
+        : 'bg-gradient-to-r from-[#91D8D9] to-transparent'
+    }`}>
+      <Navbar />
+    </div>
   );
 };
 

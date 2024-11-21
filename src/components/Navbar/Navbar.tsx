@@ -1,11 +1,9 @@
+// components/Navbar/Navbar.tsx
 import { Disclosure } from "@headlessui/react";
-import { Bars3Icon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import React from "react";
-import Drawer from "./Drawer";
-import Drawerdata from "./Drawerdata";
 import Image from "next/image";
-
 import AuthButton from "./Signdialog";
 
 interface NavigationItem {
@@ -27,84 +25,85 @@ function classNames(...classes: string[]) {
 }
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = React.useState(false);
-
   return (
-    <Disclosure as="nav" className="navbar">
-      <>
-        <div className="mx-auto max-w-7xl px-6 md:py-4 lg:px-8">
-          <div className="relative flex h-20 items-center justify-between">
-            <div className="flex flex-1 items-center sm:items-stretch sm:justify-start">
-              {/* LOGO */}
-              <Link href="/">
-                <div className="flex flex-shrink-0 items-center">
-                  <Image
-                    height={800}
-                    width={200}
-                    className="block h-12 w-40 lg:hidden"
-                    src={"/assets/logo/logo.png"}
-                    alt="paidin-logo"
-                  />
-                  <Image
-                    height={600}
-                    width={200}
-                    className="hidden lg:block"
-                    src={"/assets/logo/logo.png"}
-                    alt="paidin-logo"
-                  />
-                </div>
-              </Link>
+    <Disclosure as="nav">
+      {({ open }) => (
+        <>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="relative flex h-20 items-center justify-between">
+              {/* Logo */}
+              <div className="flex items-center">
+                <Link href="/">
+                  <div className="flex-shrink-0">
+                    <Image
+                      height={800}
+                      width={200}
+                      className="h-12 w-40"
+                      src="/assets/logo/logo.png"
+                      alt="Vet Family logo"
+                    />
+                  </div>
+                </Link>
+              </div>
 
-              {/* LINKS */}
-
-              <div className="hidden lg:block ml-20">
+              {/* Desktop menu */}
+              <div className="hidden lg:block">
                 <div className="flex space-x-4">
                   {navigation.map((item) => (
                     <Link
                       key={item.name}
                       href={item.href}
                       className={classNames(
-                        item.current
-                          ? " text-black hover:opacity-75"
-                          : "hover:text-black hover:opacity-75",
-                        "px-3 py-4 text-lg font-normal text-black space-links"
+                        "px-3 py-4 text-lg font-normal text-black hover:opacity-75 transition-opacity"
                       )}
-                      aria-current={item.href ? "page" : undefined}
                     >
                       {item.name}
                     </Link>
                   ))}
                 </div>
               </div>
+
+              {/* Auth button - desktop */}
+              <div className="hidden lg:block">
+                <AuthButton />
+              </div>
+
+              {/* Mobile menu button */}
+              <div className="flex lg:hidden">
+                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-black hover:bg-black/10">
+                  <span className="sr-only">Abrir menú principal</span>
+                  {open ? (
+                    <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
+                  ) : (
+                    <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
+                  )}
+                </Disclosure.Button>
+              </div>
             </div>
-
-            {/* REGISTER DIALOG */}
-
-            {/* AUTH BUTTON */}
-            <div className="hidden lg:block">
-              <AuthButton />
-            </div>
-
-            {/* DRAWER FOR MOBILE VIEW */}
-
-            {/* DRAWER ICON */}
-
-            <div className="block lg:hidden">
-              <Bars3Icon
-                className="block h-6 w-6"
-                aria-hidden="true"
-                onClick={() => setIsOpen(true)}
-              />
-            </div>
-
-            {/* DRAWER LINKS DATA */}
-
-            <Drawer isOpen={isOpen} setIsOpen={setIsOpen}>
-              <Drawerdata />
-            </Drawer>
           </div>
-        </div>
-      </>
+
+          {/* Mobile menu panel */}
+          <Disclosure.Panel className="lg:hidden bg-[#E5F5F5]">
+            <div className="space-y-1 px-4 pb-4 pt-2">
+              {navigation.map((item) => (
+                <Disclosure.Button
+                  key={item.name}
+                  as={Link}
+                  href={item.href}
+                  className={classNames(
+                    "block px-3 py-2 text-base font-medium text-black hover:bg-black/10 rounded-md"
+                  )}
+                >
+                  {item.name}
+                </Disclosure.Button>
+              ))}
+              <div className="pt-2">
+                <AuthButton />
+              </div>
+            </div>
+          </Disclosure.Panel>
+        </>
+      )}
     </Disclosure>
   );
 };

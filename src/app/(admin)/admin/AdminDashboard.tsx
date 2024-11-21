@@ -150,7 +150,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     {
       title: "Nuevo Cliente",
       icon: UserPlus,
-      href: "/admin/clientes/nuevo",
+      href: "/admin/clientes/nuevo-cliente",
       description: "Registrar nuevo usuario",
     },
     {

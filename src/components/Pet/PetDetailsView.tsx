@@ -1,3 +1,5 @@
+// src/components/Pet/PetDetailsView.tsx
+
 "use client";
 
 import React, { useState } from "react";
@@ -21,42 +23,9 @@ import {
   updatePetNeuteredStatus,
   updatePetDeceasedStatus,
 } from "@/app/actions/add-edit-pet";
-import { VaccinationContainer } from '@/components/Vaccination/VaccinationContainer';
-
-interface MedicalHistory {
-  id: string;
-  petId: string;
-  visitDate: Date;
-  reasonForVisit: string;
-  diagnosis: string;
-  treatment: string;
-  prescriptions: string[];
-  notes: string | null;
-}
-
-interface Vaccination {
-  id: string;
-  petId: string;
-  vaccineType: string;
-  administrationDate: Date;
-  nextDoseDate: Date;
-}
-
-interface Pet {
-  id: string;
-  internalId?: string | null;
-  name: string;
-  species: string;
-  breed: string;
-  dateOfBirth: Date;
-  gender: string;
-  weight: number;
-  microchipNumber: string | null;
-  isNeutered: boolean;
-  isDeceased: boolean;
-  medicalHistory: MedicalHistory[];
-  vaccinations: Vaccination[];
-}
+import { VaccinationContainer } from "@/components/Vaccination/VaccinationContainer";
+import { DewormingContainer } from "@/components/Deworming/DewormingContainer";
+import type { Pet } from "@/types/pet";
 
 const calculateAge = (dateOfBirth: Date): string => {
   const today = new Date();
@@ -82,7 +51,9 @@ const calculateAge = (dateOfBirth: Date): string => {
 export default function PetDetailsView({ pet }: { pet: Pet }) {
   const [open, setOpen] = useState(false);
   const [isNeutered, setIsNeutered] = useState(pet.isNeutered);
-  const [isDeceased, setIsDeceased] = useState(pet.isDeceased);
+  const [isDeceased, setIsDeceased] = useState<boolean>(
+    pet.isDeceased === true
+  );
   const params = useParams();
   const pathname = usePathname();
 
@@ -294,22 +265,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       </Card>
 
       <VaccinationContainer petId={pet.id} vaccinations={pet.vaccinations} />
-
-
-
-      {/* <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle>Vacunas</CardTitle>
-            <Button>
-              <PlusIcon className="mr-2 h-4 w-4" /> Nueva Vacuna
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-         <VaccinationTable />
-        </CardContent>
-      </Card> */}
+      <DewormingContainer petId={pet.id} dewormings={pet.dewormings} />
     </div>
   );
 }

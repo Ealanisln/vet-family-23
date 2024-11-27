@@ -1,3 +1,5 @@
+// src/components/Vaccination/VaccinationContainer.tsx
+
 import React from 'react';
 import VaccinationCard, { IVaccination, VaccineType, VaccinationStage, VaccinationStatus } from './VaccinationDialogCard';
 

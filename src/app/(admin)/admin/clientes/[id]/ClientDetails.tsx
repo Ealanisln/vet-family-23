@@ -31,16 +31,14 @@ interface Pet {
 
 const formatPhoneNumber = (phone: string | null): string => {
   if (!phone) return "N/A";
-  // Eliminar todos los caracteres no numéricos
   const digits = phone.replace(/\D/g, "");
-  // Tomar los últimos 10 dígitos
   const last10Digits = digits.slice(-10);
-  // Formatear como (XXX) XXX-XXXX
   return last10Digits.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
 };
 
 export default function ClientDetails({ user }: { user: any }) {
   const router = useRouter();
+  const pets = user?.pets ?? [];
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -64,28 +62,28 @@ export default function ClientDetails({ user }: { user: any }) {
               <div>
                 <p className="font-semibold">Nombre:</p>
                 <p>
-                  {user.firstName} {user.lastName}
+                  {user?.firstName} {user?.lastName}
                 </p>
               </div>
               <div>
                 <p className="font-semibold">Email:</p>
-                <p>{user.email}</p>
+                <p>{user?.email}</p>
               </div>
               <div>
                 <p className="font-semibold">Teléfono:</p>
-                <p>{formatPhoneNumber(user.phone)}</p>
+                <p>{formatPhoneNumber(user?.phone)}</p>
               </div>
               <div>
                 <p className="font-semibold">Dirección:</p>
-                <p>{user.address || "N/A"}</p>
+                <p>{user?.address || "N/A"}</p>
               </div>
             </div>
             <div className="mt-4">
-              <p className="font-semibold">Visitas: {user.visits}</p>
+              <p className="font-semibold">Visitas: {user?.visits}</p>
               <div className="font-semibold flex items-center">
                 <span className="mr-2">Próxima visita gratis:</span>
                 <Badge variant="secondary">
-                  {user.nextVisitFree ? "Sí" : "No"}
+                  {user?.nextVisitFree ? "Sí" : "No"}
                 </Badge>
               </div>
             </div>
@@ -116,8 +114,8 @@ export default function ClientDetails({ user }: { user: any }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {user.pets.length > 0 ? (
-                  user.pets.map((pet: Pet) => (
+                {pets.length > 0 ? (
+                  pets.map((pet: Pet) => (
                     <TableRow key={pet.id}>
                       <TableCell>
                         <PawPrintIcon className="h-4 w-4 text-muted-foreground" />

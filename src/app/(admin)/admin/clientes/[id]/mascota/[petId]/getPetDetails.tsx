@@ -10,14 +10,17 @@ export async function getPetDetails(userId: string, petId: string) {
   }
 
   try {
-    const pet = await prisma.pet.findUnique({
+    const pet = await prisma.pet.findFirst({
       where: {
-        id: petId,
-        userId: userId,
+        AND: [
+          { id: petId },
+          { userId: userId }
+        ]
       },
       include: {
         medicalHistory: true,
         vaccinations: true,
+        dewormings: true,
       },
     });
 

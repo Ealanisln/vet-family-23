@@ -10,7 +10,7 @@ interface AccessoryData {
   NOMBRE: string
   SALIDA: string
   TOTAL: string
-  'No.'?: string // Para los collares isabelinos
+  'No.'?: string 
 }
 
 async function getAdminUser() {

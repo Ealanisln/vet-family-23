@@ -1,24 +1,48 @@
-'use server'
+// src/app/actions/get-pets.ts
+"use server";
 
-import { PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
-export interface Pet {
-  id: string;
-  name: string;
-  species: string;
-  breed: string;
-  userId: string;
-  ownerName: string;
-  isDeceased: boolean;  
+const petInclude = {
+  user: {
+    select: {
+      firstName: true,
+      lastName: true,
+    },
+  },
+  medicalHistory: true,
+  vaccinations: true,
+  dewormings: {
+    include: {
+      product: true,
+    },
+  },
+  appointments: true,
+  vacSchedules: true,
+  visitHistory: true,
+} as const;
+
+type PetWithRelations = Prisma.PetGetPayload<{
+  include: typeof petInclude;
+}>;
+
+interface GetPetsResponse {
+  success: boolean;
+  pets?: Array<{
+    id: string;
+    name: string;
+    species: string;
+    breed: string;
+    ownerName: string;
+    isDeceased: boolean | null; 
+  }>;
+  error?: string;
 }
 
-type GetPetsResult = 
-  | { success: true; pets: Pet[] }
-  | { success: false; error: string; pets: never[] }
-
-export async function getPets(): Promise<GetPetsResult> {
+export async function getPets(): Promise<GetPetsResponse> {
   try {
     const pets = await prisma.pet.findMany({
       select: {
@@ -26,35 +50,37 @@ export async function getPets(): Promise<GetPetsResult> {
         name: true,
         species: true,
         breed: true,
-        userId: true,
-        isDeceased: true,  // Añadimos isDeceased a la consulta
+        isDeceased: true,
         user: {
           select: {
             firstName: true,
             lastName: true,
-          }
-        }
+          },
+        },
       },
       orderBy: {
-        name: 'asc'
-      }
-    })
+        name: 'asc',
+      },
+    });
 
     const formattedPets = pets.map(pet => ({
       id: pet.id,
       name: pet.name,
       species: pet.species,
       breed: pet.breed,
-      userId: pet.userId,
-      ownerName: `${pet.user.firstName || ''} ${pet.user.lastName || ''}`.trim() || 'N/A',
-      isDeceased: pet.isDeceased  // Incluimos isDeceased en el objeto formateado
-    }))
+      ownerName: pet.user ? `${pet.user.firstName} ${pet.user.lastName}`.trim() : 'Sin dueño',
+      isDeceased: pet.isDeceased,
+    }));
 
-    return { success: true, pets: formattedPets }
+    return {
+      success: true,
+      pets: formattedPets,
+    };
   } catch (error) {
-    console.error('Failed to fetch pets:', error)
-    return { success: false, error: 'Failed to fetch pets', pets: [] }
-  } finally {
-    await prisma.$disconnect()
+    console.error("Failed to fetch pets:", error);
+    return {
+      success: false,
+      error: "Failed to fetch pets",
+    };
   }
 }

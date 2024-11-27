@@ -1,0 +1,15 @@
+FROM oven/bun:1
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json bun.lockb ./
+RUN bun install
+
+# Copy the rest of the application
+COPY . .
+
+EXPOSE 3000
+
+# Development command
+CMD ["bun", "dev"]

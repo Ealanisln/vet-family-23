@@ -1,92 +1,49 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Staff } from "@prisma/client";
 import { createKindeManagementAPIClient } from "@kinde-oss/kinde-auth-nextjs/server";
+import { revalidatePath } from "next/cache";
 
-const prisma = new PrismaClient();
-
-export async function getUsers(token: string) {
-  try {
-    // Here you would typically use the token to authenticate the request
-    // For example, you might pass it as a header to an external API
-    // or use it to verify the user's session
-
-    // For now, we'll just log that we received a token
-
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        email: true,
-        kindeId: true,
-        name: true,
-        address: true,
-        preferredContactMethod: true,
-        pet: true,
-        visits: true,
-        nextVisitFree: true,
-        lastVisit: true,
-        userRoles: {
-          select: {
-            role: {
-              select: {
-                key: true,
-                name: true,
-              },
-            },
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    // Transform the userRoles to match the previous format
-    return users.map(user => ({
-      ...user,
-      roles: user.userRoles.map(ur => ur.role),
-      userRoles: undefined, // Remove the userRoles field
-    }));
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    throw new Error("Failed to fetch users");
-  }
+// Interfaces
+interface Pet {
+  id: string;
+  name: string;
+  species: string;
+  isDeceased: boolean;
+  internalId?: string | null;
 }
 
-export async function getUserById(id: string) {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id },
-      include: {
-        pets: true,
-        appointments: true,
-        billings: true,
-        reminders: true,
-        userRoles: {
-          include: {
-            role: true,
-          },
-        },
-      },
-    });
-    if (!user) {
-      throw new Error("User not found");
-    }
-    // Transform the userRoles to match the previous format
-    return {
-      ...user,
-      roles: user.userRoles.map(ur => ur.role),
-      userRoles: undefined, // Remove the userRoles field
-    };
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    throw new Error("Failed to fetch user");
-  }
+// Extendemos de Partial<Staff> para hacer todos los campos opcionales
+interface StaffResponse {
+  id: string;
+  address: string | null;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  internalId: string | null;
+  kindeId: string;
+  name: string | null;
+  nextVisitFree: boolean;
+  phone: string | null;
+  visits: number;
+  createdAt: Date;
+  updatedAt: Date;
+  roles: string[];
+  pets: Pet[];
 }
 
-export async function updateUser(userData: {
+interface CreateStaffInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  kindeId: string;
+  visits?: number;
+  nextVisitFree?: boolean;
+}
+
+interface UpdateStaffInput {
   id: string;
   firstName: string;
   lastName: string;
@@ -96,10 +53,102 @@ export async function updateUser(userData: {
   visits?: number;
   nextVisitFree?: boolean;
   internalId?: string;
-}) {
+}
+
+// PrismaClient initialization
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+const transformStaffResponse = (staff: any): StaffResponse => ({
+  ...staff,
+  visits: Number(staff.visits),
+  roles: staff.roles,
+  pets: staff.pets || []
+});
+
+export async function getUsers(token: string): Promise<StaffResponse[]> {
   try {
-    // Actualizar en la base de datos local
-    const updatedUser = await prisma.user.update({
+    const staff = await prisma.staff.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        email: true,
+        kindeId: true,
+        name: true,
+        address: true,
+        visits: true,
+        nextVisitFree: true,
+        createdAt: true,
+        updatedAt: true,
+        internalId: true,
+        roles: true,
+        pets: {
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            isDeceased: true,
+            internalId: true
+          }
+        }
+      },
+    });
+
+    return staff.map(transformStaffResponse);
+  } catch (error) {
+    console.error("Error fetching staff:", error instanceof Error ? error.message : error);
+    throw new Error("Failed to fetch staff");
+  }
+}
+
+export async function getUserById(id: string): Promise<StaffResponse> {
+  try {
+    const staff = await prisma.staff.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        email: true,
+        kindeId: true,
+        name: true,
+        address: true,
+        visits: true,
+        nextVisitFree: true,
+        createdAt: true,
+        updatedAt: true,
+        internalId: true,
+        roles: true,
+        pets: {
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            isDeceased: true,
+            internalId: true
+          }
+        }
+      },
+    });
+    
+    if (!staff) {
+      throw new Error("Staff member not found");
+    }
+    
+    return transformStaffResponse(staff);
+  } catch (error) {
+    console.error("Error fetching staff member:", error instanceof Error ? error.message : error);
+    throw new Error("Failed to fetch staff member");
+  }
+}
+
+export async function updateUser(userData: UpdateStaffInput): Promise<StaffResponse> {
+  try {
+    const updatedStaff = await prisma.staff.update({
       where: { id: userData.id },
       data: {
         firstName: userData.firstName,
@@ -107,22 +156,39 @@ export async function updateUser(userData: {
         email: userData.email,
         phone: userData.phone,
         address: userData.address,
-        visits: userData.visits,
+        visits: BigInt(userData.visits || 0),
         nextVisitFree: userData.nextVisitFree,
+        updatedAt: new Date()
       },
-      include: {
-        userRoles: {
-          include: {
-            role: true,
-          },
-        },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        email: true,
+        kindeId: true,
+        name: true,
+        address: true,
+        visits: true,
+        nextVisitFree: true,
+        createdAt: true,
+        updatedAt: true,
+        internalId: true,
+        roles: true,
+        pets: {
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            isDeceased: true,
+            internalId: true
+          }
+        }
       },
     });
 
-    // Crear el cliente de la API de Kinde
     const { usersApi } = await createKindeManagementAPIClient();
 
-    // Actualizar en Kinde (solo nombre y apellido)
     try {
       await usersApi.updateUser({
         id: userData.id,
@@ -132,30 +198,140 @@ export async function updateUser(userData: {
         },
       });
     } catch (kindeError) {
-      console.error("Error updating user in Kinde:", kindeError);
-      // Aquí podrías decidir si quieres lanzar un error o simplemente loggearlo
+      console.error("Error updating user in Kinde:", kindeError instanceof Error ? kindeError.message : kindeError);
     }
 
-    // Si el email ha cambiado, registra una advertencia
-    if (updatedUser.email !== userData.email) {
+    if (updatedStaff.email !== userData.email) {
       console.warn(
         `Email update for user ${userData.id} was not synced to Kinde. Local email: ${userData.email}, Kinde email may be different.`
       );
     }
 
-    // Registra una advertencia para el teléfono
-    console.warn(
-      `Phone number for user ${userData.id} was updated locally but not in Kinde.`
-    );
+    revalidatePath("/admin/customers");
 
-    // Transform the userRoles to match the previous format
-    return {
-      ...updatedUser,
-      roles: updatedUser.userRoles.map(ur => ur.role),
-      userRoles: undefined, // Remove the userRoles field
-    };
+    return transformStaffResponse(updatedStaff);
   } catch (error) {
-    console.error("Error updating user:", error);
-    throw new Error("Failed to update user");
+    console.error("Error updating staff member:", error instanceof Error ? error.message : error);
+    throw new Error("Failed to update staff member");
+  }
+}
+
+export async function createUser(userData: CreateStaffInput): Promise<StaffResponse> {
+  try {
+    const newStaff = await prisma.staff.create({
+      data: {
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        phone: userData.phone,
+        address: userData.address,
+        kindeId: userData.kindeId,
+        visits: BigInt(userData.visits || 0),
+        nextVisitFree: userData.nextVisitFree || false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        roles: []
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        email: true,
+        kindeId: true,
+        name: true,
+        address: true,
+        visits: true,
+        nextVisitFree: true,
+        createdAt: true,
+        updatedAt: true,
+        internalId: true,
+        roles: true,
+        pets: {
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            isDeceased: true,
+            internalId: true
+          }
+        }
+      },
+    });
+
+    revalidatePath("/admin/customers");
+
+    return transformStaffResponse(newStaff);
+  } catch (error) {
+    console.error("Error creating staff member:", error instanceof Error ? error.message : error);
+    throw new Error("Failed to create staff member");
+  }
+}
+
+export async function deleteUser(id: string): Promise<Staff> {
+  try {
+    const deletedStaff = await prisma.staff.delete({
+      where: { id }
+    });
+
+    const { usersApi } = await createKindeManagementAPIClient();
+
+    try {
+      await usersApi.deleteUser({ id });
+    } catch (kindeError) {
+      console.error("Error deleting user in Kinde:", kindeError instanceof Error ? kindeError.message : kindeError);
+    }
+
+    revalidatePath("/admin/customers");
+
+    return deletedStaff;
+  } catch (error) {
+    console.error("Error deleting staff member:", error instanceof Error ? error.message : error);
+    throw new Error("Failed to delete staff member");
+  }
+}
+
+export async function searchUsers(searchTerm: string): Promise<StaffResponse[]> {
+  try {
+    const staff = await prisma.staff.findMany({
+      where: {
+        OR: [
+          { firstName: { contains: searchTerm, mode: 'insensitive' } },
+          { lastName: { contains: searchTerm, mode: 'insensitive' } },
+          { email: { contains: searchTerm, mode: 'insensitive' } },
+          { phone: { contains: searchTerm } },
+        ],
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        email: true,
+        kindeId: true,
+        name: true,
+        address: true,
+        visits: true,
+        nextVisitFree: true,
+        createdAt: true,
+        updatedAt: true,
+        internalId: true,
+        roles: true,
+        pets: {
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            isDeceased: true,
+            internalId: true
+          }
+        }
+      },
+    });
+
+    return staff.map(transformStaffResponse);
+  } catch (error) {
+    console.error("Error searching staff members:", error instanceof Error ? error.message : error);
+    throw new Error("Failed to search staff members");
   }
 }

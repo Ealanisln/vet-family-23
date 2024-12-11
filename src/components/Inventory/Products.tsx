@@ -238,19 +238,27 @@ export default function Inventory() {
         "Manual update"
       );
 
-      if (result.success) {
-        toast({
-          title: "Éxito",
-          description: "Item actualizado correctamente",
-        });
-        fetchInventory();
-      } else {
+      if (!result.success) {
+        // Check if it's an auth error
+        if (result.requiresAuth) {
+          // Use Kinde's login function
+          window.location.href = "/api/auth/login";
+          return;
+        }
+
         toast({
           variant: "destructive",
           title: "Error",
           description: result.error || "Error al actualizar item",
         });
+        return;
       }
+
+      toast({
+        title: "Éxito",
+        description: "Item actualizado correctamente",
+      });
+      fetchInventory();
     } catch (error) {
       toast({
         variant: "destructive",

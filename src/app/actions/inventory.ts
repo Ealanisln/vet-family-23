@@ -62,19 +62,24 @@ interface UpdateInventoryData {
 export async function updateInventoryItem(
   id: string,
   data: UpdateInventoryData,
-  _userId: string, // Mantenemos el parámetro pero no lo usaremos
+  _userId: string,
   reason?: string
 ) {
   try {
-    // Obtener información del usuario
+    // Get user session
     const { getUser } = getKindeServerSession();
     const kindeUser = await getUser();
 
+    // Instead of redirecting, return an auth error
     if (!kindeUser || !kindeUser.id) {
-      redirect("/api/auth/login");
+      return {
+        success: false,
+        error: "Authentication required",
+        requiresAuth: true  // Add this flag to handle it in the frontend
+      };
     }
 
-    // Obtener el usuario de nuestra base de datos
+    // Rest of your code...
     const user = await prisma.user.findUnique({
       where: { kindeId: kindeUser.id },
     });
@@ -82,7 +87,7 @@ export async function updateInventoryItem(
     if (!user) {
       return {
         success: false,
-        error: "Usuario no autorizado",
+        error: "Usuario no autorizado"
       };
     }
 

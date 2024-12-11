@@ -1,3 +1,4 @@
+// middleware.ts
 import {
   authMiddleware,
   withAuth,
@@ -8,5 +9,9 @@ export default function middleware(req: Request) {
 }
 
 export const config = {
-  matcher: ["/admin"],
+  matcher: [
+    "/admin",
+    "/inventory/:path*",  // Protect all inventory routes
+    "/api/inventory/:path*"  // Protect inventory API routes
+  ],
 };

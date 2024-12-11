@@ -272,30 +272,69 @@ export default function Inventory() {
     if (!selectedItem) return;
 
     try {
-      // Convertir los datos del formulario al formato esperado por UpdateInventoryData
+      setIsSubmitting(true);
+
       const updateData: UpdateInventoryData = {
+        // Include all fields from formData
+        name: formData.name,
         quantity: formData.quantity,
         minStock: formData.minStock || undefined,
         location: formData.location || undefined,
-        status: selectedItem.status, // Mantener el status actual
+        description: formData.description || undefined,
+        activeCompound: formData.activeCompound || undefined,
+        presentation: formData.presentation || undefined,
+        measure: formData.measure || undefined,
+        brand: formData.brand || undefined,
+        batchNumber: formData.batchNumber || undefined,
+        specialNotes: formData.specialNotes || undefined,
+        expirationDate: formData.expirationDate
+          ? new Date(formData.expirationDate)
+          : null,
+        status: selectedItem.status,
       };
 
-      await handleUpdateItem(selectedItem.id, updateData);
+      const result = await updateInventoryItem(
+        selectedItem.id,
+        updateData,
+        "current-user-id",
+        "Manual update"
+      );
 
+      if (!result.success) {
+        if (result.requiresAuth) {
+          window.location.href = "/api/auth/login";
+          return;
+        }
+
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error || "Error al actualizar item",
+        });
+        return;
+      }
+
+      // Close forms and show success
       setIsEditFormOpen(false);
       setIsDialogOpen(false);
-      await fetchInventory(); // Recargar datos
+
+      // Refetch data
+      await fetchInventory();
 
       toast({
         title: "Éxito",
         description: "Item actualizado correctamente",
       });
     } catch (error) {
+      console.error("Update error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error al actualizar el item",
+        description:
+          error instanceof Error ? error.message : "Error al actualizar",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

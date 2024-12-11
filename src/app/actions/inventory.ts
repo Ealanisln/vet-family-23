@@ -1,4 +1,3 @@
-// app/actions/inventory-actions.ts
 "use server";
 
 import { prisma } from "@/lib/prismaDB";
@@ -8,9 +7,8 @@ import {
   MovementType,
   InventoryCategory,
 } from "@prisma/client";
-import { InventoryItemFormData } from "@/components/Inventory/types";
+import { UpdateInventoryData, InventoryItemFormData } from "@/components/Inventory/types";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { redirect } from "next/navigation";
 
 export async function getInventory() {
   try {
@@ -35,7 +33,6 @@ export async function getInventory() {
       },
     });
 
-    // Convertir fechas a strings para serialización
     const serializedItems = items.map((item) => ({
       ...item,
       expirationDate: item.expirationDate?.toISOString() || null,
@@ -52,13 +49,6 @@ export async function getInventory() {
   }
 }
 
-interface UpdateInventoryData {
-  quantity?: number;
-  status?: InventoryStatus;
-  location?: string;
-  minStock?: number;
-}
-
 export async function updateInventoryItem(
   id: string,
   data: UpdateInventoryData,
@@ -66,25 +56,30 @@ export async function updateInventoryItem(
   reason?: string
 ) {
   try {
-    // Get user session
+    console.log('Starting update with data:', { id, data, reason });
+
     const { getUser } = getKindeServerSession();
     const kindeUser = await getUser();
 
-    // Instead of redirecting, return an auth error
     if (!kindeUser || !kindeUser.id) {
+      console.log('No authenticated user found');
       return {
         success: false,
         error: "Authentication required",
-        requiresAuth: true  // Add this flag to handle it in the frontend
+        requiresAuth: true
       };
     }
 
-    // Rest of your code...
+    console.log('Kinde user:', kindeUser);
+
     const user = await prisma.user.findUnique({
       where: { kindeId: kindeUser.id },
     });
 
+    console.log('DB user:', user);
+
     if (!user) {
+      console.log('No DB user found for kindeId:', kindeUser.id);
       return {
         success: false,
         error: "Usuario no autorizado"
@@ -95,7 +90,10 @@ export async function updateInventoryItem(
       where: { id },
     });
 
+    console.log('Current item:', currentItem);
+
     if (!currentItem) {
+      console.log('No item found with id:', id);
       throw new Error("Item not found");
     }
 
@@ -124,7 +122,7 @@ export async function updateInventoryItem(
                     ? MovementType.IN
                     : MovementType.OUT,
                 quantity: Math.abs(data.quantity - (currentItem.quantity || 0)),
-                userId: user.id, // Usamos el ID del usuario de nuestra base de datos
+                userId: user.id,
                 reason: reason || "Manual adjustment",
               },
             }),
@@ -132,27 +130,35 @@ export async function updateInventoryItem(
         : []),
     ]);
 
-    revalidatePath("/inventory");
+    console.log('Update successful:', updatedItem);
+
+    revalidatePath("/admin/inventario");
     return { success: true, item: updatedItem };
   } catch (error) {
     console.error("Error updating inventory:", error);
-    return { success: false, error: "Failed to update inventory" };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to update inventory"
+    };
   }
 }
+
 export async function createInventoryItem(
   data: InventoryItemFormData,
   reason?: string
 ) {
-  // Obtener información del usuario
-  const { getUser } = getKindeServerSession();
-  const kindeUser = await getUser();
-
-  if (!kindeUser || !kindeUser.id) {
-    redirect("/api/auth/login");
-  }
-
   try {
-    // Obtener el usuario de nuestra base de datos
+    const { getUser } = getKindeServerSession();
+    const kindeUser = await getUser();
+
+    if (!kindeUser || !kindeUser.id) {
+      return {
+        success: false,
+        error: "Authentication required",
+        requiresAuth: true
+      };
+    }
+
     const user = await prisma.user.findUnique({
       where: { kindeId: kindeUser.id },
     });
@@ -164,7 +170,6 @@ export async function createInventoryItem(
       };
     }
 
-    // Validaciones
     if (!data.name?.trim()) {
       return { success: false, error: "El nombre es requerido" };
     }
@@ -177,7 +182,6 @@ export async function createInventoryItem(
       return { success: false, error: "La cantidad no puede ser negativa" };
     }
 
-    // Crear el item con su movimiento inicial
     const newItem = await prisma.inventoryItem.create({
       data: {
         name: data.name.trim(),
@@ -201,18 +205,16 @@ export async function createInventoryItem(
             : data.quantity === 0
               ? InventoryStatus.OUT_OF_STOCK
               : InventoryStatus.ACTIVE,
-        // Crear el movimiento inicial usando create nested
         movements: {
           create: {
             type: MovementType.IN,
             quantity: data.quantity,
-            userId: user.id, // Usamos el ID del usuario de nuestra base de datos
+            userId: user.id,
             reason: reason || "Creación inicial del item",
             date: new Date(),
           },
         },
       },
-      // Incluir los movements en la respuesta
       include: {
         movements: {
           take: 1,
@@ -227,9 +229,8 @@ export async function createInventoryItem(
       },
     });
 
-    revalidatePath("/inventory");
+    revalidatePath("/admin/inventario");
 
-    // Serializar las fechas antes de retornar
     return {
       success: true,
       item: {
@@ -243,6 +244,9 @@ export async function createInventoryItem(
     };
   } catch (error) {
     console.error("Error creating inventory item:", error);
-    return { success: false, error: "Failed to create inventory item" };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to create inventory item"
+    };
   }
 }

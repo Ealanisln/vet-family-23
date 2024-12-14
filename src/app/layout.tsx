@@ -4,6 +4,7 @@ import { FacebookPixelEvents } from "@/components/Facebook/FacebookPixel";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Toaster } from "@/components/ui/toaster";
 import { Metadata } from "next";
+import { KindeProvider } from "@kinde-oss/kinde-auth-nextjs";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -71,12 +72,14 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
-        {children}
-        <Toaster />
-        <Suspense fallback={null}>
-          <FacebookPixelEvents />
-        </Suspense>
-        <GoogleAnalytics gaId="G-PXSVH1SGKW" />
+        <KindeProvider>
+          {children}
+          <Toaster />
+          <Suspense fallback={null}>
+            <FacebookPixelEvents />
+          </Suspense>
+          <GoogleAnalytics gaId="G-PXSVH1SGKW" />
+        </KindeProvider>
       </body>
     </html>
   );

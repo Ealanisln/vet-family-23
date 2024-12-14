@@ -4,7 +4,7 @@ import { FacebookPixelEvents } from "@/components/Facebook/FacebookPixel";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Toaster } from "@/components/ui/toaster";
 import { Metadata } from "next";
-import { KindeProvider } from "@kinde-oss/kinde-auth-nextjs";
+import { KindeProvider } from "@/providers/KindeProvider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(

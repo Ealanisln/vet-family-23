@@ -7,7 +7,10 @@ import {
   MovementType,
   InventoryCategory,
 } from "@prisma/client";
-import { UpdateInventoryData, InventoryItemFormData } from "@/components/Inventory/types";
+import {
+  UpdateInventoryData,
+  InventoryItemFormData,
+} from "@/components/Inventory/types";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 
 export async function getInventory() {
@@ -56,33 +59,50 @@ export async function updateInventoryItem(
   reason?: string
 ) {
   try {
-    console.log('Starting update with data:', { id, data, reason });
+    console.log("Starting update with data:", { id, data, reason });
 
     const { getUser } = getKindeServerSession();
+
+    // Add more detailed authentication debugging
+    const isAuthenticated = await getKindeServerSession().isAuthenticated();
+    console.log("Is authenticated:", isAuthenticated);
+
     const kindeUser = await getUser();
 
+    console.log("Kinde user details:", {
+      exists: !!kindeUser,
+      id: kindeUser?.id,
+      email: kindeUser?.email,
+    });
+
     if (!kindeUser || !kindeUser.id) {
-      console.log('No authenticated user found');
+      console.log("Authentication failed:", {
+        kindeUser: !!kindeUser,
+        kindeUserId: kindeUser?.id,
+      });
       return {
         success: false,
         error: "Authentication required",
-        requiresAuth: true
+        requiresAuth: true,
+        debug: { isAuthenticated },
       };
     }
-
-    console.log('Kinde user:', kindeUser);
 
     const user = await prisma.user.findUnique({
       where: { kindeId: kindeUser.id },
     });
 
-    console.log('DB user:', user);
+    console.log("DB user lookup result:", {
+      kindeId: kindeUser.id,
+      userFound: !!user,
+      userId: user?.id,
+    });
 
     if (!user) {
-      console.log('No DB user found for kindeId:', kindeUser.id);
+      console.log("No DB user found for kindeId:", kindeUser.id);
       return {
         success: false,
-        error: "Usuario no autorizado"
+        error: "Usuario no autorizado",
       };
     }
 
@@ -90,10 +110,10 @@ export async function updateInventoryItem(
       where: { id },
     });
 
-    console.log('Current item:', currentItem);
+    console.log("Current item:", currentItem);
 
     if (!currentItem) {
-      console.log('No item found with id:', id);
+      console.log("No item found with id:", id);
       throw new Error("Item not found");
     }
 
@@ -130,15 +150,16 @@ export async function updateInventoryItem(
         : []),
     ]);
 
-    console.log('Update successful:', updatedItem);
+    console.log("Update successful:", updatedItem);
 
     revalidatePath("/admin/inventario");
     return { success: true, item: updatedItem };
   } catch (error) {
     console.error("Error updating inventory:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Failed to update inventory"
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to update inventory",
     };
   }
 }
@@ -155,7 +176,7 @@ export async function createInventoryItem(
       return {
         success: false,
         error: "Authentication required",
-        requiresAuth: true
+        requiresAuth: true,
       };
     }
 
@@ -244,9 +265,12 @@ export async function createInventoryItem(
     };
   } catch (error) {
     console.error("Error creating inventory item:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Failed to create inventory item"
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to create inventory item",
     };
   }
 }

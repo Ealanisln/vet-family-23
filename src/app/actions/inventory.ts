@@ -62,29 +62,22 @@ export async function updateInventoryItem(
     console.log("Starting update with data:", { id, data, reason });
 
     const { getUser } = getKindeServerSession();
-
-    // Add more detailed authentication debugging
     const isAuthenticated = await getKindeServerSession().isAuthenticated();
-    console.log("Is authenticated:", isAuthenticated);
-
-    const kindeUser = await getUser();
-
-    console.log("Kinde user details:", {
-      exists: !!kindeUser,
-      id: kindeUser?.id,
-      email: kindeUser?.email,
-    });
-
-    if (!kindeUser || !kindeUser.id) {
-      console.log("Authentication failed:", {
-        kindeUser: !!kindeUser,
-        kindeUserId: kindeUser?.id,
-      });
+    
+    if (!isAuthenticated) {
       return {
         success: false,
         error: "Authentication required",
         requiresAuth: true,
-        debug: { isAuthenticated },
+      };
+    }
+
+    const kindeUser = await getUser();
+    if (!kindeUser || !kindeUser.id) {
+      return {
+        success: false,
+        error: "Authentication required",
+        requiresAuth: true,
       };
     }
 
@@ -92,14 +85,7 @@ export async function updateInventoryItem(
       where: { kindeId: kindeUser.id },
     });
 
-    console.log("DB user lookup result:", {
-      kindeId: kindeUser.id,
-      userFound: !!user,
-      userId: user?.id,
-    });
-
     if (!user) {
-      console.log("No DB user found for kindeId:", kindeUser.id);
       return {
         success: false,
         error: "Usuario no autorizado",
@@ -110,11 +96,11 @@ export async function updateInventoryItem(
       where: { id },
     });
 
-    console.log("Current item:", currentItem);
-
     if (!currentItem) {
-      console.log("No item found with id:", id);
-      throw new Error("Item not found");
+      return {
+        success: false,
+        error: "Item not found",
+      };
     }
 
     const [updatedItem] = await prisma.$transaction([
@@ -150,16 +136,23 @@ export async function updateInventoryItem(
         : []),
     ]);
 
-    console.log("Update successful:", updatedItem);
+    try {
+      await revalidatePath("/admin/inventario");
+    } catch (revalidateError) {
+      console.error("Error during revalidation:", revalidateError);
+      // Continuamos a pesar del error de revalidación
+    }
 
-    revalidatePath("/admin/inventario");
-    return { success: true, item: updatedItem };
+    return {
+      success: true,
+      item: updatedItem,
+      redirectTo: "/admin/inventario",
+    };
   } catch (error) {
     console.error("Error updating inventory:", error);
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : "Failed to update inventory",
+      error: error instanceof Error ? error.message : "Failed to update inventory",
     };
   }
 }
@@ -250,7 +243,12 @@ export async function createInventoryItem(
       },
     });
 
-    revalidatePath("/admin/inventario");
+    try {
+      await revalidatePath("/admin/inventario");
+    } catch (revalidateError) {
+      console.error("Error during revalidation:", revalidateError);
+      // Continuamos a pesar del error de revalidación
+    }
 
     return {
       success: true,
@@ -262,6 +260,7 @@ export async function createInventoryItem(
           date: movement.date.toISOString(),
         })),
       },
+      redirectTo: "/admin/inventario",
     };
   } catch (error) {
     console.error("Error creating inventory item:", error);

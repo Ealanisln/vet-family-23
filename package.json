@@ -20,7 +20,7 @@
     "@kinde-oss/kinde-auth-nextjs": "^2.4.6",
     "@next/third-parties": "^14.2.20",
     "@portabletext/react": "^3.2.0",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.1.0",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-avatar": "^1.1.1",
@@ -48,6 +48,7 @@
     "@sanity/vision": "^3.67.1",
     "@sendgrid/mail": "^8.1.4",
     "@types/node-fetch": "^2.6.12",
+    "@types/pg": "^8.11.10",
     "@types/react": "^18.3.16",
     "@types/react-dom": "18.2.4",
     "autoprefixer": "10.4.14",
@@ -70,8 +71,8 @@
     "next-cloudinary": "^5.20.0",
     "next-sanity": "^9.8.25",
     "nodemailer": "^6.9.16",
+    "pg": "^8.13.1",
     "postcss": "8.4.23",
-    "prisma": "^5.22.0",
     "react": "18.3.1",
     "react-dimmer": "^1.0.7",
     "react-dom": "18.3.1",
@@ -103,6 +104,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.2",
     "@types/nodemailer": "^6.4.17",
+    "prisma": "^6.1.0",
     "tsx": "^4.19.2"
   }
 }

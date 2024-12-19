@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -7,10 +7,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Existing models remain exactly the same
 model User {
-  id                     String         @id @default(auto()) @map("_id") @db.ObjectId
-  kindeId                String         @unique
+  id                     String              @id
+  kindeId                String              @unique
   email                  String?
   firstName              String?
   lastName               String?
@@ -19,58 +18,54 @@ model User {
   address                String?
   preferredContactMethod String?
   pet                    String?
-  visits                 Int            @default(0)
-  nextVisitFree          Boolean        @default(false)
+  visits                 Int                 @default(0)
+  nextVisitFree          Boolean             @default(false)
   lastVisit              DateTime?
   visitHistory           VisitHistory[]
   pets                   Pet[]
   appointments           Appointment[]
-  billings              Billing[]
-  reminders             Reminder[]
-  userRoles             UserRole[]
-  inventoryMovements    InventoryMovement[]
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  billings               Billing[]
+  reminders              Reminder[]
+  userRoles              UserRole[]
+  inventoryMovements     InventoryMovement[]
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
 
   @@index([firstName, lastName, phone])
   @@index([email])
-  @@map("users")
 }
 
 model Role {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  id        String     @id @default(uuid())
   key       String     @unique
   name      String
   userRoles UserRole[]
-
-  @@map("roles")
 }
 
 model UserRole {
-  id     String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @db.ObjectId
-  roleId String @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id])
-  role   Role   @relation(fields: [roleId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, roleId])
-  @@map("userRoles")
 }
 
 model VisitHistory {
-  id     String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId String   @db.ObjectId
-  user   User     @relation(fields: [userId], references: [id])
+  id     String   @id @default(uuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date   DateTime @default(now())
   cost   Float
   isFree Boolean  @default(false)
 }
 
 model Pet {
-  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
+  id                  String                @id
   internalId          String?
-  userId              String                @db.ObjectId
-  user                User                  @relation(fields: [userId], references: [id])
+  userId              String
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   name                String
   species             String
   breed               String
@@ -89,9 +84,9 @@ model Pet {
 }
 
 model MedicalHistory {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  petId          String   @db.ObjectId
-  pet            Pet      @relation(fields: [petId], references: [id])
+  id             String   @id @default(uuid())
+  petId          String
+  pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   visitDate      DateTime
   reasonForVisit String
   diagnosis      String
@@ -101,9 +96,9 @@ model MedicalHistory {
 }
 
 model Vaccination {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
-  petId              String   @db.ObjectId
-  pet                Pet      @relation(fields: [petId], references: [id])
+  id                 String   @id @default(uuid())
+  petId              String
+  pet                Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   vaccineType        String
   stage              String
   status             String
@@ -118,13 +113,12 @@ model Vaccination {
 
   @@index([petId, vaccineType])
   @@index([nextDoseDate, status])
-  @@map("vaccinations")
 }
 
 model VaccinationSchedule {
-  id            String            @id @default(auto()) @map("_id") @db.ObjectId
-  petId         String            @db.ObjectId
-  pet           Pet               @relation(fields: [petId], references: [id])
+  id            String            @id @default(uuid())
+  petId         String
+  pet           Pet               @relation(fields: [petId], references: [id], onDelete: Cascade)
   vaccineType   VaccineType
   stage         VaccinationStage
   scheduledDate DateTime
@@ -134,25 +128,24 @@ model VaccinationSchedule {
   updatedAt     DateTime          @updatedAt
 
   @@index([petId, scheduledDate, status])
-  @@map("vaccination_schedules")
 }
 
 model Appointment {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId   String   @db.ObjectId
-  user     User     @relation(fields: [userId], references: [id])
-  petId    String   @db.ObjectId
-  pet      Pet      @relation(fields: [petId], references: [id])
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  petId    String
+  pet      Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   dateTime DateTime
   reason   String
   status   String
 }
 
 model Billing {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId        String   @db.ObjectId
-  user          User     @relation(fields: [userId], references: [id])
-  petId         String?  @db.ObjectId
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  petId         String?
   pet           Pet?     @relation(fields: [petId], references: [id])
   date          DateTime
   services      String[]
@@ -161,24 +154,24 @@ model Billing {
 }
 
 model Reminder {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String   @db.ObjectId
-  user         User     @relation(fields: [userId], references: [id])
-  petId        String   @db.ObjectId
-  pet          Pet      @relation(fields: [petId], references: [id])
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  petId        String
+  pet          Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   reminderType String
   dueDate      DateTime
   status       String
 }
 
 model Staff {
-  id                 String @id @default(auto()) @map("_id") @db.ObjectId
+  id                 String @id @default(uuid())
   name               String
   position           String
   contactInformation String
 }
 
-// Existing enums
+// Enums remain the same
 enum VaccineType {
   DP_PUPPY
   DHPPI
@@ -202,7 +195,6 @@ enum VaccinationStage {
   ADULT
 }
 
-// New inventory models and enums
 enum InventoryCategory {
   MEDICINE
   SURGICAL_MATERIAL
@@ -229,46 +221,44 @@ enum MovementType {
 }
 
 model InventoryItem {
-  id              String            @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  category        InventoryCategory
-  description     String?
-  activeCompound  String?
-  presentation    String?
-  measure         String?
-  brand           String?
-  quantity        Int               @default(0)
-  minStock        Int?
-  location        String?
-  expirationDate  DateTime?
-  status          InventoryStatus   @default(ACTIVE)
-  batchNumber     String?
-  specialNotes    String?
-  movements       InventoryMovement[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id             String              @id @default(uuid())
+  name           String
+  category       InventoryCategory
+  description    String?
+  activeCompound String?
+  presentation   String?
+  measure        String?
+  brand          String?
+  quantity       Int                 @default(0)
+  minStock       Int?
+  location       String?
+  expirationDate DateTime?
+  status         InventoryStatus     @default(ACTIVE)
+  batchNumber    String?
+  specialNotes   String?
+  movements      InventoryMovement[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   @@index([category])
   @@index([name])
   @@index([status])
   @@index([expirationDate])
-  @@map("inventory_items")
 }
 
 model InventoryMovement {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
-  itemId          String         @db.ObjectId
-  item            InventoryItem  @relation(fields: [itemId], references: [id])
+  id              String        @id @default(uuid())
+  itemId          String
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
   type            MovementType
   quantity        Int
-  date            DateTime       @default(now())
+  date            DateTime      @default(now())
   reason          String?
-  userId          String         @db.ObjectId
-  user            User           @relation(fields: [userId], references: [id])
-  relatedRecordId String?        @db.ObjectId
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  relatedRecordId String?
   notes           String?
 
   @@index([itemId, date])
   @@index([userId])
-  @@map("inventory_movements")
 }

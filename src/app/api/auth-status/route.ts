@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { PrismaClient } from "@prisma/client";
+import crypto from 'crypto';
 
 export const dynamic = "force-dynamic";
 
@@ -8,8 +9,7 @@ const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   try {
-    const { getUser, isAuthenticated, getAccessToken } =
-      getKindeServerSession();
+    const { getUser, isAuthenticated, getAccessToken } = getKindeServerSession();
 
     let user = null;
     let authStatus = false;
@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
         if (!dbUser && user.email) {
           console.log("Checking if user exists with email");
           dbUser = await prisma.user.findFirst({
-            // Changed from findUnique to findFirst
             where: { email: user.email },
             include: { userRoles: { include: { role: true } } },
           });
@@ -38,6 +37,7 @@ export async function GET(req: NextRequest) {
             console.log("Creating new user in database");
             dbUser = await prisma.user.create({
               data: {
+                id: crypto.randomUUID(),  // Generate UUID for new user
                 kindeId: user.id,
                 email: user.email,
               },
@@ -56,11 +56,7 @@ export async function GET(req: NextRequest) {
         // Get roles from access token
         const accessToken = await getAccessToken();
 
-        if (
-          accessToken &&
-          typeof accessToken === "object" &&
-          "roles" in accessToken
-        ) {
+        if (accessToken && typeof accessToken === "object" && "roles" in accessToken) {
           userRoles = Array.isArray(accessToken.roles) ? accessToken.roles : [];
         }
 

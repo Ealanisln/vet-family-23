@@ -111,6 +111,7 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             },
           },
           create: {
+            id: user.id,  // Added this line to fix the error
             kindeId: user.id,
             email: user.email,
             phone: user.phone,

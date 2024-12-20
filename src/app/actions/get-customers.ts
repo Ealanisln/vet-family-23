@@ -1,61 +1,69 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role, User, UserRole } from "@prisma/client";
 import { createKindeManagementAPIClient } from "@kinde-oss/kinde-auth-nextjs/server";
+import { randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Type guard for Prisma errors
+function isPrismaError(
+  error: unknown
+): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError;
+}
 
-export async function getUsers(token: string) {
-  try {
-    // Here you would typically use the token to authenticate the request
-    // For example, you might pass it as a header to an external API
-    // or use it to verify the user's session
+// Define better return types
+type UserWithRoles = User & {
+  roles: Role[];
+};
 
-    // For now, we'll just log that we received a token
-
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        email: true,
-        kindeId: true,
-        name: true,
-        address: true,
-        preferredContactMethod: true,
-        pet: true,
-        visits: true,
-        nextVisitFree: true,
-        lastVisit: true,
-        userRoles: {
-          select: {
-            role: {
-              select: {
-                key: true,
-                name: true,
-              },
-            },
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    // Transform the userRoles to match the previous format
-    return users.map(user => ({
-      ...user,
-      roles: user.userRoles.map(ur => ur.role),
-      userRoles: undefined, // Remove the userRoles field
-    }));
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    throw new Error("Failed to fetch users");
+// Custom error class
+class ServerActionError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number = 500
+  ) {
+    super(message);
+    this.name = "ServerActionError";
   }
 }
 
-export async function getUserById(id: string) {
+// Implement a singleton pattern for PrismaClient
+const prismaClientSingleton = () => {
+  return new PrismaClient();
+};
+
+declare global {
+  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
+}
+
+const prisma = globalThis.prisma ?? prismaClientSingleton();
+if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
+
+export async function getUsers(token: string): Promise<UserWithRoles[]> {
+  try {
+    const users = await prisma.user.findMany({
+      include: {
+        userRoles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    return users.map((user) => ({
+      ...user,
+      roles: user.userRoles.map((ur) => ur.role),
+      userRoles: undefined,
+    })) as UserWithRoles[];
+  } catch (error: unknown) {
+    console.error("Error fetching users:", error);
+    throw new ServerActionError("Failed to fetch users");
+  }
+}
+
+export async function getUserById(id: string): Promise<UserWithRoles> {
   try {
     const user = await prisma.user.findUnique({
       where: { id },
@@ -71,44 +79,56 @@ export async function getUserById(id: string) {
         },
       },
     });
+
     if (!user) {
-      throw new Error("User not found");
+      throw new ServerActionError("User not found", 404);
     }
-    // Transform the userRoles to match the previous format
+
     return {
       ...user,
-      roles: user.userRoles.map(ur => ur.role),
-      userRoles: undefined, // Remove the userRoles field
-    };
-  } catch (error) {
+      roles: user.userRoles.map((ur) => ur.role),
+      userRoles: undefined,
+    } as UserWithRoles;
+  } catch (error: unknown) {
+    if (error instanceof ServerActionError) throw error;
     console.error("Error fetching user:", error);
-    throw new Error("Failed to fetch user");
+    throw new ServerActionError("Failed to fetch user");
   }
 }
 
-export async function updateUser(userData: {
+interface UpdateUserData {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
   visits?: number;
   nextVisitFree?: boolean;
-  internalId?: string;
-}) {
+}
+
+export async function updateUser(
+  userData: UpdateUserData
+): Promise<UserWithRoles> {
   try {
-    // Actualizar en la base de datos local
+    // Validate input
+    if (!userData.id) {
+      throw new ServerActionError("User ID is required", 400);
+    }
+
+    // Update in the local database
     const updatedUser = await prisma.user.update({
       where: { id: userData.id },
       data: {
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        email: userData.email,
-        phone: userData.phone,
-        address: userData.address,
-        visits: userData.visits,
-        nextVisitFree: userData.nextVisitFree,
+        ...(userData.firstName && { firstName: userData.firstName }),
+        ...(userData.lastName && { lastName: userData.lastName }),
+        ...(userData.email && { email: userData.email }),
+        ...(userData.phone && { phone: userData.phone }),
+        ...(userData.address && { address: userData.address }),
+        ...(userData.visits !== undefined && { visits: userData.visits }),
+        ...(userData.nextVisitFree !== undefined && {
+          nextVisitFree: userData.nextVisitFree,
+        }),
       },
       include: {
         userRoles: {
@@ -119,43 +139,157 @@ export async function updateUser(userData: {
       },
     });
 
-    // Crear el cliente de la API de Kinde
-    const { usersApi } = await createKindeManagementAPIClient();
-
-    // Actualizar en Kinde (solo nombre y apellido)
-    try {
-      await usersApi.updateUser({
-        id: userData.id,
-        updateUserRequest: {
-          givenName: userData.firstName,
-          familyName: userData.lastName,
-        },
-      });
-    } catch (kindeError) {
-      console.error("Error updating user in Kinde:", kindeError);
-      // Aquí podrías decidir si quieres lanzar un error o simplemente loggearlo
+    // Update in Kinde if name fields are provided
+    if (userData.firstName || userData.lastName) {
+      try {
+        const { usersApi } = await createKindeManagementAPIClient();
+        await usersApi.updateUser({
+          id: userData.id,
+          updateUserRequest: {
+            ...(userData.firstName && { givenName: userData.firstName }),
+            ...(userData.lastName && { familyName: userData.lastName }),
+          },
+        });
+      } catch (kindeError) {
+        console.error("Error updating user in Kinde:", kindeError);
+      }
     }
 
-    // Si el email ha cambiado, registra una advertencia
-    if (updatedUser.email !== userData.email) {
-      console.warn(
-        `Email update for user ${userData.id} was not synced to Kinde. Local email: ${userData.email}, Kinde email may be different.`
-      );
-    }
-
-    // Registra una advertencia para el teléfono
-    console.warn(
-      `Phone number for user ${userData.id} was updated locally but not in Kinde.`
-    );
-
-    // Transform the userRoles to match the previous format
     return {
       ...updatedUser,
-      roles: updatedUser.userRoles.map(ur => ur.role),
-      userRoles: undefined, // Remove the userRoles field
-    };
-  } catch (error) {
+      roles: updatedUser.userRoles.map((ur) => ur.role),
+      userRoles: undefined,
+    } as UserWithRoles;
+  } catch (error: unknown) {
+    if (error instanceof ServerActionError) throw error;
+    if (isPrismaError(error)) {
+      if (error.code === "P2025") {
+        throw new ServerActionError("User not found", 404);
+      }
+    }
     console.error("Error updating user:", error);
-    throw new Error("Failed to update user");
+    throw new ServerActionError("Failed to update user");
+  }
+}
+
+interface CreateUserData {
+  kindeId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string | null;
+  address?: string | null;
+  name?: string | null;
+  roles?: string[];
+}
+
+export async function createUser(
+  userData: CreateUserData
+): Promise<UserWithRoles> {
+  try {
+    // Input validation
+    if (!userData.kindeId || !userData.email) {
+      throw new ServerActionError("KindeId and email are required", 400);
+    }
+
+    // Create or get roles if provided
+    const roleIds = userData.roles
+      ? await Promise.all(
+          userData.roles.map(async (roleKey) => {
+            const role = await prisma.role.upsert({
+              where: { key: roleKey },
+              update: {},
+              create: {
+                id: randomUUID(),
+                key: roleKey,
+                name:
+                  roleKey.charAt(0).toUpperCase() +
+                  roleKey.slice(1).toLowerCase(),
+              },
+            });
+            return role.id;
+          })
+        )
+      : [];
+
+    // Create user with transaction to ensure atomicity
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          id: randomUUID(),
+          kindeId: userData.kindeId,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          phone: userData.phone,
+          address: userData.address,
+          name: userData.name,
+        },
+      });
+
+      if (roleIds.length > 0) {
+        await tx.userRole.createMany({
+          data: roleIds.map((roleId) => ({
+            id: randomUUID(),
+            userId: newUser.id,
+            roleId: roleId,
+          })),
+        });
+      }
+
+      return newUser;
+    });
+
+    // Fetch the complete user with roles
+    const userWithRoles = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        userRoles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!userWithRoles) {
+      throw new ServerActionError("Failed to create user", 500);
+    }
+
+    return {
+      ...userWithRoles,
+      roles: userWithRoles.userRoles.map((ur) => ur.role),
+      userRoles: undefined,
+    } as UserWithRoles;
+  } catch (error: unknown) {
+    if (error instanceof ServerActionError) throw error;
+    if (isPrismaError(error)) {
+      if (error.code === "P2002") {
+        throw new ServerActionError(
+          "User with this kindeId already exists",
+          409
+        );
+      }
+    }
+    console.error("Error creating user:", error);
+    throw new ServerActionError("Failed to create user");
+  }
+}
+
+export async function deleteUser(userId: string): Promise<User> {
+  try {
+    // Delete user and all related data using cascade
+    const deletedUser = await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return deletedUser;
+  } catch (error: unknown) {
+    if (error instanceof ServerActionError) throw error;
+    if (isPrismaError(error) && error.code === "P2025") {
+      throw new ServerActionError("User not found", 404);
+    }
+    console.error("Error deleting user:", error);
+    throw new ServerActionError("Failed to delete user");
   }
 }

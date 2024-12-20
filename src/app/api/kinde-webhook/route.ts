@@ -76,6 +76,7 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             },
           },
           create: {
+            id: user.id,
             kindeId: user.id,
             email: user.email,
             phone: user.phone,

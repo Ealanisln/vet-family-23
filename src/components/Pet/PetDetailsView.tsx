@@ -21,7 +21,7 @@ import {
   updatePetNeuteredStatus,
   updatePetDeceasedStatus,
 } from "@/app/actions/add-edit-pet";
-import { VaccinationContainer } from '@/components/Vaccination/VaccinationContainer';
+import { VaccinationContainer } from "@/components/Vaccination/VaccinationContainer";
 
 interface MedicalHistory {
   id: string;
@@ -92,7 +92,11 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
 
   const handleNeuteredChange = async (checked: boolean) => {
     setIsNeutered(checked);
-    const result = await updatePetNeuteredStatus(pet.id, checked);
+    const result = await updatePetNeuteredStatus(
+      params.id as string,
+      pet.id,
+      checked
+    );
     if (result.success) {
       console.log("Estado de esterilización actualizado correctamente");
     } else {
@@ -106,7 +110,11 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
 
   const handleDeceasedChange = async (checked: boolean) => {
     setIsDeceased(checked);
-    const result = await updatePetDeceasedStatus(pet.id, checked);
+    const result = await updatePetDeceasedStatus(
+      params.id as string,
+      pet.id,
+      checked
+    );
     if (result.success) {
       console.log("Estado de fallecimiento actualizado correctamente");
     } else {
@@ -117,7 +125,6 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       setIsDeceased(!checked);
     }
   };
-
   const formatPetForForm = (pet: Pet) => {
     return {
       id: pet.id,
@@ -294,8 +301,6 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       </Card>
 
       <VaccinationContainer petId={pet.id} vaccinations={pet.vaccinations} />
-
-
 
       {/* <Card>
         <CardHeader>

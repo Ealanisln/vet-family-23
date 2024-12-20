@@ -315,18 +315,27 @@ export default function Inventory() {
         if (result.requiresAuth) {
           console.log("[handleEditSubmit] Authentication required, saving pending state");
           
+          // Guardar el estado actual
           sessionStorage.setItem(
             "pendingInventoryUpdate",
             JSON.stringify({
               itemId: selectedItem.id,
               updateData,
-              returnTo: "/admin/inventario",
+              returnTo: window.location.pathname,
             })
           );
 
-          const returnUrl = encodeURIComponent("/admin/inventario");
+          // Construir URL de retorno absoluta
+          const returnUrl = encodeURIComponent(
+            `${window.location.origin}${window.location.pathname}`
+          );
+          
           console.log("[handleEditSubmit] Redirecting to login with return URL:", returnUrl);
-          window.location.href = `/api/auth/login?returnTo=${returnUrl}`;
+          // Usar la URL completa del servidor actual
+          const loginUrl = `/api/auth/login?returnTo=${returnUrl}`;
+          console.log("[handleEditSubmit] Login URL:", loginUrl);
+          
+          window.location.href = loginUrl;
           return;
         }
 
@@ -346,9 +355,9 @@ export default function Inventory() {
       });
 
       // Usar setTimeout para asegurar que el toast se muestre antes de la redirección
+      // No redireccionar, solo refrescar la página actual
       setTimeout(() => {
-        console.log("[handleEditSubmit] Redirecting to inventory page");
-        router.push("/admin/inventario");
+        console.log("[handleEditSubmit] Refreshing current page");
         router.refresh();
       }, 500);
 

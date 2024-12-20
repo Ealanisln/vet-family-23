@@ -59,12 +59,14 @@ export async function updateInventoryItem(
   reason?: string
 ) {
   try {
-    console.log("Starting update with data:", { id, data, reason });
+    console.log("[updateInventoryItem] Starting update process", { id, data, reason });
 
     const { getUser } = getKindeServerSession();
     const isAuthenticated = await getKindeServerSession().isAuthenticated();
+    console.log("[updateInventoryItem] Authentication status:", { isAuthenticated });
     
     if (!isAuthenticated) {
+      console.log("[updateInventoryItem] Authentication failed");
       return {
         success: false,
         error: "Authentication required",
@@ -73,7 +75,10 @@ export async function updateInventoryItem(
     }
 
     const kindeUser = await getUser();
+    console.log("[updateInventoryItem] Kinde user retrieved:", { userId: kindeUser?.id });
+
     if (!kindeUser || !kindeUser.id) {
+      console.log("[updateInventoryItem] No Kinde user found");
       return {
         success: false,
         error: "Authentication required",
@@ -84,8 +89,10 @@ export async function updateInventoryItem(
     const user = await prisma.user.findUnique({
       where: { kindeId: kindeUser.id },
     });
+    console.log("[updateInventoryItem] Prisma user lookup result:", { found: !!user });
 
     if (!user) {
+      console.log("[updateInventoryItem] No Prisma user found");
       return {
         success: false,
         error: "Usuario no autorizado",
@@ -95,14 +102,17 @@ export async function updateInventoryItem(
     const currentItem = await prisma.inventoryItem.findUnique({
       where: { id },
     });
+    console.log("[updateInventoryItem] Current item lookup:", { found: !!currentItem });
 
     if (!currentItem) {
+      console.log("[updateInventoryItem] Item not found");
       return {
         success: false,
         error: "Item not found",
       };
     }
 
+    console.log("[updateInventoryItem] Starting transaction");
     const [updatedItem] = await prisma.$transaction([
       prisma.inventoryItem.update({
         where: { id },
@@ -135,21 +145,24 @@ export async function updateInventoryItem(
           ]
         : []),
     ]);
+    console.log("[updateInventoryItem] Transaction completed successfully", { updatedItemId: updatedItem.id });
 
     try {
+      console.log("[updateInventoryItem] Starting path revalidation");
       await revalidatePath("/admin/inventario");
+      console.log("[updateInventoryItem] Path revalidation completed");
     } catch (revalidateError) {
-      console.error("Error during revalidation:", revalidateError);
-      // Continuamos a pesar del error de revalidación
+      console.error("[updateInventoryItem] Revalidation error:", revalidateError);
     }
 
+    console.log("[updateInventoryItem] Returning success response");
     return {
       success: true,
       item: updatedItem,
       redirectTo: "/admin/inventario",
     };
   } catch (error) {
-    console.error("Error updating inventory:", error);
+    console.error("[updateInventoryItem] Operation failed:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update inventory",

@@ -270,12 +270,12 @@ export default function Inventory() {
 
   const handleEditSubmit = async (formData: InventoryItemFormData) => {
     if (!selectedItem) return;
-
+  
     try {
       setIsSubmitting(true);
-
+      console.log("[handleEditSubmit] Starting submission", { itemId: selectedItem.id });
+  
       const updateData: UpdateInventoryData = {
-        // Include all fields from formData
         name: formData.name,
         quantity: formData.quantity,
         minStock: formData.minStock || undefined,
@@ -292,46 +292,54 @@ export default function Inventory() {
           : null,
         status: selectedItem.status,
       };
-
+  
+      console.log("[handleEditSubmit] Calling updateInventoryItem", { updateData });
       const result = await updateInventoryItem(
         selectedItem.id,
         updateData,
         "current-user-id",
         "Manual update"
       );
-
+      console.log("[handleEditSubmit] Update result:", result);
+  
       if (!result.success) {
         if (result.requiresAuth) {
+          console.log("[handleEditSubmit] Authentication required, redirecting to login");
           window.location.href = "/api/auth/login";
           return;
         }
-
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: result.error || "Error al actualizar item",
-        });
-        return;
+  
+        throw new Error(result.error || "Error al actualizar item");
       }
-
+  
       // Close forms and show success
       setIsEditFormOpen(false);
       setIsDialogOpen(false);
-
-      // Refetch data
+  
+      // Refetch data before redirecting
+      console.log("[handleEditSubmit] Fetching updated inventory");
       await fetchInventory();
-
+  
       toast({
         title: "Éxito",
         description: "Item actualizado correctamente",
       });
+  
+      // Add a small delay before redirecting
+      console.log("[handleEditSubmit] Setting timeout for redirect");
+      setTimeout(() => {
+        if (result.redirectTo) {
+          console.log("[handleEditSubmit] Redirecting to", result.redirectTo);
+          window.location.href = result.redirectTo;
+        }
+      }, 500);
+  
     } catch (error) {
-      console.error("Update error:", error);
+      console.error("[handleEditSubmit] Error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description:
-          error instanceof Error ? error.message : "Error al actualizar",
+        description: error instanceof Error ? error.message : "Error al actualizar",
       });
     } finally {
       setIsSubmitting(false);

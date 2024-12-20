@@ -101,6 +101,49 @@ export default function Inventory() {
   const [isNewItemFormOpen, setIsNewItemFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Procesar actualizaciones pendientes después del login
+  React.useEffect(() => {
+    const processPendingUpdate = async () => {
+      const pendingUpdateStr = sessionStorage.getItem("pendingInventoryUpdate");
+      if (!pendingUpdateStr) return;
+
+      try {
+        const pendingUpdate = JSON.parse(pendingUpdateStr);
+        console.log("[processPendingUpdate] Processing update:", pendingUpdate);
+
+        const result = await updateInventoryItem(
+          pendingUpdate.itemId,
+          pendingUpdate.updateData,
+          "system",
+          "Pending update processed"
+        );
+
+        if (result.success) {
+          toast({
+            title: "Éxito",
+            description: "Item actualizado correctamente",
+          });
+          await fetchInventory();
+        } else {
+          throw new Error(
+            result.error || "Error al procesar actualización pendiente"
+          );
+        }
+      } catch (error) {
+        console.error("[processPendingUpdate] Error:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Error procesando actualización pendiente",
+        });
+      } finally {
+        sessionStorage.removeItem("pendingInventoryUpdate");
+      }
+    };
+
+    processPendingUpdate();
+  }, []);
+
   const columns: ColumnDef<InventoryItem>[] = [
     {
       accessorKey: "name",
@@ -279,7 +322,10 @@ export default function Inventory() {
 
     try {
       setIsSubmitting(true);
-      console.log("[handleEditSubmit] Starting submission for item:", selectedItem.id);
+      console.log(
+        "[handleEditSubmit] Starting submission for item:",
+        selectedItem.id
+      );
 
       const updateData: UpdateInventoryData = {
         name: formData.name,
@@ -300,70 +346,51 @@ export default function Inventory() {
         category: formData.category,
       };
 
-      console.log("[handleEditSubmit] Prepared update data:", updateData);
-
       const result = await updateInventoryItem(
         selectedItem.id,
         updateData,
-        "current-user-id",
+        "system",
         "Manual update"
       );
 
-      console.log("[handleEditSubmit] Update result:", result);
-
       if (!result.success) {
         if (result.requiresAuth) {
-          console.log("[handleEditSubmit] Authentication required, saving pending state");
-          
-          // Guardar el estado actual
+          console.log("[handleEditSubmit] Auth required, saving state");
+
+          const currentPath = window.location.pathname;
+          const pendingUpdate = {
+            itemId: selectedItem.id,
+            updateData,
+            returnTo: currentPath,
+          };
+
           sessionStorage.setItem(
             "pendingInventoryUpdate",
-            JSON.stringify({
-              itemId: selectedItem.id,
-              updateData,
-              returnTo: window.location.pathname,
-            })
+            JSON.stringify(pendingUpdate)
           );
 
-          // Construir URL de retorno absoluta
+          // Redirigir al login con returnTo como query param
           const returnUrl = encodeURIComponent(
-            `${window.location.origin}${window.location.pathname}`
+            `${window.location.origin}${currentPath}`
           );
-          
-          console.log("[handleEditSubmit] Redirecting to login with return URL:", returnUrl);
-          // Usar la URL completa del servidor actual
-          const loginUrl = `/api/auth/login?returnTo=${returnUrl}`;
-          console.log("[handleEditSubmit] Login URL:", loginUrl);
-          
-          window.location.href = loginUrl;
+          window.location.href = `/api/auth/login?returnTo=${returnUrl}`;
           return;
         }
 
         throw new Error(result.error || "Error al actualizar item");
       }
 
-      console.log("[handleEditSubmit] Update successful, closing forms");
+      console.log("[handleEditSubmit] Update successful");
       setIsEditFormOpen(false);
       setIsDialogOpen(false);
-
-      console.log("[handleEditSubmit] Fetching updated inventory");
       await fetchInventory();
 
       toast({
         title: "Éxito",
         description: "Item actualizado correctamente",
       });
-
-      // Usar setTimeout para asegurar que el toast se muestre antes de la redirección
-      // No redireccionar, solo refrescar la página actual
-      setTimeout(() => {
-        console.log("[handleEditSubmit] Refreshing current page");
-        router.refresh();
-      }, 500);
-
     } catch (error) {
-      console.error("[handleEditSubmit] Error during update:", error);
-      
+      console.error("[handleEditSubmit] Error:", error);
       toast({
         variant: "destructive",
         title: "Error al actualizar",

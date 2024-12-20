@@ -61,111 +61,111 @@ export async function updateInventoryItem(
   try {
     console.log("[updateInventoryItem] Starting update process", { id, data, reason });
 
-    const { getUser } = getKindeServerSession();
-    const isAuthenticated = await getKindeServerSession().isAuthenticated();
-    console.log("[updateInventoryItem] Authentication status:", { isAuthenticated });
+    // Verificar autenticación
+    const { getUser, isAuthenticated } = getKindeServerSession();
+    const authStatus = await isAuthenticated();
     
-    if (!isAuthenticated) {
-      console.log("[updateInventoryItem] Authentication failed");
+    console.log("[updateInventoryItem] Auth status:", { isAuthenticated: authStatus });
+    
+    if (!authStatus) {
+      console.log("[updateInventoryItem] No auth, returning requiresAuth");
       return {
         success: false,
         error: "Authentication required",
-        requiresAuth: true,
+        requiresAuth: true
       };
     }
 
+    // Obtener usuario Kinde
     const kindeUser = await getUser();
-    console.log("[updateInventoryItem] Kinde user retrieved:", { userId: kindeUser?.id });
-
-    if (!kindeUser || !kindeUser.id) {
-      console.log("[updateInventoryItem] No Kinde user found");
+    console.log("[updateInventoryItem] Kinde user:", { id: kindeUser?.id });
+    
+    if (!kindeUser?.id) {
+      console.log("[updateInventoryItem] No Kinde user, returning requiresAuth");
       return {
         success: false,
         error: "Authentication required",
-        requiresAuth: true,
+        requiresAuth: true
       };
     }
 
+    // Buscar usuario en Prisma
     const user = await prisma.user.findUnique({
-      where: { kindeId: kindeUser.id },
+      where: { kindeId: kindeUser.id }
     });
-    console.log("[updateInventoryItem] Prisma user lookup result:", { found: !!user });
-
+    
+    console.log("[updateInventoryItem] Prisma user:", { found: !!user });
+    
     if (!user) {
-      console.log("[updateInventoryItem] No Prisma user found");
       return {
         success: false,
-        error: "Usuario no autorizado",
+        error: "Usuario no autorizado"
       };
     }
 
+    // Buscar item actual
     const currentItem = await prisma.inventoryItem.findUnique({
-      where: { id },
+      where: { id }
     });
-    console.log("[updateInventoryItem] Current item lookup:", { found: !!currentItem });
 
     if (!currentItem) {
-      console.log("[updateInventoryItem] Item not found");
       return {
         success: false,
-        error: "Item not found",
+        error: "Item not found"
       };
     }
 
-    console.log("[updateInventoryItem] Starting transaction");
+    // Realizar la actualización en una transacción
     const [updatedItem] = await prisma.$transaction([
       prisma.inventoryItem.update({
         where: { id },
         data: {
           ...data,
-          status:
-            data.quantity !== undefined
-              ? data.quantity <= (data.minStock || currentItem.minStock || 0)
-                ? InventoryStatus.LOW_STOCK
-                : data.quantity === 0
-                  ? InventoryStatus.OUT_OF_STOCK
-                  : InventoryStatus.ACTIVE
-              : data.status,
-        },
+          status: data.quantity !== undefined
+            ? data.quantity <= (data.minStock || currentItem.minStock || 0)
+              ? InventoryStatus.LOW_STOCK
+              : data.quantity === 0
+                ? InventoryStatus.OUT_OF_STOCK
+                : InventoryStatus.ACTIVE
+            : data.status
+        }
       }),
-      ...(data.quantity !== undefined
+      // Crear movimiento solo si la cantidad cambió
+      ...(data.quantity !== undefined && data.quantity !== currentItem.quantity
         ? [
             prisma.inventoryMovement.create({
               data: {
                 itemId: id,
-                type:
-                  data.quantity > (currentItem.quantity || 0)
-                    ? MovementType.IN
-                    : MovementType.OUT,
+                type: data.quantity > (currentItem.quantity || 0)
+                  ? MovementType.IN
+                  : MovementType.OUT,
                 quantity: Math.abs(data.quantity - (currentItem.quantity || 0)),
                 userId: user.id,
-                reason: reason || "Manual adjustment",
-              },
-            }),
+                reason: reason || "Manual adjustment"
+              }
+            })
           ]
-        : []),
+        : [])
     ]);
-    console.log("[updateInventoryItem] Transaction completed successfully", { updatedItemId: updatedItem.id });
 
+    // Revalidar la página
     try {
-      console.log("[updateInventoryItem] Starting path revalidation");
       await revalidatePath("/admin/inventario");
-      console.log("[updateInventoryItem] Path revalidation completed");
     } catch (revalidateError) {
       console.error("[updateInventoryItem] Revalidation error:", revalidateError);
+      // Continuar a pesar del error de revalidación
     }
 
-    console.log("[updateInventoryItem] Returning success response");
     return {
       success: true,
-      item: updatedItem,
-      redirectTo: "/admin/inventario",
+      item: updatedItem
     };
+
   } catch (error) {
-    console.error("[updateInventoryItem] Operation failed:", error);
+    console.error("[updateInventoryItem] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to update inventory",
+      error: error instanceof Error ? error.message : "Failed to update inventory"
     };
   }
 }

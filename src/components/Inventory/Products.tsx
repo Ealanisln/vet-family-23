@@ -59,6 +59,7 @@ import {
 } from "./types";
 import InventoryItemForm from "./ui/InventoryItemForm";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
   const statusMap: Record<string, BadgeProps["variant"]> = {
@@ -269,12 +270,20 @@ export default function Inventory() {
   };
 
   const handleEditSubmit = async (formData: InventoryItemFormData) => {
-    if (!selectedItem) return;
-  
+    const router = useRouter();
+
+    if (!selectedItem) {
+      console.log("[handleEditSubmit] No item selected");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      console.log("[handleEditSubmit] Starting submission", { itemId: selectedItem.id });
-  
+      console.log(
+        "[handleEditSubmit] Starting submission for item:",
+        selectedItem.id
+      );
+
       const updateData: UpdateInventoryData = {
         name: formData.name,
         quantity: formData.quantity,
@@ -291,55 +300,85 @@ export default function Inventory() {
           ? new Date(formData.expirationDate)
           : null,
         status: selectedItem.status,
+        category: formData.category,
       };
-  
-      console.log("[handleEditSubmit] Calling updateInventoryItem", { updateData });
+
+      console.log("[handleEditSubmit] Prepared update data:", updateData);
+
       const result = await updateInventoryItem(
         selectedItem.id,
         updateData,
         "current-user-id",
         "Manual update"
       );
+
       console.log("[handleEditSubmit] Update result:", result);
-  
+
       if (!result.success) {
+        // Manejar error de autenticación
         if (result.requiresAuth) {
-          console.log("[handleEditSubmit] Authentication required, redirecting to login");
-          window.location.href = "/api/auth/login";
+          console.log(
+            "[handleEditSubmit] Authentication required, saving pending state"
+          );
+
+          // Guardar el estado actual en sessionStorage
+          sessionStorage.setItem(
+            "pendingInventoryUpdate",
+            JSON.stringify({
+              itemId: selectedItem.id,
+              updateData,
+              returnTo: "/admin/inventario",
+            })
+          );
+
+          // Redirigir al login
+          const returnUrl = encodeURIComponent("/admin/inventario");
+          console.log(
+            "[handleEditSubmit] Redirecting to login with return URL:",
+            returnUrl
+          );
+          window.location.href = `/api/auth/login?returnTo=${returnUrl}`;
           return;
         }
-  
+
+        // Manejar otros errores
         throw new Error(result.error || "Error al actualizar item");
       }
-  
-      // Close forms and show success
+
+      // Éxito - cerrar formularios
+      console.log("[handleEditSubmit] Update successful, closing forms");
       setIsEditFormOpen(false);
       setIsDialogOpen(false);
-  
-      // Refetch data before redirecting
+
+      // Refrescar datos
       console.log("[handleEditSubmit] Fetching updated inventory");
       await fetchInventory();
-  
+
+      // Mostrar notificación de éxito
       toast({
         title: "Éxito",
         description: "Item actualizado correctamente",
       });
-  
-      // Add a small delay before redirecting
-      console.log("[handleEditSubmit] Setting timeout for redirect");
-      setTimeout(() => {
-        if (result.redirectTo) {
-          console.log("[handleEditSubmit] Redirecting to", result.redirectTo);
-          window.location.href = result.redirectTo;
-        }
-      }, 500);
-  
+
+      // Esperar un momento antes de redirigir
+      console.log("[handleEditSubmit] Waiting before redirect");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Redirigir usando router
+      console.log("[handleEditSubmit] Redirecting to inventory page");
+      router.push("/admin/inventario");
+      router.refresh(); // Forzar refresco de la página
     } catch (error) {
-      console.error("[handleEditSubmit] Error:", error);
+      console.error("[handleEditSubmit] Error during update:", error);
+
+      // Mostrar error al usuario
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al actualizar",
+        title: "Error al actualizar",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error inesperado al actualizar el item",
       });
     } finally {
       setIsSubmitting(false);

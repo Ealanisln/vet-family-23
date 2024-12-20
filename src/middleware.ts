@@ -1,60 +1,61 @@
 // middleware.ts
-import { withAuth } from "@kinde-oss/kinde-auth-nextjs/middleware";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 
+// Rutas públicas que no requieren autenticación
 const PUBLIC_PATHS = ['/', '/blog', '/promociones'];
+const AUTH_PATHS = ['/api/auth'];
+const STATIC_PATHS = ['/_next', '/assets', '/favicon.ico'];
 
-// Definir el tipo para el token
-interface KindeToken {
-  sub?: string;
-  aud?: string[];
-  exp?: number;
-  iat?: number;
-  iss?: string;
-  [key: string]: unknown;
-}
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-export default withAuth((req: NextRequest) => {
-  const { pathname } = req.nextUrl;
-
-  // Permitir rutas públicas sin restricciones
-  if (PUBLIC_PATHS.includes(pathname)) {
+  // Permitir rutas públicas
+  if (PUBLIC_PATHS.some(path => pathname === path)) {
     return NextResponse.next();
   }
 
-  // Para rutas de autenticación y assets, permitir sin restricciones
+  // Permitir rutas de autenticación y assets
   if (
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/_next') ||
-    pathname.includes('/favicon.ico') ||
-    pathname.startsWith('/assets')
+    AUTH_PATHS.some(path => pathname.startsWith(path)) ||
+    STATIC_PATHS.some(path => pathname.startsWith(path))
   ) {
     return NextResponse.next();
   }
 
-  // Para rutas admin, asegurarse de que las cookies de sesión se manejen correctamente
+  // Para rutas protegidas (/admin/*)
   if (pathname.startsWith('/admin')) {
-    const response = NextResponse.next();
-    response.headers.set('Cache-Control', 'no-store, max-age=0');
-    return response;
+    try {
+      const { getUser } = getKindeServerSession();
+      const user = await getUser();
+
+      if (!user) {
+        // Redireccionar al login con la URL de retorno
+        const returnUrl = encodeURIComponent(request.url);
+        return NextResponse.redirect(
+          new URL(`/api/auth/login?post_login_redirect_url=${returnUrl}`, request.url)
+        );
+      }
+
+      // Usuario autenticado, continuar
+      const response = NextResponse.next();
+      response.headers.set('Cache-Control', 'no-store, max-age=0');
+      return response;
+    } catch (error) {
+      console.error('Auth error:', error);
+      // En caso de error, redirigir al login
+      return NextResponse.redirect(new URL('/api/auth/login', request.url));
+    }
   }
 
+  // Permitir todas las demás rutas
   return NextResponse.next();
-}, {
-  // Opciones de configuración de Kinde con tipos correctos
-  isAuthorized: async (token: KindeToken | null) => {
-    return !!token;
-  },
-  redirectToLogin: true,
-  loginPage: "/api/auth/login",
-  publicPaths: PUBLIC_PATHS
-});
+}
 
 export const config = {
   matcher: [
     '/admin/:path*',
-    '/api/:path*',
     '/((?!_next/static|_next/image|favicon.ico).*)',
-  ]
+  ],
 };

@@ -56,86 +56,50 @@ export async function getInventory() {
 export async function updateInventoryItem(
   id: string,
   data: UpdateInventoryData,
-  _userId: string,
   reason?: string
 ) {
   try {
-    console.log("[updateInventoryItem] Starting update process", {
-      id,
-      data,
-      reason,
-    });
+    const { getUser } = getKindeServerSession();
+    const user = await getUser();
 
-    const { getUser, isAuthenticated } = getKindeServerSession();
-    const authStatus = await isAuthenticated();
-
-    console.log("[updateInventoryItem] Auth status:", {
-      isAuthenticated: authStatus,
-    });
-
-    if (!authStatus) {
-      console.log("[updateInventoryItem] No auth, returning requiresAuth");
+    if (!user?.id) {
       return {
         success: false,
-        error: "Authentication required",
+        error: "No authenticated user",
         requiresAuth: true,
       };
     }
 
-    const kindeUser = await getUser();
-    console.log("[updateInventoryItem] Kinde user:", { id: kindeUser?.id });
-
-    if (!kindeUser?.id) {
-      return {
-        success: false,
-        error: "Authentication required",
-        requiresAuth: true,
-      };
-    }
-
-    // Buscar usuario existente
-    let user = await prisma.user.findUnique({
-      where: { kindeId: kindeUser.id },
+    // Buscar o crear usuario en la base de datos
+    let dbUser = await prisma.user.findUnique({
+      where: { kindeId: user.id },
     });
 
-    if (!user) {
-      // Crear usuario si no existe, incluyendo el ID requerido
-      try {
-        user = await prisma.user.create({
-          data: {
-            id: randomUUID(), // Genera un UUID para el ID requerido
-            kindeId: kindeUser.id,
-            email: kindeUser.email || "",
-            name: kindeUser.given_name || kindeUser.family_name || "Usuario",
-            createdAt: new Date(), // Si es requerido en tu schema
-            updatedAt: new Date(), // Si es requerido en tu schema
-          },
-        });
-        console.log("[updateInventoryItem] Created new user:", user);
-      } catch (createError) {
-        console.error(
-          "[updateInventoryItem] Error creating user:",
-          createError
-        );
-        throw new Error("Error creating user profile");
-      }
+    if (!dbUser) {
+      dbUser = await prisma.user.create({
+        data: {
+          id: crypto.randomUUID(),
+          kindeId: user.id,
+          email: user.email || "",
+          name: user.given_name || user.family_name || "Usuario",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
     }
 
-    // Buscar item actual
+    // Verificar item
     const currentItem = await prisma.inventoryItem.findUnique({
       where: { id },
     });
 
     if (!currentItem) {
-      return {
-        success: false,
-        error: "Item not found",
-      };
+      return { success: false, error: "Item not found" };
     }
 
-    // Realizar actualización en una transacción
-    const [updatedItem] = await prisma.$transaction([
-      prisma.inventoryItem.update({
+    // Realizar actualización
+    const updatedItem = await prisma.$transaction(async (tx) => {
+      const item = await tx.inventoryItem.update({
         where: { id },
         data: {
           ...data,
@@ -148,40 +112,33 @@ export async function updateInventoryItem(
                   : InventoryStatus.ACTIVE
               : data.status,
         },
-      }),
-      ...(data.quantity !== undefined && data.quantity !== currentItem.quantity
-        ? [
-            prisma.inventoryMovement.create({
-              data: {
-                id: randomUUID(), // Si el MovementModel también requiere ID
-                itemId: id,
-                type:
-                  data.quantity > currentItem.quantity
-                    ? MovementType.IN
-                    : MovementType.OUT,
-                quantity: Math.abs(data.quantity - currentItem.quantity),
-                userId: user.id,
-                reason: reason || "Manual adjustment",
-                date: new Date(), // Si es requerido
-              },
-            }),
-          ]
-        : []),
-    ]);
+      });
 
-    // Revalidar la página
-    try {
-      await revalidatePath("/admin/inventario");
-    } catch (error) {
-      console.error("[updateInventoryItem] Revalidation error:", error);
-    }
+      if (
+        data.quantity !== undefined &&
+        data.quantity !== currentItem.quantity
+      ) {
+        await tx.inventoryMovement.create({
+          data: {
+            itemId: id,
+            type:
+              data.quantity > currentItem.quantity
+                ? MovementType.IN
+                : MovementType.OUT,
+            quantity: Math.abs(data.quantity - currentItem.quantity),
+            userId: dbUser.id,
+            reason: reason || "Manual adjustment",
+            date: new Date(),
+          },
+        });
+      }
 
-    return {
-      success: true,
-      item: updatedItem,
-    };
+      return item;
+    });
+
+    return { success: true, item: updatedItem };
   } catch (error) {
-    console.error("[updateInventoryItem] Operation failed:", error);
+    console.error("Operation failed:", error);
     return {
       success: false,
       error:

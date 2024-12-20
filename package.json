@@ -96,7 +96,7 @@
     "typescript": "5.1.6",
     "uuid": "^11.0.3",
     "vaul": "^0.9.9",
-    "vercel": "^39.2.0",
+    "vercel": "^39.2.2",
     "yet-another-react-lightbox": "^3.21.7",
     "zod": "^3.24.1"
   },

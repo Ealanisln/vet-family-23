@@ -2,13 +2,14 @@
   "name": "family-vet-23",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
+"scripts": {
     "dev": "next dev",
     "build": "pnpm prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "import-data": "tsx scripts/import-data.ts"
-  },
+    "import-data": "tsx scripts/import-data.ts",
+    "postinstall": "prisma generate"
+},
   "dependencies": {
     "@auth/mongodb-adapter": "^3.7.4",
     "@cloudinary/react": "^1.13.1",

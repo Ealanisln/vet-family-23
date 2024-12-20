@@ -103,6 +103,9 @@ export default function Inventory() {
 
   // Procesar actualizaciones pendientes después del login
   React.useEffect(() => {
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+
     const processPendingUpdate = async () => {
       const pendingUpdateStr = sessionStorage.getItem("pendingInventoryUpdate");
       if (!pendingUpdateStr) return;
@@ -118,30 +121,47 @@ export default function Inventory() {
           "Pending update processed"
         );
 
-        if (result.success) {
-          toast({
-            title: "Éxito",
-            description: "Item actualizado correctamente",
-          });
-          await fetchInventory();
-        } else {
+        if (!result.success) {
+          if (result.requiresAuth && retryCount < MAX_RETRIES) {
+            console.log(
+              `[processPendingUpdate] Auth required, retry ${retryCount + 1} of ${MAX_RETRIES}`
+            );
+            retryCount++;
+            // Esperar 1 segundo antes de reintentar
+            setTimeout(processPendingUpdate, 1000);
+            return;
+          }
           throw new Error(
             result.error || "Error al procesar actualización pendiente"
           );
         }
+
+        // Éxito: limpiar storage y mostrar mensaje
+        sessionStorage.removeItem("pendingInventoryUpdate");
+        await fetchInventory();
+        toast({
+          title: "Éxito",
+          description: "Item actualizado correctamente",
+        });
       } catch (error) {
         console.error("[processPendingUpdate] Error:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Error procesando actualización pendiente",
-        });
-      } finally {
-        sessionStorage.removeItem("pendingInventoryUpdate");
+        // Solo mostrar el error si hemos agotado los reintentos
+        if (retryCount >= MAX_RETRIES) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description:
+              "Error procesando actualización pendiente. Por favor, intente nuevamente.",
+          });
+          sessionStorage.removeItem("pendingInventoryUpdate");
+        }
       }
     };
 
-    processPendingUpdate();
+    // Esperar un poco antes de procesar para dar tiempo a que se establezca la sesión
+    const timeoutId = setTimeout(processPendingUpdate, 1000);
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const columns: ColumnDef<InventoryItem>[] = [

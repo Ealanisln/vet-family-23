@@ -82,6 +82,8 @@ const formatDate = (date: string | null) => {
 };
 
 export default function Inventory() {
+  const router = useRouter();
+
   const [data, setData] = React.useState<InventoryItem[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -270,8 +272,6 @@ export default function Inventory() {
   };
 
   const handleEditSubmit = async (formData: InventoryItemFormData) => {
-    const router = useRouter();
-
     if (!selectedItem) {
       console.log("[handleEditSubmit] No item selected");
       return;
@@ -279,10 +279,7 @@ export default function Inventory() {
 
     try {
       setIsSubmitting(true);
-      console.log(
-        "[handleEditSubmit] Starting submission for item:",
-        selectedItem.id
-      );
+      console.log("[handleEditSubmit] Starting submission for item:", selectedItem.id);
 
       const updateData: UpdateInventoryData = {
         name: formData.name,
@@ -315,13 +312,9 @@ export default function Inventory() {
       console.log("[handleEditSubmit] Update result:", result);
 
       if (!result.success) {
-        // Manejar error de autenticación
         if (result.requiresAuth) {
-          console.log(
-            "[handleEditSubmit] Authentication required, saving pending state"
-          );
-
-          // Guardar el estado actual en sessionStorage
+          console.log("[handleEditSubmit] Authentication required, saving pending state");
+          
           sessionStorage.setItem(
             "pendingInventoryUpdate",
             JSON.stringify({
@@ -331,47 +324,37 @@ export default function Inventory() {
             })
           );
 
-          // Redirigir al login
           const returnUrl = encodeURIComponent("/admin/inventario");
-          console.log(
-            "[handleEditSubmit] Redirecting to login with return URL:",
-            returnUrl
-          );
+          console.log("[handleEditSubmit] Redirecting to login with return URL:", returnUrl);
           window.location.href = `/api/auth/login?returnTo=${returnUrl}`;
           return;
         }
 
-        // Manejar otros errores
         throw new Error(result.error || "Error al actualizar item");
       }
 
-      // Éxito - cerrar formularios
       console.log("[handleEditSubmit] Update successful, closing forms");
       setIsEditFormOpen(false);
       setIsDialogOpen(false);
 
-      // Refrescar datos
       console.log("[handleEditSubmit] Fetching updated inventory");
       await fetchInventory();
 
-      // Mostrar notificación de éxito
       toast({
         title: "Éxito",
         description: "Item actualizado correctamente",
       });
 
-      // Esperar un momento antes de redirigir
-      console.log("[handleEditSubmit] Waiting before redirect");
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Usar setTimeout para asegurar que el toast se muestre antes de la redirección
+      setTimeout(() => {
+        console.log("[handleEditSubmit] Redirecting to inventory page");
+        router.push("/admin/inventario");
+        router.refresh();
+      }, 500);
 
-      // Redirigir usando router
-      console.log("[handleEditSubmit] Redirecting to inventory page");
-      router.push("/admin/inventario");
-      router.refresh(); // Forzar refresco de la página
     } catch (error) {
       console.error("[handleEditSubmit] Error during update:", error);
-
-      // Mostrar error al usuario
+      
       toast({
         variant: "destructive",
         title: "Error al actualizar",

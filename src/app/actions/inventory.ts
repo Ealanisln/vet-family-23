@@ -12,49 +12,9 @@ import {
   CreateInventoryResponse,
 } from "@/types/inventory";
 
-async function getOrCreateUser() {
-  const { getUser } = getKindeServerSession();
-  const kindeUser = await getUser();
-  
-  if (!kindeUser) {
-    throw new Error("No autorizado");
-  }
-
-  try {
-    // Primero intentamos encontrar el usuario
-    const existingUser = await prisma.user.findUnique({
-      where: { kindeId: kindeUser.id }
-    });
-
-    if (existingUser) {
-      return existingUser;
-    }
-
-    // Si no existe, lo creamos
-    const newUser = await prisma.user.create({
-      data: {
-        id: kindeUser.id, // Usando el mismo ID de Kinde como ID principal
-        kindeId: kindeUser.id,
-        email: kindeUser.email || undefined,
-        firstName: kindeUser.given_name || undefined,
-        lastName: kindeUser.family_name || undefined,
-        name: kindeUser.given_name 
-          ? `${kindeUser.given_name} ${kindeUser.family_name || ''}`
-          : undefined,
-      },
-    });
-
-    return newUser;
-  } catch (error) {
-    console.error('Error getting/creating user:', error);
-    throw new Error("Error de autenticación");
-  }
-}
-
 export async function getInventory(): Promise<GetInventoryResponse> {
   try {
-    await getOrCreateUser(); // Verificar autenticación
-    
+    // Eliminamos la verificación de autenticación
     const items = await prisma.inventoryItem.findMany({
       orderBy: {
         updatedAt: "desc",
@@ -90,9 +50,6 @@ export async function getInventory(): Promise<GetInventoryResponse> {
     return { success: true, items: serializedItems };
   } catch (error) {
     console.error("Error fetching inventory:", error);
-    if (error instanceof Error && error.message === "No autorizado") {
-      return { success: false, error: "No autorizado" };
-    }
     return { success: false, error: "Failed to fetch inventory" };
   }
 }
@@ -102,9 +59,7 @@ export async function updateInventoryItem(
   data: UpdateInventoryData,
   reason?: string
 ): Promise<UpdateInventoryResponse> {
-  try {
-    const user = await getOrCreateUser();
-    
+  try {    
     const currentItem = await prisma.inventoryItem.findUnique({
       where: { id },
     });
@@ -149,7 +104,6 @@ export async function updateInventoryItem(
                 : MovementType.OUT,
             quantity: Math.abs(data.quantity - currentItem.quantity),
             reason: reason || "Manual adjustment",
-            userId: user.id,
             date: new Date(),
           },
         });
@@ -188,7 +142,6 @@ export async function createInventoryItem(
   reason?: string
 ): Promise<CreateInventoryResponse> {
   try {
-    const user = await getOrCreateUser();
 
     if (!data.name?.trim()) {
       return { success: false, error: "El nombre es requerido" };
@@ -235,7 +188,6 @@ export async function createInventoryItem(
           type: MovementType.IN,
           quantity: data.quantity,
           reason: reason || "Initial stock",
-          userId: user.id,
           date: new Date(),
         },
       });

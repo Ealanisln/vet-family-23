@@ -1,7 +1,10 @@
+// src/components/Inventory/Medicine.tsx
+
 "use client";
 
 import * as React from "react";
-import { Search, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { Search, AlertTriangle, Plus } from "lucide-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -32,10 +35,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import Loader from "@/components/ui/loader";
 import { Badge, type BadgeProps } from "@/components/ui/custom-badge";
-import { getInventory } from "@/app/actions/inventory";
-import type { InventoryStatus, MovementType } from "@prisma/client";
+import { toast } from "@/components/ui/use-toast";
+import { getInventory, updateInventoryItem } from "@/app/actions/inventory";
+import type {
+  InventoryStatus,
+  MovementType,
+  InventoryCategory,
+} from "@prisma/client";
+import InventoryItemForm from "../Inventory/ui/InventoryItemForm";
 
 // Interfaces y tipos
 type MedicineItem = {
@@ -66,17 +83,27 @@ type MedicineItem = {
       name: string | null;
     } | null;
   }[];
-  category: string;
+  category: InventoryCategory;
   description: string | null;
   createdAt: Date;
   updatedAt: Date | null;
 };
 
-interface FetchMedicineResult {
-  success: boolean;
-  items?: MedicineItem[];
-  error?: string;
-}
+type InventoryItemFormData = {
+  name: string;
+  category: InventoryCategory;
+  quantity: number;
+  minStock?: number | null;
+  location?: string | null;
+  description?: string | null;
+  activeCompound?: string | null;
+  presentation?: string | null;
+  measure?: string | null;
+  brand?: string | null;
+  batchNumber?: string | null;
+  specialNotes?: string | null;
+  expirationDate: string | null;
+};
 
 // Funciones auxiliares
 const getStatusBadgeVariant = (
@@ -101,96 +128,23 @@ const formatDate = (date: string | null) => {
   });
 };
 
-// Definición de columnas
-const columns: ColumnDef<MedicineItem>[] = [
-  {
-    accessorKey: "name",
-    header: "Nombre",
-    cell: ({ row }) => {
-      const isLowStock =
-        row.original.status === "LOW_STOCK" ||
-        row.original.status === "OUT_OF_STOCK";
-      return (
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{row.getValue("name")}</span>
-          {isLowStock && <AlertTriangle className="h-4 w-4 text-orange-500" />}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "activeCompound",
-    header: "Compuesto Activo",
-    cell: ({ row }) => row.getValue("activeCompound") || "-",
-  },
-  {
-    accessorKey: "presentation",
-    header: "Presentación",
-    cell: ({ row }) => row.getValue("presentation") || "-",
-  },
-  {
-    accessorKey: "measure",
-    header: "Medida",
-    cell: ({ row }) => row.getValue("measure") || "-",
-  },
-  {
-    accessorKey: "quantity",
-    header: "Cantidad",
-    cell: ({ row }) => (
-      <div className="text-right">{row.getValue("quantity")}</div>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Estado",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as InventoryStatus;
-      const statusMap: Record<InventoryStatus, string> = {
-        ACTIVE: "Activo",
-        INACTIVE: "Inactivo",
-        LOW_STOCK: "Stock Bajo",
-        OUT_OF_STOCK: "Sin Stock",
-        EXPIRED: "Expirado",
-      };
-      return (
-        <Badge variant={getStatusBadgeVariant(status)}>
-          {statusMap[status]}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "location",
-    header: "Ubicación",
-    cell: ({ row }) => row.getValue("location") || "-",
-  },
-  {
-    accessorKey: "expirationDate",
-    header: "Fecha de Expiración",
-    cell: ({ row }) =>
-      formatDate(row.getValue("expirationDate") as string | null),
-  },
-  {
-    accessorKey: "batchNumber",
-    header: "Número de Lote",
-    cell: ({ row }) => row.getValue("batchNumber") || "-",
-  },
-];
-
-// Componente principal
 export default function MedicineInventory() {
-  const [data, setData] = React.useState<MedicineItem[]>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+  const [data, setData] = useState<MedicineItem[]>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<InventoryStatus | null>(
+    null
   );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [statusFilter, setStatusFilter] =
-    React.useState<InventoryStatus | null>(null);
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  // Estados para modal y edición
+  const [selectedItem, setSelectedItem] = useState<MedicineItem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
     async function fetchMedicines() {
@@ -203,6 +157,10 @@ export default function MedicineInventory() {
             ...item,
             createdAt: new Date(item.createdAt),
             updatedAt: item.updatedAt ? new Date(item.updatedAt) : null,
+            movements: item.movements.map((movement) => ({
+              ...movement,
+              date: new Date(movement.date).toISOString(),
+            })),
           }));
           setData(formattedItems);
         } else {
@@ -218,6 +176,256 @@ export default function MedicineInventory() {
     }
     fetchMedicines();
   }, []);
+
+  const handleEditSubmit = async (formData: InventoryItemFormData) => {
+    if (!selectedItem) return;
+
+    try {
+      setIsSubmitting(true);
+
+      const updateData = {
+        name: formData.name,
+        quantity: formData.quantity,
+        minStock: formData.minStock || undefined,
+        location: formData.location || undefined,
+        description: formData.description || undefined,
+        activeCompound: formData.activeCompound || undefined,
+        presentation: formData.presentation || undefined,
+        measure: formData.measure || undefined,
+        brand: formData.brand || undefined,
+        batchNumber: formData.batchNumber || undefined,
+        specialNotes: formData.specialNotes || undefined,
+        expirationDate: formData.expirationDate,
+        status: selectedItem.status,
+        category: formData.category,
+      };
+
+      const result = await updateInventoryItem(
+        selectedItem.id,
+        updateData,
+        "system"
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || "Error al actualizar item");
+      }
+
+      setIsEditFormOpen(false);
+      setIsDialogOpen(false);
+
+      // Refrescar la lista de medicamentos
+      const refreshResult = await getInventory();
+      if (refreshResult.success && refreshResult.items) {
+        const formattedItems = refreshResult.items.map((item) => ({
+          ...item,
+          createdAt: new Date(item.createdAt),
+          updatedAt: item.updatedAt ? new Date(item.updatedAt) : null,
+          movements: item.movements.map((movement) => ({
+            ...movement,
+            date: new Date(movement.date).toISOString(),
+          })),
+        }));
+        setData(formattedItems);
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Item actualizado correctamente",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error al actualizar",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error inesperado al actualizar el item",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderItemDetails = () => {
+    if (!selectedItem) return null;
+
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <h4 className="font-medium text-gray-500">Detalles Básicos</h4>
+            <div className="mt-2 space-y-2">
+              <p>
+                <span className="font-medium">Nombre:</span> {selectedItem.name}
+              </p>
+              <p>
+                <span className="font-medium">Categoría:</span>{" "}
+                {selectedItem.category}
+              </p>
+              <p>
+                <span className="font-medium">Cantidad:</span>{" "}
+                {selectedItem.quantity}
+              </p>
+              <p>
+                <span className="font-medium">Stock Mínimo:</span>{" "}
+                {selectedItem.minStock || "-"}
+              </p>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-medium text-gray-500">Información Adicional</h4>
+            <div className="mt-2 space-y-2">
+              <p>
+                <span className="font-medium">Ubicación:</span>{" "}
+                {selectedItem.location || "-"}
+              </p>
+              <p>
+                <span className="font-medium">Presentación:</span>{" "}
+                {selectedItem.presentation || "-"}
+              </p>
+              <p>
+                <span className="font-medium">Medida:</span>{" "}
+                {selectedItem.measure || "-"}
+              </p>
+              <p>
+                <span className="font-medium">Marca:</span>{" "}
+                {selectedItem.brand || "-"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {selectedItem.description && (
+          <div>
+            <h4 className="font-medium text-gray-500">Descripción</h4>
+            <p className="mt-1">{selectedItem.description}</p>
+          </div>
+        )}
+
+        {selectedItem.activeCompound && (
+          <div>
+            <h4 className="font-medium text-gray-500">Compuesto Activo</h4>
+            <p className="mt-1">{selectedItem.activeCompound}</p>
+          </div>
+        )}
+
+        <div>
+          <h4 className="font-medium text-gray-500 mb-2">
+            Últimos Movimientos
+          </h4>
+          <div className="space-y-2">
+            {selectedItem.movements.map((movement, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+              >
+                <span
+                  className={
+                    movement.type === "IN" ? "text-green-600" : "text-red-600"
+                  }
+                >
+                  {movement.type === "IN" ? "+" : "-"}
+                  {movement.quantity}
+                </span>
+                <span className="text-gray-500">
+                  {formatDate(movement.date)}
+                </span>
+                {movement.user?.name && (
+                  <span className="text-gray-400">
+                    por {movement.user.name}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Definición de columnas
+  const columns: ColumnDef<MedicineItem>[] = [
+    {
+      accessorKey: "name",
+      header: "Nombre",
+      cell: ({ row }) => {
+        const isLowStock =
+          row.original.status === "LOW_STOCK" ||
+          row.original.status === "OUT_OF_STOCK";
+        return (
+          <button
+            onClick={() => {
+              setSelectedItem(row.original);
+              setIsDialogOpen(true);
+            }}
+            className="flex items-center gap-2 hover:text-[#47b3b6] transition-colors"
+          >
+            <span className="font-medium">{row.getValue("name")}</span>
+            {isLowStock && (
+              <AlertTriangle className="h-4 w-4 text-orange-500" />
+            )}
+          </button>
+        );
+      },
+    },
+    {
+      accessorKey: "activeCompound",
+      header: "Compuesto Activo",
+      cell: ({ row }) => row.getValue("activeCompound") || "-",
+    },
+    {
+      accessorKey: "presentation",
+      header: "Presentación",
+      cell: ({ row }) => row.getValue("presentation") || "-",
+    },
+    {
+      accessorKey: "measure",
+      header: "Medida",
+      cell: ({ row }) => row.getValue("measure") || "-",
+    },
+    {
+      accessorKey: "quantity",
+      header: "Cantidad",
+      cell: ({ row }) => (
+        <div className="text-right">{row.getValue("quantity")}</div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Estado",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as InventoryStatus;
+        const statusMap: Record<InventoryStatus, string> = {
+          ACTIVE: "Activo",
+          INACTIVE: "Inactivo",
+          LOW_STOCK: "Stock Bajo",
+          OUT_OF_STOCK: "Sin Stock",
+          EXPIRED: "Expirado",
+        };
+        return (
+          <Badge variant={getStatusBadgeVariant(status)}>
+            {statusMap[status]}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "location",
+      header: "Ubicación",
+      cell: ({ row }) => row.getValue("location") || "-",
+    },
+    {
+      accessorKey: "expirationDate",
+      header: "Fecha de Expiración",
+      cell: ({ row }) =>
+        formatDate(row.getValue("expirationDate") as string | null),
+    },
+    {
+      accessorKey: "batchNumber",
+      header: "Número de Lote",
+      cell: ({ row }) => row.getValue("batchNumber") || "-",
+    },
+  ];
 
   const filteredData = React.useMemo(() => {
     return data.filter((item) => {
@@ -401,6 +609,60 @@ export default function MedicineInventory() {
           </Button>
         </div>
       </div>
+
+      {/* Modal de Detalles */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Detalles del Medicamento</DialogTitle>
+            <DialogDescription>
+              Información detallada y movimientos del medicamento seleccionado.
+            </DialogDescription>
+          </DialogHeader>
+          {renderItemDetails()}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+              className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6]"
+            >
+              Cerrar
+            </Button>
+            {selectedItem && (
+              <Button
+                onClick={() => {
+                  setIsEditFormOpen(true);
+                  setIsDialogOpen(false);
+                }}
+                className="bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white"
+              >
+                Editar Medicamento
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Formulario de Edición */}
+      <InventoryItemForm
+        open={isEditFormOpen}
+        onOpenChange={setIsEditFormOpen}
+        initialData={
+          selectedItem
+            ? {
+                ...selectedItem,
+                createdAt: selectedItem.createdAt.toISOString(),
+                updatedAt: selectedItem.updatedAt?.toISOString() || null,
+                movements: selectedItem.movements.map((movement) => ({
+                  ...movement,
+                  date: new Date(movement.date).toISOString(),
+                })),
+              }
+            : null
+        }
+        onSubmit={handleEditSubmit}
+        isSubmitting={isSubmitting}
+      />
     </Card>
   );
 }

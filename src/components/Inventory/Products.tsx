@@ -1,3 +1,5 @@
+// src/components/Inventory/Products.tsx
+
 "use client";
 
 import * as React from "react";

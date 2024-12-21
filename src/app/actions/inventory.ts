@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
 import { InventoryStatus, MovementType } from "@prisma/client";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import {
   GetInventoryResponse,
   UpdateInventoryData,
@@ -14,7 +13,6 @@ import {
 
 export async function getInventory(): Promise<GetInventoryResponse> {
   try {
-    // Eliminamos la verificación de autenticación
     const items = await prisma.inventoryItem.findMany({
       orderBy: {
         updatedAt: "desc",

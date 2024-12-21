@@ -26,7 +26,7 @@ import {
   InventoryItemFormData,
   FormErrors,
   InventoryCategory,
-} from "../types";
+} from "@/types/inventory";
 
 const INITIAL_FORM_STATE: InventoryItemFormData = {
   name: "",

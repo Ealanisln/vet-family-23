@@ -14,7 +14,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,8 +35,10 @@ import {
 import Loader from "@/components/ui/loader";
 import { Badge, type BadgeProps } from "@/components/ui/custom-badge";
 import { getInventory } from "@/app/actions/inventory";
+import type { InventoryStatus, MovementType } from "@prisma/client";
 
-interface MedicineItem {
+// Interfaces y tipos
+type MedicineItem = {
   id: string;
   name: string;
   activeCompound: string | null;
@@ -48,16 +49,28 @@ interface MedicineItem {
   minStock: number | null;
   location: string | null;
   expirationDate: string | null;
-  status: 'ACTIVE' | 'INACTIVE' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'EXPIRED';
+  status: InventoryStatus;
   batchNumber: string | null;
   specialNotes: string | null;
   movements: {
+    id: string;
     date: string;
+    quantity: number;
+    itemId: string;
+    type: MovementType;
+    reason: string | null;
+    userId: string | null;
+    relatedRecordId: string | null;
+    notes: string | null;
     user: {
       name: string | null;
-    };
+    } | null;
   }[];
-}
+  category: string;
+  description: string | null;
+  createdAt: Date;
+  updatedAt: Date | null;
+};
 
 interface FetchMedicineResult {
   success: boolean;
@@ -65,38 +78,42 @@ interface FetchMedicineResult {
   error?: string;
 }
 
-const getStatusBadgeVariant = (status: MedicineItem['status']): BadgeProps['variant'] => {
-  const statusMap: Record<MedicineItem['status'], BadgeProps['variant']> = {
+// Funciones auxiliares
+const getStatusBadgeVariant = (
+  status: InventoryStatus
+): BadgeProps["variant"] => {
+  const statusMap: Record<InventoryStatus, BadgeProps["variant"]> = {
     ACTIVE: "success",
     INACTIVE: "secondary",
     LOW_STOCK: "warning",
     OUT_OF_STOCK: "destructive",
-    EXPIRED: "destructive"
+    EXPIRED: "destructive",
   };
   return statusMap[status];
 };
 
 const formatDate = (date: string | null) => {
-  if (!date) return '-';
-  return new Date(date).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
+// Definición de columnas
 const columns: ColumnDef<MedicineItem>[] = [
   {
     accessorKey: "name",
     header: "Nombre",
     cell: ({ row }) => {
-      const isLowStock = row.original.status === 'LOW_STOCK' || row.original.status === 'OUT_OF_STOCK';
+      const isLowStock =
+        row.original.status === "LOW_STOCK" ||
+        row.original.status === "OUT_OF_STOCK";
       return (
         <div className="flex items-center gap-2">
           <span className="font-medium">{row.getValue("name")}</span>
-          {isLowStock && (
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
-          )}
+          {isLowStock && <AlertTriangle className="h-4 w-4 text-orange-500" />}
         </div>
       );
     },
@@ -127,13 +144,13 @@ const columns: ColumnDef<MedicineItem>[] = [
     accessorKey: "status",
     header: "Estado",
     cell: ({ row }) => {
-      const status = row.getValue("status") as MedicineItem['status'];
-      const statusMap: Record<MedicineItem['status'], string> = {
+      const status = row.getValue("status") as InventoryStatus;
+      const statusMap: Record<InventoryStatus, string> = {
         ACTIVE: "Activo",
         INACTIVE: "Inactivo",
         LOW_STOCK: "Stock Bajo",
         OUT_OF_STOCK: "Sin Stock",
-        EXPIRED: "Expirado"
+        EXPIRED: "Expirado",
       };
       return (
         <Badge variant={getStatusBadgeVariant(status)}>
@@ -150,7 +167,8 @@ const columns: ColumnDef<MedicineItem>[] = [
   {
     accessorKey: "expirationDate",
     header: "Fecha de Expiración",
-    cell: ({ row }) => formatDate(row.getValue("expirationDate") as string | null),
+    cell: ({ row }) =>
+      formatDate(row.getValue("expirationDate") as string | null),
   },
   {
     accessorKey: "batchNumber",
@@ -159,14 +177,19 @@ const columns: ColumnDef<MedicineItem>[] = [
   },
 ];
 
+// Componente principal
 export default function MedicineInventory() {
   const [data, setData] = React.useState<MedicineItem[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = React.useState<string | null>(null);
+  const [statusFilter, setStatusFilter] =
+    React.useState<InventoryStatus | null>(null);
   const [globalFilter, setGlobalFilter] = React.useState("");
 
   React.useEffect(() => {
@@ -176,13 +199,18 @@ export default function MedicineInventory() {
         setError(null);
         const result = await getInventory();
         if (result.success && result.items) {
-          setData(result.items);
+          const formattedItems = result.items.map((item) => ({
+            ...item,
+            createdAt: new Date(item.createdAt),
+            updatedAt: item.updatedAt ? new Date(item.updatedAt) : null,
+          }));
+          setData(formattedItems);
         } else {
-          setError(result.error || 'Failed to fetch medicines');
+          setError(result.error || "Failed to fetch medicines");
           setData([]);
         }
       } catch (error) {
-        setError('An unexpected error occurred');
+        setError("An unexpected error occurred");
         setData([]);
       } finally {
         setLoading(false);
@@ -192,7 +220,7 @@ export default function MedicineInventory() {
   }, []);
 
   const filteredData = React.useMemo(() => {
-    return data.filter(item => {
+    return data.filter((item) => {
       const matchesStatus = !statusFilter || item.status === statusFilter;
       return matchesStatus;
     });
@@ -216,8 +244,14 @@ export default function MedicineInventory() {
     },
     globalFilterFn: (row, columnId, filterValue) => {
       const searchValue = filterValue.toLowerCase();
-      const searchableColumns = ["name", "activeCompound", "presentation", "location", "batchNumber"];
-      
+      const searchableColumns = [
+        "name",
+        "activeCompound",
+        "presentation",
+        "location",
+        "batchNumber",
+      ];
+
       return searchableColumns.some((column) => {
         const value = row.getValue(column);
         return value
@@ -248,13 +282,19 @@ export default function MedicineInventory() {
             <div className="flex gap-2">
               <Select
                 value={statusFilter || "all_statuses"}
-                onValueChange={(value) => setStatusFilter(value === "all_statuses" ? null : value)}
+                onValueChange={(value) =>
+                  setStatusFilter(
+                    value === "all_statuses" ? null : (value as InventoryStatus)
+                  )
+                }
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all_statuses">Todos los estados</SelectItem>
+                  <SelectItem value="all_statuses">
+                    Todos los estados
+                  </SelectItem>
                   <SelectItem value="ACTIVE">Activo</SelectItem>
                   <SelectItem value="INACTIVE">Inactivo</SelectItem>
                   <SelectItem value="LOW_STOCK">Stock Bajo</SelectItem>
@@ -272,12 +312,12 @@ export default function MedicineInventory() {
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow 
+                  <TableRow
                     key={headerGroup.id}
                     className="bg-gradient-to-r from-[#47b3b6]/5 to-[#47b3b6]/10 hover:from-[#47b3b6]/10 hover:to-[#47b3b6]/20"
                   >
                     {headerGroup.headers.map((header) => (
-                      <TableHead 
+                      <TableHead
                         key={header.id}
                         className="text-[#47b3b6] font-semibold whitespace-nowrap"
                       >
@@ -295,12 +335,14 @@ export default function MedicineInventory() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell 
-                      colSpan={columns.length} 
+                    <TableCell
+                      colSpan={columns.length}
                       className="h-24 text-center"
                     >
                       <Loader size={32} className="mx-auto text-[#47b3b6]" />
-                      <p className="mt-2 text-gray-600">Cargando medicamentos...</p>
+                      <p className="mt-2 text-gray-600">
+                        Cargando medicamentos...
+                      </p>
                     </TableCell>
                   </TableRow>
                 ) : table.getRowModel().rows?.length ? (
@@ -310,7 +352,7 @@ export default function MedicineInventory() {
                       className="hover:bg-[#47b3b6]/5 transition-colors duration-200"
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell 
+                        <TableCell
                           key={cell.id}
                           className="text-gray-700 whitespace-nowrap"
                         >
@@ -324,8 +366,8 @@ export default function MedicineInventory() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell 
-                      colSpan={columns.length} 
+                    <TableCell
+                      colSpan={columns.length}
                       className="h-24 text-center text-gray-600"
                     >
                       No se encontraron medicamentos en el inventario.

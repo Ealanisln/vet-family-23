@@ -1,8 +1,7 @@
-//components/Inventory/Products.tsx
-
 "use client";
 
 import * as React from "react";
+import { useState, useCallback } from "react";
 import { Search, AlertTriangle, Plus } from "lucide-react";
 import {
   ColumnDef,
@@ -16,7 +15,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 
+// Componentes UI
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,26 +42,37 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import Loader from "@/components/ui/loader";
 import { Badge, BadgeProps } from "@/components/ui/custom-badge";
+import { toast } from "@/components/ui/use-toast";
+
+// Actions y Types
 import {
   createInventoryItem,
   getInventory,
   updateInventoryItem,
 } from "@/app/actions/inventory";
-import { toast, useToast } from "@/components/ui/use-toast";
 import {
   InventoryItem,
   InventoryItemFormData,
   UpdateInventoryData,
-} from "./types";
-import InventoryItemForm from "./ui/InventoryItemForm";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+  GetInventoryResponse,
+  UpdateInventoryResponse,
+  CreateInventoryResponse,
+  InventoryFormItem,
+} from "@/types/inventory";
+import {
+  InventoryCategory,
+  InventoryStatus,
+  MovementType,
+} from "@prisma/client";
 
+// Componentes
+import InventoryItemForm from "./ui/InventoryItemForm";
+
+// Funciones auxiliares
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
   const statusMap: Record<string, BadgeProps["variant"]> = {
     ACTIVE: "success",
@@ -81,90 +93,48 @@ const formatDate = (date: string | null) => {
   });
 };
 
+const convertInventoryItemToFormData = (
+  item: InventoryItem
+): InventoryFormItem => {
+  const formItem: InventoryFormItem = {
+    ...item,
+    createdAt: new Date(item.createdAt),
+    updatedAt: item.updatedAt ? new Date(item.updatedAt) : null,
+    movements: item.movements.map((movement) => ({
+      ...movement,
+      date: new Date(movement.date),
+    })),
+  };
+  return formItem;
+};
+
 export default function Inventory() {
   const router = useRouter();
 
-  const [data, setData] = React.useState<InventoryItem[]>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+  // Estados
+  const [data, setData] = useState<InventoryFormItem[]>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<
+    InventoryCategory | "all_categories" | null
+  >(null);
+  const [statusFilter, setStatusFilter] = useState<
+    InventoryStatus | "all_statuses" | null
+  >(null);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<InventoryFormItem | null>(
+    null
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isNewItemFormOpen, setIsNewItemFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Procesar actualizaciones pendientes después del login
-  React.useEffect(() => {
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
-
-    const processPendingUpdate = async () => {
-      const pendingUpdateStr = sessionStorage.getItem("pendingInventoryUpdate");
-      if (!pendingUpdateStr) return;
-
-      try {
-        const pendingUpdate = JSON.parse(pendingUpdateStr);
-        console.log("[processPendingUpdate] Processing update:", pendingUpdate);
-
-        const result = await updateInventoryItem(
-          pendingUpdate.itemId,
-          pendingUpdate.updateData,
-          "system",
-          "Pending update processed"
-        );
-
-        if (!result.success) {
-          if (result.requiresAuth && retryCount < MAX_RETRIES) {
-            console.log(
-              `[processPendingUpdate] Auth required, retry ${retryCount + 1} of ${MAX_RETRIES}`
-            );
-            retryCount++;
-            // Esperar 1 segundo antes de reintentar
-            setTimeout(processPendingUpdate, 1000);
-            return;
-          }
-          throw new Error(
-            result.error || "Error al procesar actualización pendiente"
-          );
-        }
-
-        // Éxito: limpiar storage y mostrar mensaje
-        sessionStorage.removeItem("pendingInventoryUpdate");
-        await fetchInventory();
-        toast({
-          title: "Éxito",
-          description: "Item actualizado correctamente",
-        });
-      } catch (error) {
-        console.error("[processPendingUpdate] Error:", error);
-        // Solo mostrar el error si hemos agotado los reintentos
-        if (retryCount >= MAX_RETRIES) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description:
-              "Error procesando actualización pendiente. Por favor, intente nuevamente.",
-          });
-          sessionStorage.removeItem("pendingInventoryUpdate");
-        }
-      }
-    };
-
-    // Esperar un poco antes de procesar para dar tiempo a que se establezca la sesión
-    const timeoutId = setTimeout(processPendingUpdate, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  const columns: ColumnDef<InventoryItem>[] = [
+  // Definición de columnas
+  const columns: ColumnDef<InventoryFormItem>[] = [
     {
       accessorKey: "name",
       header: "Nombre",
@@ -214,7 +184,7 @@ export default function Inventory() {
       accessorKey: "status",
       header: "Estado",
       cell: ({ row }) => {
-        const status = row.getValue("status") as string;
+        const status = row.getValue("status") as InventoryStatus;
         const statusMap: Record<string, string> = {
           ACTIVE: "Activo",
           INACTIVE: "Inactivo",
@@ -252,14 +222,16 @@ export default function Inventory() {
           <div className="text-sm">
             <span
               className={
-                lastMovement.type === "IN" ? "text-green-600" : "text-red-600"
+                lastMovement.type === MovementType.IN
+                  ? "text-green-600"
+                  : "text-red-600"
               }
             >
-              {lastMovement.type === "IN" ? "+" : "-"}
+              {lastMovement.type === MovementType.IN ? "+" : "-"}
               {lastMovement.quantity}
             </span>
             <span className="text-gray-500 ml-2">
-              {formatDate(lastMovement.date)}
+              {formatDate(lastMovement.date.toString())}
             </span>
             {lastMovement.user?.name && (
               <span className="text-gray-400 ml-1">
@@ -272,13 +244,16 @@ export default function Inventory() {
     },
   ];
 
-  const fetchInventory = React.useCallback(async () => {
+  // Cargar inventario
+  const fetchInventory = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await getInventory();
+      const result: GetInventoryResponse = await getInventory();
       if (result.success && result.items) {
-        setData(result.items);
+        setData(
+          result.items.map((item) => convertInventoryItemToFormData(item))
+        );
       } else {
         setError(result.error || "Failed to fetch inventory");
         setData([]);
@@ -291,61 +266,12 @@ export default function Inventory() {
     }
   }, []);
 
-  React.useEffect(() => {
-    fetchInventory();
-  }, [fetchInventory]);
-
-  const handleUpdateItem = async (id: string, newData: UpdateInventoryData) => {
-    try {
-      const result = await updateInventoryItem(
-        id,
-        newData,
-        "current-user-id",
-        "Manual update"
-      );
-
-      if (!result.success) {
-        // Check if it's an auth error
-        if (result.requiresAuth) {
-          // Use Kinde's login function
-          window.location.href = "/api/auth/login";
-          return;
-        }
-
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: result.error || "Error al actualizar item",
-        });
-        return;
-      }
-
-      toast({
-        title: "Éxito",
-        description: "Item actualizado correctamente",
-      });
-      fetchInventory();
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Error inesperado al actualizar",
-      });
-    }
-  };
-
+  // Handlers
   const handleEditSubmit = async (formData: InventoryItemFormData) => {
-    if (!selectedItem) {
-      console.log("[handleEditSubmit] No item selected");
-      return;
-    }
+    if (!selectedItem) return;
 
     try {
       setIsSubmitting(true);
-      console.log(
-        "[handleEditSubmit] Starting submission for item:",
-        selectedItem.id
-      );
 
       const updateData: UpdateInventoryData = {
         name: formData.name,
@@ -359,24 +285,19 @@ export default function Inventory() {
         brand: formData.brand || undefined,
         batchNumber: formData.batchNumber || undefined,
         specialNotes: formData.specialNotes || undefined,
-        expirationDate: formData.expirationDate
-          ? new Date(formData.expirationDate)
-          : null,
+        expirationDate: formData.expirationDate,
         status: selectedItem.status,
         category: formData.category,
       };
 
-      const result = await updateInventoryItem(
+      const result: UpdateInventoryResponse = await updateInventoryItem(
         selectedItem.id,
         updateData,
-        "system",
-        "Manual update"
+        "system"
       );
 
       if (!result.success) {
         if (result.requiresAuth) {
-          console.log("[handleEditSubmit] Auth required, saving state");
-
           const currentPath = window.location.pathname;
           const pendingUpdate = {
             itemId: selectedItem.id,
@@ -389,7 +310,6 @@ export default function Inventory() {
             JSON.stringify(pendingUpdate)
           );
 
-          // Redirigir al login con returnTo como query param
           const returnUrl = encodeURIComponent(
             `${window.location.origin}${currentPath}`
           );
@@ -400,7 +320,6 @@ export default function Inventory() {
         throw new Error(result.error || "Error al actualizar item");
       }
 
-      console.log("[handleEditSubmit] Update successful");
       setIsEditFormOpen(false);
       setIsDialogOpen(false);
       await fetchInventory();
@@ -410,7 +329,6 @@ export default function Inventory() {
         description: "Item actualizado correctamente",
       });
     } catch (error) {
-      console.error("[handleEditSubmit] Error:", error);
       toast({
         variant: "destructive",
         title: "Error al actualizar",
@@ -427,13 +345,17 @@ export default function Inventory() {
   const handleNewItemSubmit = async (formData: InventoryItemFormData) => {
     setIsSubmitting(true);
     try {
-      const response = await createInventoryItem(formData, "Creación inicial");
+      const response: CreateInventoryResponse = await createInventoryItem(
+        formData,
+        "Creación inicial"
+      );
 
       if (!response.success) {
         throw new Error(response.error);
       }
 
       setIsNewItemFormOpen(false);
+      await fetchInventory();
 
       toast({
         title: "Éxito",
@@ -451,15 +373,79 @@ export default function Inventory() {
     }
   };
 
+  // Manejar actualizaciones pendientes
+  React.useEffect(() => {
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+
+    const processPendingUpdate = async () => {
+      const pendingUpdateStr = sessionStorage.getItem("pendingInventoryUpdate");
+      if (!pendingUpdateStr) return;
+
+      try {
+        const pendingUpdate = JSON.parse(pendingUpdateStr);
+        const result: UpdateInventoryResponse = await updateInventoryItem(
+          pendingUpdate.itemId,
+          pendingUpdate.updateData,
+          "system"
+        );
+
+        if (!result.success) {
+          if (result.requiresAuth && retryCount < MAX_RETRIES) {
+            retryCount++;
+            setTimeout(processPendingUpdate, 1000);
+            return;
+          }
+          throw new Error(
+            result.error || "Error al procesar actualización pendiente"
+          );
+        }
+
+        sessionStorage.removeItem("pendingInventoryUpdate");
+        await fetchInventory();
+        toast({
+          title: "Éxito",
+          description: "Item actualizado correctamente",
+        });
+      } catch (error) {
+        console.error("[processPendingUpdate] Error:", error);
+        if (retryCount >= MAX_RETRIES) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description:
+              "Error procesando actualización pendiente. Por favor, intente nuevamente.",
+          });
+          sessionStorage.removeItem("pendingInventoryUpdate");
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(processPendingUpdate, 1000);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Cargar inventario inicial
+  React.useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory]);
+
+  // Filtrar datos
   const filteredData = React.useMemo(() => {
     return data.filter((item) => {
       const matchesCategory =
-        !categoryFilter || item.category === categoryFilter;
-      const matchesStatus = !statusFilter || item.status === statusFilter;
+        !categoryFilter ||
+        categoryFilter === "all_categories" ||
+        item.category === categoryFilter;
+      const matchesStatus =
+        !statusFilter ||
+        statusFilter === "all_statuses" ||
+        item.status === statusFilter;
       return matchesCategory && matchesStatus;
     });
   }, [data, categoryFilter, statusFilter]);
 
+  // Configurar tabla
   const table = useReactTable({
     data: filteredData,
     columns,
@@ -490,6 +476,7 @@ export default function Inventory() {
     onGlobalFilterChange: setGlobalFilter,
   });
 
+  // Renderizar detalles del item
   const renderItemDetails = () => {
     if (!selectedItem) return null;
 
@@ -572,7 +559,7 @@ export default function Inventory() {
                   {movement.quantity}
                 </span>
                 <span className="text-gray-500">
-                  {formatDate(movement.date)}
+                  {formatDate(new Date(movement.date).toISOString())}
                 </span>
                 {movement.user?.name && (
                   <span className="text-gray-400">
@@ -607,9 +594,11 @@ export default function Inventory() {
             <div className="flex gap-2">
               <Select
                 value={categoryFilter || "all_categories"}
-                onValueChange={(value) =>
-                  setCategoryFilter(value === "all_categories" ? null : value)
-                }
+                onValueChange={(
+                  value: InventoryCategory | "all_categories"
+                ) => {
+                  setCategoryFilter(value);
+                }}
               >
                 <SelectTrigger className="w-[180px] h-10">
                   <SelectValue placeholder="Categoría" />
@@ -631,9 +620,9 @@ export default function Inventory() {
 
               <Select
                 value={statusFilter || "all_statuses"}
-                onValueChange={(value) =>
-                  setStatusFilter(value === "all_statuses" ? null : value)
-                }
+                onValueChange={(value: InventoryStatus | "all_statuses") => {
+                  setStatusFilter(value);
+                }}
               >
                 <SelectTrigger className="w-[180px] h-10">
                   <SelectValue placeholder="Estado" />
@@ -649,12 +638,11 @@ export default function Inventory() {
                   <SelectItem value="EXPIRED">Expirado</SelectItem>
                 </SelectContent>
               </Select>
-
               <Button
                 variant="outline"
                 size="default"
                 className="h-10 border-teal-200 hover:bg-teal-50 hover:text-teal-600"
-                onClick={() => setIsNewItemFormOpen(true)} // Agregar este onClick
+                onClick={() => setIsNewItemFormOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 <span>Nuevo registro</span>
@@ -811,7 +799,7 @@ export default function Inventory() {
         onOpenChange={setIsEditFormOpen}
         initialData={selectedItem}
         onSubmit={handleEditSubmit}
-        isSubmitting={false} // Puedes añadir un estado para controlar esto si lo deseas
+        isSubmitting={isSubmitting}
       />
     </Card>
   );

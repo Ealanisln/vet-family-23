@@ -46,7 +46,7 @@ import Loader from "@/components/ui/loader";
 import { Badge, BadgeProps } from "@/components/ui/custom-badge";
 import { getInventory, updateInventoryItem } from "@/app/actions/inventory";
 import { toast } from "@/components/ui/use-toast";
-import { UpdateInventoryData } from "./types";
+import { UpdateInventoryData } from "@/types/inventory";
 
 interface InventoryItem {
   id: string;
@@ -231,12 +231,7 @@ export default function VaccineInventory() {
 
   const handleUpdateItem = async (id: string, newData: UpdateInventoryData) => {
     try {
-      const result = await updateInventoryItem(
-        id,
-        newData,
-        "current-user-id",
-        "Manual update"
-      );
+      const result = await updateInventoryItem(id, newData, "Manual update");
 
       if (result.success) {
         toast({

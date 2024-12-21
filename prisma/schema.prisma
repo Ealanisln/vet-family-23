@@ -3,6 +3,7 @@ datasource db {
   url      = env("DATABASE_URL")
   // You can remove the directUrl since it's not needed for Neon
 }
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -254,8 +255,8 @@ model InventoryMovement {
   quantity        Int
   date            DateTime      @default(now())
   reason          String?
-  userId          String
-  user            User          @relation(fields: [userId], references: [id])
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
   relatedRecordId String?
   notes           String?
 

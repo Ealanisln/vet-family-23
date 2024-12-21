@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
 import { InventoryStatus, MovementType } from "@prisma/client";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import {
   GetInventoryResponse,
   UpdateInventoryData,
@@ -11,8 +12,49 @@ import {
   CreateInventoryResponse,
 } from "@/types/inventory";
 
+async function getOrCreateUser() {
+  const { getUser } = getKindeServerSession();
+  const kindeUser = await getUser();
+  
+  if (!kindeUser) {
+    throw new Error("No autorizado");
+  }
+
+  try {
+    // Primero intentamos encontrar el usuario
+    const existingUser = await prisma.user.findUnique({
+      where: { kindeId: kindeUser.id }
+    });
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    // Si no existe, lo creamos
+    const newUser = await prisma.user.create({
+      data: {
+        id: kindeUser.id, // Usando el mismo ID de Kinde como ID principal
+        kindeId: kindeUser.id,
+        email: kindeUser.email || undefined,
+        firstName: kindeUser.given_name || undefined,
+        lastName: kindeUser.family_name || undefined,
+        name: kindeUser.given_name 
+          ? `${kindeUser.given_name} ${kindeUser.family_name || ''}`
+          : undefined,
+      },
+    });
+
+    return newUser;
+  } catch (error) {
+    console.error('Error getting/creating user:', error);
+    throw new Error("Error de autenticación");
+  }
+}
+
 export async function getInventory(): Promise<GetInventoryResponse> {
   try {
+    await getOrCreateUser(); // Verificar autenticación
+    
     const items = await prisma.inventoryItem.findMany({
       orderBy: {
         updatedAt: "desc",
@@ -48,6 +90,9 @@ export async function getInventory(): Promise<GetInventoryResponse> {
     return { success: true, items: serializedItems };
   } catch (error) {
     console.error("Error fetching inventory:", error);
+    if (error instanceof Error && error.message === "No autorizado") {
+      return { success: false, error: "No autorizado" };
+    }
     return { success: false, error: "Failed to fetch inventory" };
   }
 }
@@ -58,6 +103,8 @@ export async function updateInventoryItem(
   reason?: string
 ): Promise<UpdateInventoryResponse> {
   try {
+    const user = await getOrCreateUser();
+    
     const currentItem = await prisma.inventoryItem.findUnique({
       where: { id },
     });
@@ -66,7 +113,6 @@ export async function updateInventoryItem(
       return { success: false, error: "Item not found" };
     }
 
-    // Convertir la fecha de expiración a DateTime ISO si existe
     const formattedData = {
       ...data,
       expirationDate: data.expirationDate 
@@ -103,12 +149,17 @@ export async function updateInventoryItem(
                 : MovementType.OUT,
             quantity: Math.abs(data.quantity - currentItem.quantity),
             reason: reason || "Manual adjustment",
+            userId: user.id,
+            date: new Date(),
           },
         });
       }
 
       return item;
     });
+
+    revalidatePath("/admin/inventario");
+
     return {
       success: true,
       item: {
@@ -121,6 +172,9 @@ export async function updateInventoryItem(
     };
   } catch (error) {
     console.error("Operation failed:", error);
+    if (error instanceof Error && error.message === "No autorizado") {
+      return { success: false, error: "No autorizado" };
+    }
     return {
       success: false,
       error:
@@ -134,6 +188,8 @@ export async function createInventoryItem(
   reason?: string
 ): Promise<CreateInventoryResponse> {
   try {
+    const user = await getOrCreateUser();
+
     if (!data.name?.trim()) {
       return { success: false, error: "El nombre es requerido" };
     }
@@ -172,11 +228,20 @@ export async function createInventoryItem(
       },
     });
 
-    try {
-      await revalidatePath("/admin/inventario");
-    } catch (revalidateError) {
-      console.error("Error during revalidation:", revalidateError);
+    if (data.quantity > 0) {
+      await prisma.inventoryMovement.create({
+        data: {
+          itemId: newItem.id,
+          type: MovementType.IN,
+          quantity: data.quantity,
+          reason: reason || "Initial stock",
+          userId: user.id,
+          date: new Date(),
+        },
+      });
     }
+
+    revalidatePath("/admin/inventario");
 
     return {
       success: true,
@@ -191,6 +256,9 @@ export async function createInventoryItem(
     };
   } catch (error) {
     console.error("Error creating inventory item:", error);
+    if (error instanceof Error && error.message === "No autorizado") {
+      return { success: false, error: "No autorizado" };
+    }
     return {
       success: false,
       error:

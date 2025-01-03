@@ -7,6 +7,7 @@ export async function getPetDetails(petId: string) {
     include: {
       medicalHistory: true,
       vaccinations: true,
+      user: true, 
     },
   });
 

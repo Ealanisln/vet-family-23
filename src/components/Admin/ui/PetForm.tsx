@@ -36,10 +36,12 @@ interface PetFormProps {
   isEditing?: boolean;
   initialPet?: Pet | null;
   onClose?: () => void;
+  userId?: string;
 }
 
 interface Pet {
   id?: string;
+  userId?: string;
   internalId?: string;
   name: string;
   species: string;
@@ -56,6 +58,7 @@ const PetForm: React.FC<PetFormProps> = ({
   isEditing = false,
   initialPet = null,
   onClose,
+  userId,
 }) => {
   const params = useParams();
   const router = useRouter();
@@ -94,30 +97,38 @@ const PetForm: React.FC<PetFormProps> = ({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
-    const userId = params.id as string;
-    const petData = {
-      ...pet,
-      internalId: pet.internalId || undefined,
-      dateOfBirth: new Date(pet.dateOfBirth),
-      weight: parseFloat(pet.weight),
-      isNeutered: pet.isNeutered,
-    };
 
-    let result;
-    if (isEditing && pet.id) {
-      result = await updatePet(userId, pet.id, petData);
-    } else {
-      result = await addPet(userId, petData);
-    }
+  const effectiveUserId = userId || (Array.isArray(params.id) ? params.id[0] : params.id);
+  
+  if (!effectiveUserId) {
+    console.error("No user ID available");
+    return;
+  }
 
-    if (result.success) {
-      if (onClose) onClose();
-      router.push(`/admin/clientes/${userId}`);
-    } else {
-      console.error(result.error);
-    }
+  const petData = {
+    ...pet,
+    internalId: pet.internalId || undefined,
+    dateOfBirth: new Date(pet.dateOfBirth),
+    weight: parseFloat(pet.weight),
+    isNeutered: pet.isNeutered,
   };
+
+  let result;
+  if (isEditing && pet.id) {
+    result = await updatePet(effectiveUserId, pet.id, petData);
+  } else {
+    result = await addPet(effectiveUserId, petData);
+  }
+
+  if (result.success) {
+    if (onClose) onClose();
+    router.push(`/admin/clientes/${effectiveUserId}`);
+  } else {
+    console.error(result.error);
+  }
+};
 
   const formContent = (
     <>

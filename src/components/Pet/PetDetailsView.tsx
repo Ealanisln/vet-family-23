@@ -44,6 +44,7 @@ interface Vaccination {
 
 interface Pet {
   id: string;
+  userId: string; 
   internalId?: string | null;
   name: string;
   species: string;
@@ -128,6 +129,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
   const formatPetForForm = (pet: Pet) => {
     return {
       id: pet.id,
+      userId: pet.userId,
       name: pet.name,
       species: pet.species,
       breed: pet.breed,
@@ -183,6 +185,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
             isEditing={true}
             initialPet={formatPetForForm(pet)}
             onClose={handleClose}
+            userId={pet.userId}
           />
         </div>
       </div>
@@ -301,20 +304,6 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       </Card>
 
       <VaccinationContainer petId={pet.id} vaccinations={pet.vaccinations} />
-
-      {/* <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle>Vacunas</CardTitle>
-            <Button>
-              <PlusIcon className="mr-2 h-4 w-4" /> Nueva Vacuna
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-         <VaccinationTable />
-        </CardContent>
-      </Card> */}
     </div>
   );
 }

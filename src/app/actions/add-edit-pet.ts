@@ -41,6 +41,14 @@ export async function addPet(
     };
   }
 
+  // Validate weight before database operation
+  if (isNaN(petData.weight)) {
+    return {
+      success: false,
+      error: "Invalid weight value provided",
+    };
+  }
+
   try {
     // Verify user exists before attempting to add pet
     const userExists = await prisma.user.findUnique({
@@ -62,53 +70,47 @@ export async function addPet(
       // Generate a UUID for the pet
       const petId = uuidv4();
 
-      const newPet = await tx.pet
-        .create({
-          data: {
-            id: petId,
-            name: petData.name,
-            species: petData.species,
-            breed: petData.breed,
-            dateOfBirth: petData.dateOfBirth,
-            gender: petData.gender,
-            weight: petData.weight,
-            microchipNumber: petData.microchipNumber || null,
-            isNeutered: petData.isNeutered,
-            isDeceased: false,
-            internalId: petData.internalId || null,
-            userId: userId,
-          },
-          include: {
-            medicalHistory: true,
-          },
-        })
-        .catch((error) => {
-          console.error("Error creating pet:", error);
-          throw error;
-        });
+      const newPet = await tx.pet.create({
+        data: {
+          id: petId,
+          name: petData.name,
+          species: petData.species,
+          breed: petData.breed,
+          dateOfBirth: petData.dateOfBirth,
+          gender: petData.gender,
+          weight: petData.weight,
+          microchipNumber: petData.microchipNumber || null,
+          isNeutered: petData.isNeutered,
+          isDeceased: false,
+          internalId: petData.internalId || null,
+          user: {
+            connect: {
+              id: userId
+            }
+          }
+        },
+        include: {
+          medicalHistory: true,
+        },
+      });
 
-      console.log("Pet created successfully:", newPet.id);
-
+      // Create medical history if provided
       if (petData.medicalHistory) {
         console.log("Creating initial medical history");
-        await tx.medicalHistory
-          .create({
-            data: {
-              petId: newPet.id,
-              visitDate: new Date(),
-              reasonForVisit: "Initial check-up",
-              diagnosis: "N/A",
-              treatment: "N/A",
-              notes: petData.medicalHistory,
-              prescriptions: [],
-            },
-          })
-          .catch((error) => {
-            console.error("Error creating medical history:", error);
-            throw error;
-          });
+        await tx.medicalHistory.create({
+          data: {
+            petId: newPet.id,
+            visitDate: new Date(),
+            reasonForVisit: "Initial check-up",
+            diagnosis: "N/A",
+            treatment: "N/A",
+            notes: petData.medicalHistory,
+            prescriptions: [],
+          },
+        });
       }
 
+      console.log("Pet created successfully:", newPet.id);
       return newPet;
     });
 

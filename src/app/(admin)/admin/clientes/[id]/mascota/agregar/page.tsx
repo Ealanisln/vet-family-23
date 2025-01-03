@@ -55,16 +55,31 @@ export default function AddPetView() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate weight
+    const weight = parseFloat(pet.weight);
+    if (isNaN(weight)) {
+      alert("Por favor ingrese un peso válido");
+      return;
+    }
+
     const userId = params.id as string;
-    const result = await addPet(userId, {
-      ...pet,
-      dateOfBirth: new Date(pet.dateOfBirth),
-      weight: parseFloat(pet.weight),
-    });
-    if (result.success) {
-      router.push(`/admin/clientes/${userId}`);
-    } else {
-      console.error(result.error);
+    try {
+      const result = await addPet(userId, {
+        ...pet,
+        dateOfBirth: new Date(pet.dateOfBirth),
+        weight: weight,
+      });
+
+      if (result.success) {
+        router.push(`/admin/clientes/${userId}`);
+      } else {
+        alert(`Error: ${result.error}`);
+        console.error(result.error);
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Ocurrió un error al intentar agregar la mascota");
     }
   };
 

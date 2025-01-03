@@ -34,54 +34,19 @@ import PetActions from "./PetActions";
 
 interface TablePet {
   id: string;
+  userId: string;
   name: string;
   species: string;
   breed: string;
   ownerName: string;
   isDeceased: boolean;
+  internalId: string | null;
+  dateOfBirth: Date;
+  gender: string;
+  weight: number;
+  microchipNumber: string | null;
+  isNeutered: boolean;
 }
-
-export const columns: ColumnDef<TablePet>[] = [
-  {
-    accessorKey: "name",
-    header: "Nombre",
-    cell: ({ row }) => (
-      <Link
-        href={`/admin/mascotas/${row.original.id}`}
-        className="hover:underline text-[#47b3b6] font-medium"
-      >
-        <div className="capitalize">{row.getValue("name")}</div>
-      </Link>
-    ),
-  },
-  {
-    accessorKey: "species",
-    header: "Especie",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("species")}</div>
-    ),
-  },
-  {
-    accessorKey: "breed",
-    header: "Raza",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("breed")}</div>
-    ),
-  },
-  {
-    accessorKey: "ownerName",
-    header: "Dueño",
-    cell: ({ row }) => <div>{row.getValue("ownerName")}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const pet = row.original;
-      return <PetActions pet={pet} />;
-    },
-  },
-];
 
 export default function PetsTable() {
   const [data, setData] = React.useState<TablePet[]>([]);
@@ -93,35 +58,92 @@ export default function PetsTable() {
   const [showDeceased, setShowDeceased] = React.useState(false);
   const [globalFilter, setGlobalFilter] = React.useState("");
 
-  React.useEffect(() => {
-    async function fetchPets() {
-      try {
-        setLoading(true);
-        const result = await getPets();
-        if (result.success) {
-          const tablePets = result.pets.map(pet => ({
-            id: pet.id,
-            name: pet.name,
-            species: pet.species,
-            breed: pet.breed,
-            ownerName: pet.ownerName,
-            isDeceased: pet.isDeceased,
-          }));
-          setData(tablePets);
-        } else {
-          console.error("Failed to fetch pets:", result.error);
-        }
-      } catch (error) {
-        console.error("Error fetching pets:", error);
-      } finally {
-        setLoading(false);
+  const fetchPets = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await getPets();
+      if (result.success) {
+        const tablePets = result.pets.map((pet) => ({
+          id: pet.id,
+          userId: pet.userId,
+          name: pet.name,
+          species: pet.species,
+          breed: pet.breed,
+          ownerName: pet.ownerName,
+          isDeceased: pet.isDeceased,
+          internalId: pet.internalId,
+          dateOfBirth: pet.dateOfBirth,
+          gender: pet.gender,
+          weight: pet.weight,
+          microchipNumber: pet.microchipNumber,
+          isNeutered: pet.isNeutered,
+        }));
+        setData(tablePets);
+      } else {
+        console.error("Failed to fetch pets:", result.error);
       }
+    } catch (error) {
+      console.error("Error fetching pets:", error);
+    } finally {
+      setLoading(false);
     }
-    fetchPets();
   }, []);
 
+  const columns = React.useMemo<ColumnDef<TablePet>[]>(() => [
+    {
+      accessorKey: "name",
+      header: "Nombre",
+      cell: ({ row }) => (
+        <Link
+          href={`/admin/mascotas/${row.original.id}`}
+          className="hover:underline text-[#47b3b6] font-medium"
+        >
+          <div className="capitalize">{row.getValue("name")}</div>
+        </Link>
+      ),
+    },
+    {
+      accessorKey: "species",
+      header: "Especie",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("species")}</div>
+      ),
+    },
+    {
+      accessorKey: "breed",
+      header: "Raza",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("breed")}</div>
+      ),
+    },
+    {
+      accessorKey: "ownerName",
+      header: "Dueño",
+      cell: ({ row }) => <div>{row.getValue("ownerName")}</div>,
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const pet = row.original;
+        return (
+          <PetActions
+            pet={{
+              ...pet,
+            }}
+            onPetDeleted={fetchPets}
+          />
+        );
+      },
+    },
+  ], [fetchPets]);
+
+  React.useEffect(() => {
+    fetchPets();
+  }, [fetchPets]);
+
   const filteredData = React.useMemo(() => {
-    return showDeceased ? data : data.filter(pet => !pet.isDeceased);
+    return showDeceased ? data : data.filter((pet) => !pet.isDeceased);
   }, [data, showDeceased]);
 
   const handleSearch = React.useCallback((value: string) => {
@@ -149,7 +171,7 @@ export default function PetsTable() {
     globalFilterFn: (row, columnId, filterValue) => {
       const searchValue = filterValue.toLowerCase();
       const searchableColumns = ["name", "species", "breed", "ownerName"];
-      
+
       return searchableColumns.some((column) => {
         const value = row.getValue(column);
         return value
@@ -163,7 +185,6 @@ export default function PetsTable() {
   return (
     <Card className="w-full bg-gradient-to-br from-white via-white to-blue-50 border-none shadow-lg">
       <div className="p-4 md:p-6 lg:p-8">
-        {/* Header y Búsqueda */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
           <div className="relative w-full sm:w-auto sm:flex-1 max-w-sm">
             <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
@@ -189,18 +210,17 @@ export default function PetsTable() {
           </div>
         </div>
 
-        {/* Contenedor de la tabla con scroll horizontal */}
         <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
           <div className="min-w-[600px]">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow 
+                  <TableRow
                     key={headerGroup.id}
                     className="bg-gradient-to-r from-[#47b3b6]/5 to-[#47b3b6]/10 hover:from-[#47b3b6]/10 hover:to-[#47b3b6]/20"
                   >
                     {headerGroup.headers.map((header) => (
-                      <TableHead 
+                      <TableHead
                         key={header.id}
                         className="text-[#47b3b6] font-semibold whitespace-nowrap"
                       >
@@ -218,8 +238,8 @@ export default function PetsTable() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell 
-                      colSpan={columns.length} 
+                    <TableCell
+                      colSpan={columns.length}
                       className="h-24 text-center"
                     >
                       <Loader size={32} className="mx-auto text-[#47b3b6]" />
@@ -234,7 +254,7 @@ export default function PetsTable() {
                       className="hover:bg-[#47b3b6]/5 transition-colors duration-200"
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell 
+                        <TableCell
                           key={cell.id}
                           className="text-gray-700 whitespace-nowrap"
                         >
@@ -248,8 +268,8 @@ export default function PetsTable() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell 
-                      colSpan={columns.length} 
+                    <TableCell
+                      colSpan={columns.length}
                       className="h-24 text-center text-gray-600"
                     >
                       No se encontraron mascotas.
@@ -261,7 +281,6 @@ export default function PetsTable() {
           </div>
         </div>
 
-        {/* Footer con paginación */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4 pt-6">
           <div className="w-full sm:w-auto text-sm text-[#47b3b6] order-2 sm:order-1">
             {table.getFilteredSelectedRowModel().rows.length} de{" "}

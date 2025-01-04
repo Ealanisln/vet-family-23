@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import AddPetForm from "@/components/Pet/AddPetForm";
 import { addPet } from "@/app/actions/add-edit-pet";
 
-// Definimos la interfaz para los datos de la mascota
 interface PetDataForSubmit {
   name: string;
   species: string;
@@ -22,6 +21,7 @@ const RegistroExitoso: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Añadimos este estado
 
   useEffect(() => {
     const userIdParam = searchParams.get("userId");
@@ -32,22 +32,24 @@ const RegistroExitoso: React.FC = () => {
     }
   }, [searchParams]);
 
-  const handleSubmit = async (userId: string, petData: PetDataForSubmit) => {
+  const handleSubmit = async (petData: PetDataForSubmit) => {
     if (!userId) {
       console.error("No se proporcionó userId");
       return;
     }
     
+    setIsSubmitting(true); // Activamos el estado de carga
     try {
       const result = await addPet(userId, petData);
       if (result.success) {
         router.push(`/admin/clientes/${userId}`);
       } else {
         console.error(result.error);
-        // Aquí podrías agregar un estado para mostrar el error al usuario
       }
     } catch (error) {
       console.error("Error al agregar mascota:", error);
+    } finally {
+      setIsSubmitting(false); // Desactivamos el estado de carga
     }
   };
 
@@ -78,6 +80,7 @@ const RegistroExitoso: React.FC = () => {
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           userId={userId}
+          isSubmitting={isSubmitting} // Pasamos el estado de carga
         />
       </div>
     </div>

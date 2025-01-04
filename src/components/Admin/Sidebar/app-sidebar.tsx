@@ -77,8 +77,8 @@ const data = {
           icon: PawPrint,
         },
         {
-          title: "Historial Médico",
-          url: "/admin/mascotas/historial",
+          title: "Agregar mascota",
+          url: "/admin/mascotas/nueva",
           icon: ClipboardList,
         },
       ],

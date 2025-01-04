@@ -48,8 +48,6 @@ export default function PetActions({ pet, onPetDeleted }: PetActionsProps) {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
-  console.log("PetActions received pet data:", pet);
-
   const handleDelete = async () => {
     if (!pet?.userId) {
       console.error("Pet data:", pet);

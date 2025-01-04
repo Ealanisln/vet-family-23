@@ -1,18 +1,11 @@
 // components/Pet/AddPetForm.tsx
 
-import React, { useState, ChangeEvent, FormEvent } from "react";
-import { updatePetNeuteredStatus } from "@/app/actions/add-edit-pet";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+
+
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,19 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { ArrowLeftIcon, PlusIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeftIcon, Loader2 } from "lucide-react";
 
-interface PetFormData {
-  name: string;
-  species: string;
-  breed: string;
-  dateOfBirth: string;
-  gender: string;
-  weight: string;
-  microchipNumber?: string;
-  medicalHistory?: string;
-  isNeutered: boolean; // Añadimos esta propiedad
+interface AddPetFormProps {
+  onSubmit: (petData: PetDataForSubmit) => Promise<void>;
+  onCancel: () => void;
+  userId: string;
+  isSubmitting: boolean;
 }
 
 interface PetDataForSubmit {
@@ -44,120 +33,124 @@ interface PetDataForSubmit {
   weight: number;
   microchipNumber?: string;
   medicalHistory?: string;
-  isNeutered: boolean; // Añadimos esta propiedad
-}
-
-interface AddPetFormProps {
-  onSubmit: (userId: string, petData: PetDataForSubmit) => void;
-  onCancel: () => void;
-  userId: string;
+  isNeutered: boolean;
 }
 
 const AddPetForm: React.FC<AddPetFormProps> = ({
   onSubmit,
   onCancel,
   userId,
+  isSubmitting
 }) => {
-  const [pet, setPet] = useState<PetFormData>({
+  const [petData, setPetData] = useState<PetDataForSubmit>({
     name: "",
     species: "",
     breed: "",
-    dateOfBirth: "",
+    dateOfBirth: new Date(),
     gender: "",
-    weight: "",
+    weight: 0,
     microchipNumber: "",
     medicalHistory: "",
-    isNeutered: false, 
+    isNeutered: false
   });
-  const [isNeutered, setIsNeutered] = useState(pet.isNeutered);
 
-  const handleNeuteredChange = (checked: boolean) => {
-    setPet((prevState) => ({ ...prevState, isNeutered: checked }));
-  };
-
-  const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setPet((prevState) => ({ ...prevState, [name]: value }));
-  };
-
-  const handleSelectChange = (value: string, name: string) => {
-    setPet((prevState) => ({ ...prevState, [name]: value }));
-  };
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const petDataForSubmit: PetDataForSubmit = {
-      ...pet,
-      dateOfBirth: new Date(pet.dateOfBirth),
-      weight: parseFloat(pet.weight),
-      isNeutered: pet.isNeutered, 
-    };
-    onSubmit(userId, petDataForSubmit);
+    if (!isSubmitting) {
+      // Ya no pasamos el userId aquí porque lo manejará el componente padre
+      await onSubmit(petData);
+    }
+  };
+
+  const isFormValid = () => {
+    return (
+      petData.name.trim() !== "" &&
+      petData.species.trim() !== "" &&
+      petData.breed.trim() !== "" &&
+      petData.gender.trim() !== "" &&
+      petData.weight > 0
+    );
   };
 
   return (
     <Card>
-      <form onSubmit={handleSubmit}>
-        <CardHeader>
-          <CardTitle>Información de la Mascota</CardTitle>
-        </CardHeader>
+      <CardHeader>
+        <CardTitle>Agregar Nueva Mascota</CardTitle>
+      </CardHeader>
+      <form onSubmit={handleFormSubmit}>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nombre</Label>
+              <Label htmlFor="name">
+                Nombre <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="name"
-                name="name"
-                value={pet.name}
-                onChange={handleInputChange}
+                value={petData.name}
+                onChange={(e) => setPetData({ ...petData, name: e.target.value })}
+                disabled={isSubmitting}
                 required
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="species">Especie</Label>
+              <Label htmlFor="species">
+                Especie <span className="text-red-500">*</span>
+              </Label>
               <Select
-                name="species"
-                onValueChange={(value) => handleSelectChange(value, "species")}
+                value={petData.species}
+                onValueChange={(value) => setPetData({ ...petData, species: value })}
+                disabled={isSubmitting}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar especie" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="perro">Perro</SelectItem>
-                  <SelectItem value="gato">Gato</SelectItem>
-                  <SelectItem value="ave">Ave</SelectItem>
-                  <SelectItem value="huron">Hurón</SelectItem>
-                  <SelectItem value="huron">Conejo</SelectItem>
-                  <SelectItem value="otro">Otro</SelectItem>
-                </SelectContent>
+                    <SelectItem value="perro">Perro</SelectItem>
+                    <SelectItem value="gato">Gato</SelectItem>
+                    <SelectItem value="ave">Ave</SelectItem>
+                    <SelectItem value="huron">Hurón</SelectItem>
+                    <SelectItem value="conejo">Conejo</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="breed">Raza</Label>
+              <Label htmlFor="breed">
+                Raza <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="breed"
-                name="breed"
-                value={pet.breed}
-                onChange={handleInputChange}
+                value={petData.breed}
+                onChange={(e) => setPetData({ ...petData, breed: e.target.value })}
+                disabled={isSubmitting}
+                required
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="dateOfBirth">Fecha de Nacimiento</Label>
+              <Label htmlFor="dateOfBirth">
+                Fecha de Nacimiento <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="dateOfBirth"
-                name="dateOfBirth"
                 type="date"
-                value={pet.dateOfBirth}
-                onChange={handleInputChange}
+                value={petData.dateOfBirth.toISOString().split('T')[0]}
+                onChange={(e) => setPetData({ ...petData, dateOfBirth: new Date(e.target.value) })}
+                disabled={isSubmitting}
+                required
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="gender">Género</Label>
+              <Label htmlFor="gender">
+                Género <span className="text-red-500">*</span>
+              </Label>
               <Select
-                name="gender"
-                onValueChange={(value) => handleSelectChange(value, "gender")}
+                value={petData.gender}
+                onValueChange={(value) => setPetData({ ...petData, gender: value })}
+                disabled={isSubmitting}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar género" />
@@ -168,59 +161,81 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="weight">Peso (kg)</Label>
+              <Label htmlFor="weight">
+                Peso (kg) <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="weight"
-                name="weight"
                 type="number"
                 step="0.1"
-                value={pet.weight}
-                onChange={handleInputChange}
+                value={petData.weight}
+                onChange={(e) => setPetData({ ...petData, weight: parseFloat(e.target.value) })}
+                disabled={isSubmitting}
+                required
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="microchipNumber">Número de Microchip</Label>
               <Input
                 id="microchipNumber"
-                name="microchipNumber"
-                value={pet.microchipNumber}
-                onChange={handleInputChange}
-                maxLength={15} // Limita a 15 caracteres
-                inputMode="numeric" // Sugerencia de teclado numérico en móviles
-                pattern="\d*" // Acepta solo números
+                value={petData.microchipNumber}
+                onChange={(e) => setPetData({ ...petData, microchipNumber: e.target.value })}
+                disabled={isSubmitting}
               />
             </div>
-            <div className="space-y-2">
-          <div>
-            <Label htmlFor="isNeutered">Esta esterilizado?</Label>
-          </div>
-          <div className="pt-2">
-            <Switch
-              id="isNeutered"
-              checked={pet.isNeutered}
-              onCheckedChange={handleNeuteredChange}
-            />
-          </div>
-        </div>
 
             <div className="space-y-2 col-span-2">
-              <Label htmlFor="medicalHistory">Historia Médica</Label>
+              <Label htmlFor="medicalHistory">Historial Médico</Label>
               <Textarea
                 id="medicalHistory"
-                name="medicalHistory"
-                value={pet.medicalHistory}
-                onChange={handleInputChange}
+                value={petData.medicalHistory}
+                onChange={(e) => setPetData({ ...petData, medicalHistory: e.target.value })}
+                disabled={isSubmitting}
+                rows={4}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={petData.isNeutered}
+                  onChange={(e) => setPetData({ ...petData, isNeutered: e.target.checked })}
+                  disabled={isSubmitting}
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <span>Esterilizado/a</span>
+              </Label>
             </div>
           </div>
         </CardContent>
+
         <CardFooter className="flex justify-between">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
             <ArrowLeftIcon className="mr-2 h-4 w-4" /> Cancelar
           </Button>
-          <Button type="submit">
-            <PlusIcon className="mr-2 h-4 w-4" /> Agregar Mascota
+          
+          <Button 
+            type="submit"
+            disabled={!isFormValid() || isSubmitting}
+            className="relative"
+          >
+            {isSubmitting ? (
+              <>
+                <span className="animate-pulse mr-2">Guardando mascota...</span>
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </>
+            ) : (
+              'Guardar Mascota'
+            )}
           </Button>
         </CardFooter>
       </form>

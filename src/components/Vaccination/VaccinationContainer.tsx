@@ -1,5 +1,9 @@
-import React from 'react';
-import VaccinationCard, { IVaccination, VaccineType, VaccinationStage, VaccinationStatus } from './VaccinationDialogCard';
+// src/components/Vaccination/VaccinationContainer.tsx
+
+import VaccinationCard from './VaccinationDialogCard';
+import type { IVaccination } from './VaccinationDialogCard';
+import type { VaccineType } from '@/utils/vaccines'; // Importar desde utils
+import type { VaccinationStage, VaccinationStatus } from '@prisma/client'; // Importar desde prisma client
 
 // Esta interfaz debe coincidir exactamente con la forma de los datos que vienen de Prisma
 interface PrismaVaccination {
@@ -16,10 +20,15 @@ interface PrismaVaccination {
 
 interface VaccinationContainerProps {
   petId: string;
+  petSpecies: string;
   vaccinations: PrismaVaccination[];
 }
 
-export function VaccinationContainer({ petId, vaccinations }: VaccinationContainerProps) {
+export function VaccinationContainer({ 
+  petId, 
+  petSpecies, 
+  vaccinations 
+}: VaccinationContainerProps) {
   // Convertir las vacunaciones de Prisma al formato que espera el componente
   const formattedVaccinations: IVaccination[] = vaccinations.map(v => ({
     id: v.id,
@@ -39,6 +48,7 @@ export function VaccinationContainer({ petId, vaccinations }: VaccinationContain
   return (
     <VaccinationCard
       petId={petId}
+      petSpecies={petSpecies}
       vaccinations={formattedVaccinations}
     />
   );

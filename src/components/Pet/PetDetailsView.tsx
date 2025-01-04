@@ -1,3 +1,5 @@
+// src/components/Pet/PetDetailsView.tsx
+
 "use client";
 
 import React, { useState } from "react";
@@ -44,7 +46,7 @@ interface Vaccination {
 
 interface Pet {
   id: string;
-  userId: string; 
+  userId: string;
   internalId?: string | null;
   name: string;
   species: string;
@@ -303,7 +305,11 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         </CardContent>
       </Card>
 
-      <VaccinationContainer petId={pet.id} vaccinations={pet.vaccinations} />
+      <VaccinationContainer
+        petId={pet.id}
+        petSpecies={pet.species}
+        vaccinations={pet.vaccinations}
+      />
     </div>
   );
 }

@@ -1,7 +1,6 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // You can remove the directUrl since it's not needed for Neon
 }
 
 generator client {
@@ -182,6 +181,9 @@ enum VaccineType {
   SEXTUPLE
   SEXTUPLE_R
   RABIES
+  TRIPLE_FELINA 
+  LEUCEMIA_FELINA 
+  RABIA_FELINA
 }
 
 enum VaccinationStatus {

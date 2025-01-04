@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,30 +26,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { EditIcon, PlusIcon } from "lucide-react";
 import { addVaccination, updateVaccination } from "@/app/actions/vaccination";
-
-// Tipos
-export type VaccineType = 
-  | "DP_PUPPY"
-  | "DHPPI"
-  | "DHPPI_L"
-  | "DHPPI_RL"
-  | "BORDETELLA"
-  | "SEXTUPLE"
-  | "SEXTUPLE_R"
-  | "RABIES";
+import {
+  isFelineVaccine,
+  isCanineVaccine,
+  type VaccineType,
+} from "@/utils/vaccines";
 
 export type VaccinationStage = "PUPPY" | "ADULT";
 
-export type VaccinationStatus = "PENDING" | "COMPLETED" | "OVERDUE" | "SCHEDULED";
+export type VaccinationStatus =
+  | "PENDING"
+  | "COMPLETED"
+  | "OVERDUE"
+  | "SCHEDULED";
 
 export interface IVaccination {
   id: string;
@@ -77,6 +70,7 @@ export interface IVaccinationInput {
 }
 
 const vaccineTypeLabels: Record<VaccineType, string> = {
+  // Vacunas caninas
   DP_PUPPY: "Doble Puppy",
   DHPPI: "Quíntuple",
   DHPPI_L: "Quíntuple + Leptospira",
@@ -84,20 +78,26 @@ const vaccineTypeLabels: Record<VaccineType, string> = {
   BORDETELLA: "Bordetella",
   SEXTUPLE: "Sextuple (sin rabia)",
   SEXTUPLE_R: "Sextuple con rabia",
-  RABIES: "Rabia"
+  RABIES: "Rabia",
+  // Vacunas felinas
+  TRIPLE_FELINA: "Triple Felina",
+  LEUCEMIA_FELINA: "Leucemia Felina",
+  RABIA_FELINA: "Rabia Felina",
 };
 
 // Componente Dialog para agregar/editar vacunaciones
 interface VaccinationDialogProps {
   existingVaccination?: IVaccination;
   petId: string;
+  petSpecies: string; // Añadir especie de la mascota como prop
   onSave: () => void;
 }
 
-const VaccinationDialog: React.FC<VaccinationDialogProps> = ({ 
+const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
   existingVaccination,
   petId,
-  onSave
+  petSpecies,
+  onSave,
 }) => {
   const [open, setOpen] = useState(false);
   const [vaccination, setVaccination] = useState<IVaccinationInput>(() => {
@@ -121,13 +121,104 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
     };
   });
 
+  const availableVaccines = Object.entries(vaccineTypeLabels).filter(
+    ([type]) => {
+      if (
+        petSpecies.toLowerCase() === "gato" ||
+        petSpecies.toLowerCase() === "felino"
+      ) {
+        return isFelineVaccine(type as VaccineType);
+      }
+      return isCanineVaccine(type as VaccineType);
+    }
+  );
+
+  const validateDates = (
+    administrationDate: Date | undefined,
+    nextDoseDate: Date | undefined
+  ) => {
+    const errors: string[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Resetear la hora para comparar solo fechas
+
+    if (administrationDate) {
+      const adminDate = new Date(administrationDate);
+      adminDate.setHours(0, 0, 0, 0);
+
+      // Validar que la fecha de administración no sea futura
+      if (adminDate > today) {
+        errors.push("La fecha de administración no puede ser futura");
+      }
+
+      // Validar que la fecha de administración no sea muy antigua (ejemplo: más de 20 años)
+      const maxPastDate = new Date();
+      maxPastDate.setFullYear(maxPastDate.getFullYear() - 20);
+      if (adminDate < maxPastDate) {
+        errors.push("La fecha de administración parece ser demasiado antigua");
+      }
+
+      // Si también tenemos fecha de próxima dosis, validar la relación entre ambas
+      if (nextDoseDate) {
+        const nextDate = new Date(nextDoseDate);
+        nextDate.setHours(0, 0, 0, 0);
+
+        if (nextDate <= adminDate) {
+          errors.push(
+            "La fecha de próxima dosis debe ser posterior a la fecha de administración"
+          );
+        }
+
+        // Validar que la próxima dosis no esté muy lejos en el futuro (ejemplo: más de 3 años)
+        const maxFutureDate = new Date();
+        maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 3);
+        if (nextDate > maxFutureDate) {
+          errors.push(
+            "La fecha de próxima dosis parece estar demasiado lejos en el futuro"
+          );
+        }
+      }
+    }
+
+    return errors;
+  };
+
+  // En el componente VaccinationDialog, actualizar el handleSubmit:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!vaccination.vaccineType || !vaccination.stage || !vaccination.administrationDate || !vaccination.nextDoseDate) {
+
+    // Validaciones básicas
+    if (
+      !vaccination.vaccineType ||
+      !vaccination.stage ||
+      !vaccination.administrationDate ||
+      !vaccination.nextDoseDate
+    ) {
       toast({
         title: "Error",
         description: "Por favor complete todos los campos requeridos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar fechas
+    const dateErrors = validateDates(
+      vaccination.administrationDate,
+      vaccination.nextDoseDate
+    );
+    if (dateErrors.length > 0) {
+      toast({
+        title: "Error de validación",
+        description: (
+          <div className="space-y-2">
+            <p>Se encontraron los siguientes errores:</p>
+            <ul className="list-disc pl-4">
+              {dateErrors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        ),
         variant: "destructive",
       });
       return;
@@ -141,7 +232,7 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
       if (result.success) {
         toast({
           title: "Éxito",
-          description: existingVaccination 
+          description: existingVaccination
             ? "Vacunación actualizada correctamente"
             : "Nueva vacunación registrada correctamente",
         });
@@ -178,7 +269,7 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
             {existingVaccination ? "Editar Vacunación" : "Nueva Vacunación"}
           </DialogTitle>
           <DialogDescription>
-            {existingVaccination 
+            {existingVaccination
               ? "Modifique los detalles de la vacunación"
               : "Ingrese los detalles de la nueva vacunación"}
           </DialogDescription>
@@ -188,16 +279,22 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="vaccineType">Tipo de Vacuna</Label>
               <Select
-                onValueChange={(value) => 
-                  setVaccination(prev => ({...prev, vaccineType: value as VaccineType}))}
+                onValueChange={(value) =>
+                  setVaccination((prev) => ({
+                    ...prev,
+                    vaccineType: value as VaccineType,
+                  }))
+                }
                 value={vaccination.vaccineType}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Seleccione el tipo de vacuna" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(vaccineTypeLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  {availableVaccines.map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -206,8 +303,12 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="stage">Etapa</Label>
               <Select
-                onValueChange={(value) => 
-                  setVaccination(prev => ({...prev, stage: value as VaccinationStage}))}
+                onValueChange={(value) =>
+                  setVaccination((prev) => ({
+                    ...prev,
+                    stage: value as VaccinationStage,
+                  }))
+                }
                 value={vaccination.stage}
               >
                 <SelectTrigger className="col-span-3">
@@ -226,11 +327,15 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
                 id="administrationDate"
                 type="date"
                 className="col-span-3"
-                value={vaccination.administrationDate?.toISOString().split('T')[0]}
-                onChange={(e) => setVaccination(prev => ({
-                  ...prev,
-                  administrationDate: new Date(e.target.value)
-                }))}
+                value={
+                  vaccination.administrationDate?.toISOString().split("T")[0]
+                }
+                onChange={(e) =>
+                  setVaccination((prev) => ({
+                    ...prev,
+                    administrationDate: new Date(e.target.value),
+                  }))
+                }
               />
             </div>
 
@@ -240,11 +345,36 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
                 id="nextDoseDate"
                 type="date"
                 className="col-span-3"
-                value={vaccination.nextDoseDate?.toISOString().split('T')[0]}
-                onChange={(e) => setVaccination(prev => ({
-                  ...prev,
-                  nextDoseDate: new Date(e.target.value)
-                }))}
+                value={vaccination.nextDoseDate?.toISOString().split("T")[0]}
+                min={
+                  vaccination.administrationDate
+                    ? new Date(
+                        vaccination.administrationDate.getTime() + 86400000
+                      )
+                        .toISOString()
+                        .split("T")[0]
+                    : undefined
+                }
+                onChange={(e) => {
+                  const newDate = new Date(e.target.value);
+                  setVaccination((prev) => ({
+                    ...prev,
+                    nextDoseDate: newDate,
+                  }));
+
+                  // Validar inmediatamente la nueva fecha
+                  const dateErrors = validateDates(
+                    vaccination.administrationDate,
+                    newDate
+                  );
+                  if (dateErrors.length > 0) {
+                    toast({
+                      title: "Advertencia",
+                      description: dateErrors[0],
+                      variant: "destructive",
+                    });
+                  }
+                }}
               />
             </div>
 
@@ -253,11 +383,13 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
               <Input
                 id="batchNumber"
                 className="col-span-3"
-                value={vaccination.batchNumber || ''}
-                onChange={(e) => setVaccination(prev => ({
-                  ...prev,
-                  batchNumber: e.target.value
-                }))}
+                value={vaccination.batchNumber || ""}
+                onChange={(e) =>
+                  setVaccination((prev) => ({
+                    ...prev,
+                    batchNumber: e.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -266,11 +398,13 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
               <Input
                 id="veterinarianName"
                 className="col-span-3"
-                value={vaccination.veterinarianName || ''}
-                onChange={(e) => setVaccination(prev => ({
-                  ...prev,
-                  veterinarianName: e.target.value
-                }))}
+                value={vaccination.veterinarianName || ""}
+                onChange={(e) =>
+                  setVaccination((prev) => ({
+                    ...prev,
+                    veterinarianName: e.target.value,
+                  }))
+                }
               />
             </div>
           </div>
@@ -288,10 +422,15 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
 // Componente principal de la tarjeta de vacunaciones
 interface VaccinationCardProps {
   petId: string;
+  petSpecies: string;
   vaccinations: IVaccination[];
 }
 
-const VaccinationCard: React.FC<VaccinationCardProps> = ({ petId, vaccinations = [] }) => {
+const VaccinationCard: React.FC<VaccinationCardProps> = ({
+  petId,
+  petSpecies,
+  vaccinations = [],
+}) => {
   const handleSave = () => {
     // Recargar los datos de vacunación
   };
@@ -316,7 +455,7 @@ const VaccinationCard: React.FC<VaccinationCardProps> = ({ petId, vaccinations =
       COMPLETED: "Completada",
       PENDING: "Pendiente",
       OVERDUE: "Vencida",
-      SCHEDULED: "Programada"
+      SCHEDULED: "Programada",
     };
     return labels[status];
   };
@@ -325,7 +464,11 @@ const VaccinationCard: React.FC<VaccinationCardProps> = ({ petId, vaccinations =
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle>Vacunas</CardTitle>
-        <VaccinationDialog petId={petId} onSave={handleSave} />
+        <VaccinationDialog
+          petId={petId}
+          petSpecies={petSpecies}
+          onSave={handleSave}
+        />
       </CardHeader>
       <CardContent>
         {vaccinations.length > 0 ? (
@@ -346,20 +489,33 @@ const VaccinationCard: React.FC<VaccinationCardProps> = ({ petId, vaccinations =
                 <TableBody>
                   {vaccinations.map((vaccination) => (
                     <TableRow key={vaccination.id}>
-                      <TableCell>{vaccineTypeLabels[vaccination.vaccineType]}</TableCell>
-                      <TableCell>{vaccination.stage === 'PUPPY' ? 'Cachorro' : 'Adulto'}</TableCell>
-                      <TableCell>{vaccination.administrationDate.toLocaleDateString()}</TableCell>
-                      <TableCell>{vaccination.nextDoseDate.toLocaleDateString()}</TableCell>
                       <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(vaccination.status)}`}>
+                        {vaccineTypeLabels[vaccination.vaccineType]}
+                      </TableCell>
+                      <TableCell>
+                        {vaccination.stage === "PUPPY" ? "Cachorro" : "Adulto"}
+                      </TableCell>
+                      <TableCell>
+                        {vaccination.administrationDate.toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        {vaccination.nextDoseDate.toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(vaccination.status)}`}
+                        >
                           {getStatusLabel(vaccination.status)}
                         </span>
                       </TableCell>
-                      <TableCell>{vaccination.veterinarianName || 'N/A'}</TableCell>
+                      <TableCell>
+                        {vaccination.veterinarianName || "N/A"}
+                      </TableCell>
                       <TableCell>
                         <VaccinationDialog
                           existingVaccination={vaccination}
                           petId={petId}
+                          petSpecies={petSpecies}
                           onSave={handleSave}
                         />
                       </TableCell>

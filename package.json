@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "import-data": "tsx scripts/import-data.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "backup": "tsx src/scripts/backup.ts",
+    "backup:build": "tsc src/scripts/backup.ts && node dist/backup.js",
+    "backup:watch": "tsx watch src/scripts/backup.ts"
 },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.7.4",

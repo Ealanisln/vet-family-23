@@ -73,6 +73,7 @@ import {
 
 // Componentes
 import InventoryItemForm from "./ui/InventoryItemForm";
+import ItemDetails from "./ui/ItemDetails";
 
 // Funciones auxiliares
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
@@ -208,11 +209,6 @@ export default function Inventory() {
           </Badge>
         );
       },
-    },
-    {
-      accessorKey: "location",
-      header: "Ubicación",
-      cell: ({ row }) => row.getValue("location") || "-",
     },
     {
       accessorKey: "expirationDate",
@@ -772,14 +768,14 @@ export default function Inventory() {
 
       {/* Modal de Detalles */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalles del Item</DialogTitle>
             <DialogDescription>
               Información detallada y movimientos del item seleccionado.
             </DialogDescription>
           </DialogHeader>
-          {renderItemDetails()}
+          <ItemDetails selectedItem={selectedItem} />
           <DialogFooter>
             <Button
               variant="outline"

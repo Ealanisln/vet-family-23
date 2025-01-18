@@ -1,5 +1,3 @@
-// components/Inventory/ui/InventoryItemForm.tsx
-
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 import {
@@ -21,6 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
 import {
   InventoryFormProps,
   InventoryItemFormData,
@@ -60,8 +59,7 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
   onSubmit,
   isSubmitting = false,
 }) => {
-  const [formData, setFormData] =
-    React.useState<InventoryItemFormData>(INITIAL_FORM_STATE);
+  const [formData, setFormData] = React.useState<InventoryItemFormData>(INITIAL_FORM_STATE);
   const [errors, setErrors] = React.useState<FormErrors>({});
 
   React.useEffect(() => {
@@ -129,9 +127,9 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
 
   const handleChange = (
     name: keyof InventoryItemFormData,
-    value: string | number
+    value: string | number | InventoryCategory
   ) => {
-    setFormData((prev: InventoryItemFormData) => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -147,194 +145,196 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-4xl w-full h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-2xl font-semibold text-gray-900">
             {initialData ? "Editar Item" : "Nuevo Item"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            {/* Información básica */}
-            <div className="col-span-2 space-y-4">
-              <div>
-                <Label htmlFor="name">Nombre</Label>
+          {/* Sección Superior - Información Principal */}
+          <Card className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="col-span-full">
+                <Label htmlFor="name" className="text-gray-500">Nombre</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleChange("name", e.target.value)}
-                  className={errors.name ? "border-red-500" : ""}
+                  className={`mt-1 ${errors.name ? "border-red-500" : ""}`}
                 />
                 {errors.name && (
-                  <span className="text-sm text-red-500">{errors.name}</span>
+                  <span className="text-sm text-red-500 mt-1">{errors.name}</span>
                 )}
               </div>
-
-              <div>
-                <Label htmlFor="category">Categoría</Label>
+              
+              <div className="col-span-full">
+                <Label htmlFor="category" className="text-gray-500">Categoría</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value: InventoryCategory) =>
-                    handleChange("category", value)
-                  }
+                  onValueChange={(value: InventoryCategory) => handleChange("category", value)}
                 >
-                  <SelectTrigger
-                    className={errors.category ? "border-red-500" : ""}
-                  >
+                  <SelectTrigger className={`mt-1 ${errors.category ? "border-red-500" : ""}`}>
                     <SelectValue placeholder="Seleccionar categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(CATEGORY_LABELS) as InventoryCategory[]).map(
-                      (category) => (
-                        <SelectItem key={category} value={category}>
-                          {CATEGORY_LABELS[category]}
-                        </SelectItem>
-                      )
-                    )}
+                    {(Object.keys(CATEGORY_LABELS) as InventoryCategory[]).map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {CATEGORY_LABELS[category]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {errors.category && (
-                  <span className="text-sm text-red-500">
-                    {errors.category}
-                  </span>
+                  <span className="text-sm text-red-500 mt-1">{errors.category}</span>
                 )}
               </div>
             </div>
+          </Card>
 
-            {/* Cantidades */}
-            <div>
-              <Label htmlFor="quantity">Cantidad</Label>
-              <Input
-                id="quantity"
-                type="number"
-                value={formData.quantity.toString()}
-                onChange={(e) =>
-                  handleChange("quantity", parseInt(e.target.value) || 0)
-                }
-                min="0"
-                className={errors.quantity ? "border-red-500" : ""}
-              />
-              {errors.quantity && (
-                <span className="text-sm text-red-500">{errors.quantity}</span>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="minStock">Stock Mínimo</Label>
-              <Input
-                id="minStock"
-                type="number"
-                value={(formData.minStock ?? 0).toString()}
-                onChange={(e) =>
-                  handleChange("minStock", parseInt(e.target.value) || 0)
-                }
-                min="0"
-                className={errors.minStock ? "border-red-500" : ""}
-              />
-              {errors.minStock && (
-                <span className="text-sm text-red-500">{errors.minStock}</span>
-              )}
-            </div>
-
-            {/* Detalles del producto */}
-            <div className="col-span-2 grid grid-cols-2 gap-4">
+          {/* Cantidades y Stock */}
+          <Card className="p-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Existencias</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="presentation">Presentación</Label>
+                <Label htmlFor="quantity" className="text-gray-500">Cantidad</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  value={formData.quantity.toString()}
+                  onChange={(e) => handleChange("quantity", parseInt(e.target.value) || 0)}
+                  min="0"
+                  className={`mt-1 ${errors.quantity ? "border-red-500" : ""}`}
+                />
+                {errors.quantity && (
+                  <span className="text-sm text-red-500 mt-1">{errors.quantity}</span>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="minStock" className="text-gray-500">Stock Mínimo</Label>
+                <Input
+                  id="minStock"
+                  type="number"
+                  value={(formData.minStock ?? 0).toString()}
+                  onChange={(e) => handleChange("minStock", parseInt(e.target.value) || 0)}
+                  min="0"
+                  className={`mt-1 ${errors.minStock ? "border-red-500" : ""}`}
+                />
+                {errors.minStock && (
+                  <span className="text-sm text-red-500 mt-1">{errors.minStock}</span>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Detalles del Producto */}
+          <Card className="p-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Detalles del Producto</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="presentation" className="text-gray-500">Presentación</Label>
                 <Input
                   id="presentation"
                   value={formData.presentation || ""}
                   onChange={(e) => handleChange("presentation", e.target.value)}
+                  className="mt-1"
                 />
               </div>
 
               <div>
-                <Label htmlFor="measure">Medida</Label>
+                <Label htmlFor="measure" className="text-gray-500">Medida</Label>
                 <Input
                   id="measure"
                   value={formData.measure || ""}
                   onChange={(e) => handleChange("measure", e.target.value)}
+                  className="mt-1"
                 />
               </div>
 
               <div>
-                <Label htmlFor="brand">Marca</Label>
+                <Label htmlFor="brand" className="text-gray-500">Marca</Label>
                 <Input
                   id="brand"
                   value={formData.brand || ""}
                   onChange={(e) => handleChange("brand", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Fechas y Lote */}
+          <Card className="p-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Información Adicional</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="expirationDate" className="text-gray-500">Fecha de Expiración</Label>
+                <Input
+                  id="expirationDate"
+                  type="date"
+                  value={formData.expirationDate || ""}
+                  onChange={(e) => handleChange("expirationDate", e.target.value)}
+                  className={`mt-1 ${errors.expirationDate ? "border-red-500" : ""}`}
+                />
+                {errors.expirationDate && (
+                  <span className="text-sm text-red-500 mt-1">{errors.expirationDate}</span>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="batchNumber" className="text-gray-500">Número de Lote</Label>
+                <Input
+                  id="batchNumber"
+                  value={formData.batchNumber || ""}
+                  onChange={(e) => handleChange("batchNumber", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="col-span-full">
+                <Label htmlFor="activeCompound" className="text-gray-500">Compuesto Activo</Label>
+                <Input
+                  id="activeCompound"
+                  value={formData.activeCompound || ""}
+                  onChange={(e) => handleChange("activeCompound", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Descripción y Notas */}
+          <Card className="p-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Descripción y Notas</h4>
+            <div className="space-y-6">
+              <div>
+                <Label htmlFor="description" className="text-gray-500">Descripción</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description || ""}
+                  onChange={(e) => handleChange("description", e.target.value)}
+                  className="mt-1"
+                  rows={3}
                 />
               </div>
 
               <div>
-                <Label htmlFor="location">Ubicación</Label>
-                <Input
-                  id="location"
-                  value={formData.location || ""}
-                  onChange={(e) => handleChange("location", e.target.value)}
+                <Label htmlFor="specialNotes" className="text-gray-500">Notas Especiales</Label>
+                <Textarea
+                  id="specialNotes"
+                  value={formData.specialNotes || ""}
+                  onChange={(e) => handleChange("specialNotes", e.target.value)}
+                  className="mt-1"
+                  rows={2}
                 />
               </div>
             </div>
-
-            {/* Fechas y lote */}
-            <div>
-              <Label htmlFor="expirationDate">Fecha de Expiración</Label>
-              <Input
-                id="expirationDate"
-                type="date"
-                value={formData.expirationDate || ""}
-                onChange={(e) => handleChange("expirationDate", e.target.value)}
-                className={errors.expirationDate ? "border-red-500" : ""}
-              />
-              {errors.expirationDate && (
-                <span className="text-sm text-red-500">
-                  {errors.expirationDate}
-                </span>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="batchNumber">Número de Lote</Label>
-              <Input
-                id="batchNumber"
-                value={formData.batchNumber || ""}
-                onChange={(e) => handleChange("batchNumber", e.target.value)}
-              />
-            </div>
-
-            {/* Campos adicionales */}
-            <div className="col-span-2">
-              <Label htmlFor="activeCompound">Compuesto Activo</Label>
-              <Input
-                id="activeCompound"
-                value={formData.activeCompound || ""}
-                onChange={(e) => handleChange("activeCompound", e.target.value)}
-              />
-            </div>
-
-            <div className="col-span-2">
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea
-                id="description"
-                value={formData.description || ""}
-                onChange={(e) => handleChange("description", e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="col-span-2">
-              <Label htmlFor="specialNotes">Notas Especiales</Label>
-              <Textarea
-                id="specialNotes"
-                value={formData.specialNotes || ""}
-                onChange={(e) => handleChange("specialNotes", e.target.value)}
-                rows={2}
-              />
-            </div>
-          </div>
+          </Card>
 
           {Object.keys(errors).length > 0 && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="mt-6">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
                 Por favor corrige los errores antes de continuar
@@ -342,19 +342,20 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
             </Alert>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white"
+              className="w-full sm:w-auto bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white"
             >
               {isSubmitting
                 ? "Guardando..."

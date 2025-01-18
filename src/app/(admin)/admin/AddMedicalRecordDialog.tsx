@@ -46,15 +46,19 @@ interface MedicalRecordDialogProps {
   existingRecord?: MedicalHistory;
   petId?: string;
   triggerButton?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
   existingRecord,
   petId,
   triggerButton,
+  open,
+  onOpenChange,
 }) => {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
   const [pets, setPets] = useState<PetForMedicalRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [record, setRecord] = useState<MedicalHistory>({
@@ -67,6 +71,9 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
     prescriptions: existingRecord?.prescriptions || [],
     notes: existingRecord?.notes || "",
   });
+  // Usar el estado controlado si se proporcionan las props, de lo contrario usar el estado local
+  const isOpen = open !== undefined ? open : localOpen;
+  const setIsOpen = onOpenChange || setLocalOpen;
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -133,7 +140,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
           ? "El historial médico ha sido actualizado correctamente."
           : "El nuevo historial médico ha sido agregado correctamente.",
       });
-      setOpen(false);
+      setIsOpen(false);
     } else {
       console.error("Error al procesar el historial médico:", result.error);
       setError(
@@ -149,7 +156,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {triggerButton ? (
           triggerButton

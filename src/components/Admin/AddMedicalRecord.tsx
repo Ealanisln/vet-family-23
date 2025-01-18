@@ -1,3 +1,5 @@
+// src/components/Admin/AddMedicalRecord.tsx
+
 'use client'
 
 import { useState } from 'react'

@@ -1,6 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configuración de imágenes
+  // ESLint configuration
+  eslint: {
+    dirs: [
+      'app',
+      'components', 
+      'lib', 
+      'utils',
+      'hooks',     // Add if you have custom hooks
+      'types',     // Add if you have custom type definitions
+      'context',   // Add if you have context files
+      'services'   // Add if you have service files
+    ],
+    ignoreDuringBuilds: false, // Fail build if there are ESLint errors
+  },
+
+  // Images configuration (your existing config is good)
   images: {
     remotePatterns: [
       {
@@ -21,7 +36,7 @@ const nextConfig = {
     ],
   },
 
-  // Headers para control de caché
+  // Cache control (your existing config is good)
   async headers() {
     return [
       {
@@ -40,7 +55,7 @@ const nextConfig = {
     ];
   },
 
-  // Redirects
+  // Redirects (your existing config is good)
   async redirects() {
     return [
       {
@@ -51,13 +66,17 @@ const nextConfig = {
     ];
   },
 
-  // Optimizaciones de rendimiento
+  // Performance optimizations
   poweredByHeader: false,
   swcMinify: true,
+  compress: true, // Add gzip compression
+  reactStrictMode: true, // Recommended for better development experience
 
-  // TypeScript
+  // TypeScript configuration
   typescript: {
     ignoreBuildErrors: false,
+    // Add type checking during build
+    tsconfigPath: './tsconfig.json',
   },
 };
 

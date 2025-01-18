@@ -2,17 +2,19 @@
   "name": "family-vet-23",
   "version": "0.1.0",
   "private": true,
-"scripts": {
+  "scripts": {
     "dev": "next dev",
     "build": "pnpm prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:strict": "eslint --max-warnings=0 .",
+    "lint:fix": "eslint --fix .",
     "import-data": "tsx scripts/import-data.ts",
     "postinstall": "prisma generate",
     "backup": "tsx src/scripts/backup.ts",
     "backup:build": "tsc src/scripts/backup.ts && node dist/backup.js",
     "backup:watch": "tsx watch src/scripts/backup.ts"
-},
+  },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.7.4",
     "@cloudinary/react": "^1.13.1",
@@ -65,8 +67,6 @@
     "date-fns": "2.30.0",
     "dotenv": "^16.4.7",
     "embla-carousel-react": "8.0.0-rc22",
-    "eslint": "9.17.0",
-    "eslint-config-next": "15.1.1",
     "framer-motion": "^11.15.0",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
@@ -111,8 +111,10 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.2",
     "@types/nodemailer": "^6.4.17",
-    "@typescript-eslint/eslint-plugin": "^8.18.1",
-    "@typescript-eslint/parser": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "7.0.0",
+    "@typescript-eslint/parser": "7.0.0",
+    "eslint": "8.56.0",
+    "eslint-config-next": "14.1.0",
     "prisma": "^6.1.0",
     "tsx": "^4.19.2"
   }

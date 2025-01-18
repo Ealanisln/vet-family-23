@@ -41,6 +41,10 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
+import { MedicalRecordDialog } from "./AddMedicalRecordDialog";
+import { MedicalHistory } from "@prisma/client";
+
+
 interface MenuOptionProps {
   href: string;
   icon: LucideIcon;
@@ -59,6 +63,14 @@ interface SectionProps {
 interface AdminDashboardProps {
   username: string;
   isAdmin: boolean;
+}
+
+interface MedicalRecordDialogProps {
+  existingRecord?: MedicalHistory;
+  petId?: string;
+  triggerButton?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Componente MenuOption mejorado
@@ -139,6 +151,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isAdmin,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [openMedicalRecord, setOpenMedicalRecord] = useState(false);
+
 
   const clientOptions: MenuOptionProps[] = [
     {
@@ -230,7 +244,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       icon: FileText,
       href: "#",
       description: "Registrar consulta médica",
-      onClick: () => setIsDialogOpen(true),
+      onClick: () => setOpenMedicalRecord(true),
     },
     {
       title: "Soporte",
@@ -321,16 +335,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </Accordion>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white p-6 rounded-2xl max-w-2xl mx-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-[#47b3b6]">
-              Nueva Consulta Médica
-            </DialogTitle>
-          </DialogHeader>
-          {/* Aquí puedes agregar el contenido de tu formulario */}
-        </DialogContent>
-      </Dialog>
+      <MedicalRecordDialog 
+        open={openMedicalRecord}
+        onOpenChange={setOpenMedicalRecord}
+        triggerButton={
+          <button type="button" className="hidden" />
+        }
+      />
     </div>
   );
 };

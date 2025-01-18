@@ -1,6 +1,14 @@
+// .eslintrc.json
+
 {
   "extends": "next/core-web-vitals",
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "root": true,
   "rules": {
-    // Add any custom rules here
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "no-console": "warn",
+    "no-unused-vars": "off" // turned off in favor of @typescript-eslint/no-unused-vars
   }
 }

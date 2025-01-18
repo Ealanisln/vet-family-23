@@ -144,6 +144,14 @@ export default function Inventory() {
         const isLowStock = ["LOW_STOCK", "OUT_OF_STOCK"].includes(
           row.original.status
         );
+        const name = row.getValue("name");
+        const presentation = row.original.presentation;
+        const measure = row.original.measure;
+        
+        const displayName = `${name}${presentation && measure ? ` ${presentation} - ${measure}` : 
+                                    presentation ? ` (${presentation})` : 
+                                    measure ? ` (${measure})` : ''}`;
+        
         return (
           <button
             onClick={() => {
@@ -152,7 +160,7 @@ export default function Inventory() {
             }}
             className="flex items-center gap-2 hover:text-[#47b3b6] transition-colors"
           >
-            <span className="font-medium">{row.getValue("name")}</span>
+            <span className="font-medium">{displayName}</span>
             {isLowStock && (
               <AlertTriangle className="h-4 w-4 text-orange-500" />
             )}

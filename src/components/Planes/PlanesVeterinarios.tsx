@@ -35,11 +35,11 @@ const VetPlans = () => {
       age: "1-6.9 años",
       highlight: "¡Mantén a tu peludo saludable y juguetón! 🎾",
       services: [
-        "1 Vacuna Séxtuple c/r",
+        "2 Consultas",
         "1 Vacuna Séxtuple",
+        "1 Vacuna Rabia",
         "1 Bordetella",
         "6 Desparasitaciones (bimestral)",
-        "2 Consultas",
         "1 Hemograma perfil básico"
       ],
       price: "2,940",
@@ -124,7 +124,7 @@ const VetPlans = () => {
                     Ahorro: ${plan.savings}
                   </p>
                   <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
-                    Elegir Plan
+                    Enviar mensaje
                   </Button>
                 </CardFooter>
               </Card>

@@ -108,14 +108,6 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
       newErrors.minStock = "El stock mínimo no puede ser negativo";
     }
 
-    if (formData.expirationDate) {
-      const expDate = new Date(formData.expirationDate);
-      if (expDate < new Date()) {
-        newErrors.expirationDate =
-          "La fecha de expiración no puede ser en el pasado";
-      }
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

@@ -85,7 +85,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
           setPets(alivePets);
           setError(null);
         } else {
-          console.error("Error fetching pets:", result.error);
           setError(
             "No se pudieron cargar las mascotas. Por favor, intente de nuevo más tarde."
           );
@@ -128,12 +127,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
       notes: record.notes,
     });
     if (result.success) {
-      console.log(
-        record.id
-          ? "Historial médico actualizado:"
-          : "Nuevo historial médico agregado:",
-        result.record
-      );
       toast({
         title: "Éxito",
         description: record.id
@@ -142,7 +135,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
       });
       setIsOpen(false);
     } else {
-      console.error("Error al procesar el historial médico:", result.error);
       setError(
         "No se pudo procesar el historial médico. Por favor, intente de nuevo."
       );

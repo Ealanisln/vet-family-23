@@ -22,7 +22,6 @@ export default async function PetDetailsPage({
 
     return <PetDetailsView pet={pet} />;
   } catch (error) {
-    console.error('Error fetching pet details:', error);
     notFound();
   }
 }

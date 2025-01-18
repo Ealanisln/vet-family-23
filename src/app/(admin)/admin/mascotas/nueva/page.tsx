@@ -53,7 +53,6 @@ const NuevaMascotaPage = () => {
             const results = await searchUsers(debouncedSearch);
             setUsers(results);
           } catch (error) {
-            console.error('Error searching users:', error);
             toast({
               title: 'Error',
               description: 'No se pudo completar la búsqueda de usuarios',
@@ -95,7 +94,6 @@ const NuevaMascotaPage = () => {
         throw new Error(result.error || 'Error al registrar la mascota');
       }
     } catch (error) {
-      console.error('Error al agregar mascota:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Ocurrió un error al intentar registrar la mascota',

@@ -8,7 +8,6 @@ export const dynamic = "force-dynamic"
 export default async function ClientProfilePage() {
   const user = await getClientData(); // Obtener los datos completos
 
-  console.log(user)
 
   if (!user) {
     redirect("/login");

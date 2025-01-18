@@ -28,26 +28,22 @@ const RegistroExitoso: React.FC = () => {
     if (userIdParam) {
       setUserId(userIdParam);
     } else {
-      console.error("No se proporcionó userId");
     }
   }, [searchParams]);
 
   const handleSubmit = async (petData: PetDataForSubmit) => {
     if (!userId) {
-      console.error("No se proporcionó userId");
       return;
     }
-    
+
     setIsSubmitting(true); // Activamos el estado de carga
     try {
       const result = await addPet(userId, petData);
       if (result.success) {
         router.push(`/admin/clientes/${userId}`);
       } else {
-        console.error(result.error);
       }
     } catch (error) {
-      console.error("Error al agregar mascota:", error);
     } finally {
       setIsSubmitting(false); // Desactivamos el estado de carga
     }
@@ -60,9 +56,7 @@ const RegistroExitoso: React.FC = () => {
   if (!userId) {
     return (
       <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl py-6 sm:py-10">
-          Cargando...
-        </div>
+        <div className="mx-auto max-w-7xl py-6 sm:py-10">Cargando...</div>
       </div>
     );
   }
@@ -74,7 +68,8 @@ const RegistroExitoso: React.FC = () => {
           Registro exitoso
         </h1>
         <p className="mb-4">
-          ¡El usuario ha sido registrado con éxito! Ahora puedes agregar una mascota.
+          ¡El usuario ha sido registrado con éxito! Ahora puedes agregar una
+          mascota.
         </p>
         <AddPetForm
           onSubmit={handleSubmit}

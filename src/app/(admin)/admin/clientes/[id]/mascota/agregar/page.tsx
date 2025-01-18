@@ -75,10 +75,8 @@ export default function AddPetView() {
         router.push(`/admin/clientes/${userId}`);
       } else {
         alert(`Error: ${result.error}`);
-        console.error(result.error);
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
       alert("Ocurrió un error al intentar agregar la mascota");
     }
   };

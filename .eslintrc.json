@@ -4,11 +4,10 @@
   "extends": "next/core-web-vitals",
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
-  "root": true,
   "rules": {
-    "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/no-explicit-any": "error",
+    // Temporarily disable console warnings during development
     "no-console": "warn",
-    "no-unused-vars": "off" // turned off in favor of @typescript-eslint/no-unused-vars
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "error"
   }
 }

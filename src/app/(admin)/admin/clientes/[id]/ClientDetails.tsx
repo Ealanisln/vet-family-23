@@ -3,13 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  CalendarIcon,
-  PlusIcon,
-  EditIcon,
-  PawPrintIcon,
-  SyringeIcon,
-} from "lucide-react";
+import { PlusIcon, EditIcon, PawPrintIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -39,7 +33,19 @@ const formatPhoneNumber = (phone: string | null): string => {
   return last10Digits.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
 };
 
-export default function ClientDetails({ user }: { user: any }) {
+interface User {
+  id: string | number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  address?: string;
+  visits: number;
+  nextVisitFree: boolean;
+  pets: Pet[];
+}
+
+export default function ClientDetails({ user }: { user: User }) {
   const router = useRouter();
 
   return (

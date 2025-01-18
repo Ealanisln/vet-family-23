@@ -27,7 +27,6 @@ export async function getPetDetails(userId: string, petId: string) {
 
     return pet;
   } catch (error) {
-    console.error('Error fetching pet details:', error);
     throw error;
   }
 }

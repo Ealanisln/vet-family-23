@@ -11,15 +11,7 @@ import {
   UserPlus,
   FolderClock,
   Package,
-  Syringe,
-  AlertTriangle,
-  History,
-  Calendar,
-  CircleDollarSign,
-  ScrollText,
   Users,
-  ClipboardList,
-  Bell,
   UserCog,
   SyringeIcon,
   Pill,
@@ -33,17 +25,9 @@ import {
 } from "@/components/ui/accordion";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 import { MedicalRecordDialog } from "./AddMedicalRecordDialog";
-import { MedicalHistory } from "@prisma/client";
-
 
 interface MenuOptionProps {
   href: string;
@@ -63,14 +47,6 @@ interface SectionProps {
 interface AdminDashboardProps {
   username: string;
   isAdmin: boolean;
-}
-
-interface MedicalRecordDialogProps {
-  existingRecord?: MedicalHistory;
-  petId?: string;
-  triggerButton?: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 }
 
 // Componente MenuOption mejorado
@@ -146,13 +122,8 @@ const Section: React.FC<SectionProps> = ({ icon: Icon, title, children }) => (
   </AccordionItem>
 );
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  username,
-  isAdmin,
-}) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ username }) => {
   const [openMedicalRecord, setOpenMedicalRecord] = useState(false);
-
 
   const clientOptions: MenuOptionProps[] = [
     {
@@ -206,21 +177,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     //   href: "/admin/inventario/movimientos",
     //   description: "Registro de movimientos",
     // },
-  ];
-
-  const appointmentOptions: MenuOptionProps[] = [
-    {
-      title: "Citas",
-      icon: Calendar,
-      href: "/admin/citas",
-      description: "Gestionar agenda",
-    },
-    {
-      title: "Vacunación",
-      icon: SyringeIcon,
-      href: "/admin/vacunacion",
-      description: "Calendario de vacunación",
-    },
   ];
 
   const administrationOptions: MenuOptionProps[] = [
@@ -335,12 +291,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </Accordion>
       </div>
 
-      <MedicalRecordDialog 
+      <MedicalRecordDialog
         open={openMedicalRecord}
         onOpenChange={setOpenMedicalRecord}
-        triggerButton={
-          <button type="button" className="hidden" />
-        }
+        triggerButton={<button type="button" className="hidden" />}
       />
     </div>
   );

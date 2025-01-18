@@ -51,7 +51,6 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
         nextVisitFree: userData.nextVisitFree ?? false,
       })
     } catch (error) {
-      console.error('Error fetching user data:', error)
       toast({
         title: "Error",
         description: "No se pudo cargar la información del cliente.",
@@ -90,7 +89,6 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
       router.refresh()
       router.push(`/admin/clientes/${client.id}`)
     } catch (error) {
-      console.error('Error updating client:', error)
       toast({
         title: "Error",
         description: "No se pudo actualizar la información del cliente.",

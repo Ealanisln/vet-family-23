@@ -1,6 +1,5 @@
 // pages/index.js
 import VetSEO from '@/components/SEO/VetSeo';
-import { CarouselSpacing } from "../../components/Caroussel/index";
 import Reviews from "../../components/Reviews/index";
 import Servicios from "../../components/Servicios/index";
 import Business from "../../components/Business/index";

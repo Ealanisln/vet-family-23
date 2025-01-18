@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,11 +51,10 @@ interface Pet {
 }
 
 export default function PetDetailsView({ pet }: { pet: Pet }) {
-  const router = useRouter();
   const params = useParams();
 
   const formatPetForForm = (pet: Pet) => {
-    const { medicalHistory, vaccinations, ...petData } = pet;
+    const { ...petData } = pet;
     return {
       ...petData,
       dateOfBirth: pet.dateOfBirth.toISOString().split("T")[0],

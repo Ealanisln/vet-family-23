@@ -88,7 +88,6 @@ export default function EditClientForm({ initialData }: EditClientFormProps) {
       router.refresh()
       router.push(`/admin/clientes/${client.id}`)
     } catch (error) {
-      console.error('Error updating client:', error)
       toast({
         title: "Error",
         description: "No se pudo actualizar la información del cliente.",

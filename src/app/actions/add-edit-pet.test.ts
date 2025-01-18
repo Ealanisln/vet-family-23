@@ -1,8 +1,16 @@
-import { PrismaClient } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { addPet, updatePet, updatePetNeuteredStatus, updatePetDeceasedStatus } from './add-edit-pet';
 import { revalidatePath } from 'next/cache';
 import { jest } from '@jest/globals';
+
+// Extend Jest with custom matchers
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toBeDefined(): R;
+    }
+  }
+}
 
 // Mock Next.js cache revalidation
 jest.mock('next/cache', () => ({
@@ -29,8 +37,25 @@ const mockPetData = {
   medicalHistory: 'Healthy pet',
 };
 
-// Mock Prisma Client
-const mockPrismaClient = {
+// Type for mocked functions
+type MockPrismaClient = {
+  user: {
+    findUnique: jest.Mock;
+  };
+  pet: {
+    create: jest.Mock;
+    findFirst: jest.Mock;
+    update: jest.Mock;
+  };
+  medicalHistory: {
+    create: jest.Mock;
+    update: jest.Mock;
+  };
+  $transaction: jest.Mock;
+};
+
+// Create properly typed mock Prisma Client
+const mockPrismaClient: MockPrismaClient = {
   user: {
     findUnique: jest.fn(),
   },
@@ -44,7 +69,7 @@ const mockPrismaClient = {
     update: jest.fn(),
   },
   $transaction: jest.fn((callback) => callback(mockPrismaClient)),
-} as unknown as PrismaClient;
+};
 
 // Setup and teardown
 beforeEach(() => {
@@ -107,14 +132,12 @@ describe('Pet Actions', () => {
 
   describe('updatePet', () => {
     it('should successfully update a pet', async () => {
-      // Mock successful pet lookup
       mockPrismaClient.pet.findFirst.mockResolvedValueOnce({
         ...mockPetData,
         id: mockPetId,
         userId: mockUserId,
       });
 
-      // Mock successful update
       mockPrismaClient.pet.update.mockResolvedValueOnce({
         ...mockPetData,
         id: mockPetId,
@@ -195,7 +218,3 @@ describe('Pet Actions', () => {
     });
   });
 });
-
-function beforeEach(arg0: () => void) {
-    throw new Error('Function not implemented.');
-}

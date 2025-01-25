@@ -66,6 +66,7 @@ import { InventoryStatus, MovementType } from "@prisma/client";
 
 // Componentes
 import InventoryItemForm from "./ui/InventoryItemForm";
+import ItemDetails from "./ui/ItemDetails";
 
 // Funciones auxiliares
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
@@ -482,102 +483,6 @@ export default function Medicine() {
     onGlobalFilterChange: setGlobalFilter,
   });
 
-  type ItemDetailsProps = {
-    selectedItem: InventoryFormItem | null;
-  };
-
-  function ItemDetails({ selectedItem }: ItemDetailsProps) {
-    if (!selectedItem) return null;
-
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <h4 className="font-medium text-gray-500">
-              Detalles del Medicamento
-            </h4>
-            <div className="mt-2 space-y-2">
-              <p>
-                <span className="font-medium">Nombre:</span> {selectedItem.name}
-              </p>
-              <p>
-                <span className="font-medium">Cantidad:</span>{" "}
-                {selectedItem.quantity}
-              </p>
-              <p>
-                <span className="font-medium">Stock Mínimo:</span>{" "}
-                {selectedItem.minStock || "-"}
-              </p>
-              <p>
-                <span className="font-medium">Compuesto Activo:</span>{" "}
-                {selectedItem.activeCompound || "-"}
-              </p>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-500">Información Adicional</h4>
-            <div className="mt-2 space-y-2">
-              <p>
-                <span className="font-medium">Ubicación:</span>{" "}
-                {selectedItem.location || "-"}
-              </p>
-              <p>
-                <span className="font-medium">Presentación:</span>{" "}
-                {selectedItem.presentation || "-"}
-              </p>
-              <p>
-                <span className="font-medium">Medida:</span>{" "}
-                {selectedItem.measure || "-"}
-              </p>
-              <p>
-                <span className="font-medium">Marca:</span>{" "}
-                {selectedItem.brand || "-"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {selectedItem.description && (
-          <div>
-            <h4 className="font-medium text-gray-500">Descripción</h4>
-            <p className="mt-1">{selectedItem.description}</p>
-          </div>
-        )}
-
-        <div>
-          <h4 className="font-medium text-gray-500 mb-2">
-            Últimos Movimientos
-          </h4>
-          <div className="space-y-2">
-            {selectedItem.movements.map((movement, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-              >
-                <span
-                  className={
-                    movement.type === "IN" ? "text-green-600" : "text-red-600"
-                  }
-                >
-                  {movement.type === "IN" ? "+" : "-"}
-                  {movement.quantity}
-                </span>
-                <span className="text-gray-500">
-                  {formatDate(new Date(movement.date).toISOString())}
-                </span>
-                {movement.user?.name && (
-                  <span className="text-gray-400">
-                    por {movement.user.name}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <Card className="w-full bg-gradient-to-br from-white via-white to-blue-50 border-none shadow-lg">
       <div className="p-4 md:p-6 lg:p-8">
@@ -738,8 +643,7 @@ export default function Medicine() {
           </div>
         </div>
       </div>
-
-      {/* Modal de Detalles */}
+      ` {/* Modal de Detalles */}`
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -771,7 +675,6 @@ export default function Medicine() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Formulario de Edición */}
       <InventoryItemForm
         open={isEditFormOpen}

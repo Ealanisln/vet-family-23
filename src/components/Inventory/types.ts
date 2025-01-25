@@ -1,4 +1,4 @@
-import { InventoryFormItem } from "@/types/inventory";
+// import { InventoryFormItem } from "@/types/inventory";
 import { InventoryStatus, MovementType } from "@prisma/client";
 
 // Enums
@@ -56,17 +56,13 @@ export type InventoryItemFormData = Omit<
   "id" | "movements" | "status" | "createdAt" | "updatedAt"
 >;
 
-interface InventoryFormProps {
-  open: boolean;
-
-  onOpenChange: (open: boolean) => void;
-
-  initialData: InventoryFormItem | null;
-
-  onSubmit: (data: InventoryItemFormData) => Promise<void>;
-
-  isSubmitting?: boolean;
-}
+// interface InventoryFormProps {
+//   open: boolean;
+//   onOpenChange: (open: boolean) => void;
+//   initialData: InventoryFormItem | null;
+//   onSubmit: (data: InventoryItemFormData) => Promise<void>;
+//   isSubmitting?: boolean;
+// }
 
 // Unified interface for inventory updates
 export interface UpdateInventoryData {

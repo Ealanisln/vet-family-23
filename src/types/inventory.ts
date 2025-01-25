@@ -163,3 +163,5 @@ export interface ValidationResponse {
   isValid: boolean;
   errors: FormErrors;
 }
+
+export { InventoryStatus };

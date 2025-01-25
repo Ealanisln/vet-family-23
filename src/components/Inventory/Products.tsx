@@ -72,6 +72,7 @@ import {
 
 // Componentes
 import InventoryItemForm from "./ui/InventoryItemForm";
+import ItemDetails from "./ui/ItemDetails";
 
 // Funciones auxiliares
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
@@ -115,7 +116,6 @@ export default function Inventory() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<
     InventoryCategory | "all_categories" | null
@@ -144,11 +144,17 @@ export default function Inventory() {
         const name = row.getValue("name");
         const presentation = row.original.presentation;
         const measure = row.original.measure;
-        
-        const displayName = `${name}${presentation && measure ? ` ${presentation} - ${measure}` : 
-                                    presentation ? ` (${presentation})` : 
-                                    measure ? ` (${measure})` : ''}`;
-        
+
+        const displayName = `${name}${
+          presentation && measure
+            ? ` ${presentation} - ${measure}`
+            : presentation
+              ? ` (${presentation})`
+              : measure
+                ? ` (${measure})`
+                : ""
+        }`;
+
         return (
           <button
             onClick={() => {
@@ -252,12 +258,14 @@ export default function Inventory() {
       setLoading(true);
       const result: GetInventoryResponse = await getInventory();
       if (result.success && result.items) {
-        setData(result.items.map((item) => convertInventoryItemToFormData(item)));
+        setData(
+          result.items.map((item) => convertInventoryItemToFormData(item))
+        );
       } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: result.error || "Failed to fetch inventory"
+          description: result.error || "Failed to fetch inventory",
         });
         setData([]);
       }
@@ -265,7 +273,7 @@ export default function Inventory() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An unexpected error occurred"
+        description: "An unexpected error occurred",
       });
       setData([]);
     } finally {
@@ -389,11 +397,11 @@ export default function Inventory() {
   React.useEffect(() => {
     let retryCount = 0;
     const MAX_RETRIES = 3;
-  
+
     const processPendingUpdate = async () => {
       const pendingUpdateStr = sessionStorage.getItem("pendingInventoryUpdate");
       if (!pendingUpdateStr) return;
-  
+
       try {
         const pendingUpdate = JSON.parse(pendingUpdateStr);
         const result: UpdateInventoryResponse = await updateInventoryItem(
@@ -401,7 +409,7 @@ export default function Inventory() {
           pendingUpdate.updateData,
           "system"
         );
-  
+
         if (!result.success) {
           if (result.requiresAuth && retryCount < MAX_RETRIES) {
             retryCount++;
@@ -412,7 +420,7 @@ export default function Inventory() {
             result.error || "Error al procesar actualización pendiente"
           );
         }
-  
+
         sessionStorage.removeItem("pendingInventoryUpdate");
         await fetchInventory();
         toast({
@@ -420,7 +428,6 @@ export default function Inventory() {
           description: "Item actualizado correctamente",
         });
       } catch (error) {
-        console.error("[processPendingUpdate] Error:", error);
         if (retryCount >= MAX_RETRIES) {
           toast({
             variant: "destructive",
@@ -432,10 +439,10 @@ export default function Inventory() {
         }
       }
     };
-  
+
     const timeoutId = setTimeout(processPendingUpdate, 1000);
     return () => clearTimeout(timeoutId);
-  }, [fetchInventory]); 
+  }, [fetchInventory]);
 
   // Cargar inventario inicial
   React.useEffect(() => {
@@ -487,108 +494,6 @@ export default function Inventory() {
     },
     onGlobalFilterChange: setGlobalFilter,
   });
-
-  type ItemDetailsProps = {
-    selectedItem: InventoryFormItem | null;
-  };
-  
-  function ItemDetails({ selectedItem }: ItemDetailsProps) {
-    if (!selectedItem) return null;
-  
-
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <h4 className="font-medium text-gray-500">Detalles Básicos</h4>
-            <div className="mt-2 space-y-2">
-              <p>
-                <span className="font-medium">Nombre:</span> {selectedItem.name}
-              </p>
-              <p>
-                <span className="font-medium">Categoría:</span>{" "}
-                {selectedItem.category}
-              </p>
-              <p>
-                <span className="font-medium">Cantidad:</span>{" "}
-                {selectedItem.quantity}
-              </p>
-              <p>
-                <span className="font-medium">Stock Mínimo:</span>{" "}
-                {selectedItem.minStock || "-"}
-              </p>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-500">Información Adicional</h4>
-            <div className="mt-2 space-y-2">
-              <p>
-                <span className="font-medium">Ubicación:</span>{" "}
-                {selectedItem.location || "-"}
-              </p>
-              <p>
-                <span className="font-medium">Presentación:</span>{" "}
-                {selectedItem.presentation || "-"}
-              </p>
-              <p>
-                <span className="font-medium">Medida:</span>{" "}
-                {selectedItem.measure || "-"}
-              </p>
-              <p>
-                <span className="font-medium">Marca:</span>{" "}
-                {selectedItem.brand || "-"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {selectedItem.description && (
-          <div>
-            <h4 className="font-medium text-gray-500">Descripción</h4>
-            <p className="mt-1">{selectedItem.description}</p>
-          </div>
-        )}
-
-        {selectedItem.activeCompound && (
-          <div>
-            <h4 className="font-medium text-gray-500">Compuesto Activo</h4>
-            <p className="mt-1">{selectedItem.activeCompound}</p>
-          </div>
-        )}
-
-        <div>
-          <h4 className="font-medium text-gray-500 mb-2">
-            Últimos Movimientos
-          </h4>
-          <div className="space-y-2">
-            {selectedItem.movements.map((movement, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-              >
-                <span
-                  className={
-                    movement.type === "IN" ? "text-green-600" : "text-red-600"
-                  }
-                >
-                  {movement.type === "IN" ? "+" : "-"}
-                  {movement.quantity}
-                </span>
-                <span className="text-gray-500">
-                  {formatDate(new Date(movement.date).toISOString())}
-                </span>
-                {movement.user?.name && (
-                  <span className="text-gray-400">
-                    por {movement.user.name}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <Card className="w-full bg-gradient-to-br from-white via-white to-blue-50 border-none shadow-lg">

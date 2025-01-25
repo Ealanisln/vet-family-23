@@ -106,7 +106,7 @@ export async function addMedicalHistory(
 
     // Start a transaction
     const result = await prisma.$transaction(async (tx) => {
-      const { id, ...data } = recordData;
+      const { ...data } = recordData;
       
       const newRecord = await tx.medicalHistory.create({
         data: {

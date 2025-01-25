@@ -1,3 +1,5 @@
+// src/app/(admin)/admin/clientes/[id]/mascota/agregar/page.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -55,6 +57,11 @@ export default function AddPetView() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isNaN(new Date(pet.dateOfBirth).getTime())) {
+      alert("Por favor ingrese una fecha válida");
+      return;
+    }
 
     // Validate weight
     const weight = parseFloat(pet.weight);

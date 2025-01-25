@@ -1,6 +1,7 @@
 "use server";
 
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 
@@ -26,22 +27,53 @@ interface ActionResult<T> {
   pet?: T;
 }
 
+type MedicalHistory = {
+  id: string;
+  petId: string;
+  visitDate: Date;
+  reasonForVisit: string;
+  diagnosis: string;
+  treatment: string;
+  prescriptions: string[];
+  notes?: string | null;
+};
+
+type Pet = {
+  id: string;
+  internalId: string | null;
+  userId: string;
+  name: string;
+  species: string;
+  breed: string;
+  dateOfBirth: Date;
+  gender: string;
+  weight: number;
+  microchipNumber: string | null;
+  isNeutered: boolean;
+  isDeceased: boolean;
+  medicalHistory?: MedicalHistory[];
+};
+
+type PetWithMedicalHistory = Pet & {
+  medicalHistory: MedicalHistory[];
+};
+
+type TransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
+
 export async function addPet(
   userId: string,
   petData: PetDataForSubmit
-): Promise<ActionResult<any>> {
-  console.log("Starting addPet action with userId:", userId);
-  console.log("Pet data received:", JSON.stringify(petData, null, 2));
-
+): Promise<ActionResult<PetWithMedicalHistory>> {
   if (!userId) {
-    console.error("addPet called with invalid userId");
     return {
       success: false,
       error: "Invalid user ID provided",
     };
   }
 
-  // Validate weight before database operation
   if (isNaN(petData.weight)) {
     return {
       success: false,
@@ -50,24 +82,18 @@ export async function addPet(
   }
 
   try {
-    // Verify user exists before attempting to add pet
     const userExists = await prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!userExists) {
-      console.error(`User with ID ${userId} not found`);
       return {
         success: false,
         error: "User not found",
       };
     }
 
-    // Start a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      console.log("Starting database transaction");
-
-      // Generate a UUID for the pet
+    const result = await prisma.$transaction(async (tx: TransactionClient) => {
       const petId = uuidv4();
 
       const newPet = await tx.pet.create({
@@ -94,9 +120,7 @@ export async function addPet(
         },
       });
 
-      // Create medical history if provided
       if (petData.medicalHistory) {
-        console.log("Creating initial medical history");
         await tx.medicalHistory.create({
           data: {
             petId: newPet.id,
@@ -110,24 +134,13 @@ export async function addPet(
         });
       }
 
-      console.log("Pet created successfully:", newPet.id);
       return newPet;
     });
 
-    console.log("Transaction completed successfully");
     revalidatePath(`/admin/clientes/${userId}`);
-    return { success: true, pet: result };
-  } catch (error) {
-    console.error("Failed to add pet. Full error:", error);
-    console.error(
-      "Error stack trace:",
-      error instanceof Error ? error.stack : "No stack trace available"
-    );
-
-    // Determine if it's a Prisma error
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error("Prisma error code:", error.code);
-      // Handle specific Prisma error codes
+    return { success: true, pet: result as PetWithMedicalHistory };
+  } catch (error: unknown) {
+    if (error instanceof PrismaClientKnownRequestError) {
       switch (error.code) {
         case "P2002":
           return {
@@ -141,9 +154,10 @@ export async function addPet(
       }
     }
 
+    const errorMessage = error instanceof Error ? error.message : "Failed to add pet";
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to add pet",
+      error: errorMessage,
     };
   }
 }
@@ -152,12 +166,8 @@ export async function updatePet(
   userId: string,
   petId: string,
   petData: PetDataForSubmit
-): Promise<ActionResult<any>> {
-  console.log("Starting updatePet action", { userId, petId });
-  console.log("Update data:", JSON.stringify(petData, null, 2));
-
+): Promise<ActionResult<PetWithMedicalHistory>> {
   if (!userId || !petId) {
-    console.error("updatePet called with invalid userId or petId");
     return {
       success: false,
       error: "Invalid user ID or pet ID provided",
@@ -165,8 +175,7 @@ export async function updatePet(
   }
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // First verify the pet belongs to the user
+    const result = await prisma.$transaction(async (tx: TransactionClient) => {
       const existingPet = await tx.pet.findFirst({
         where: {
           id: petId,
@@ -175,9 +184,6 @@ export async function updatePet(
       });
 
       if (!existingPet) {
-        console.error(
-          `Pet not found or unauthorized. PetId: ${petId}, UserId: ${userId}`
-        );
         throw new Error("Pet not found or unauthorized");
       }
 
@@ -233,18 +239,10 @@ export async function updatePet(
       return updatedPet;
     });
 
-    console.log("Pet updated successfully");
     revalidatePath(`/admin/clientes/${userId}`);
-    return { success: true, pet: result };
-  } catch (error) {
-    console.error("Failed to update pet:", error);
-    console.error(
-      "Error stack trace:",
-      error instanceof Error ? error.stack : "No stack trace available"
-    );
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error("Prisma error code:", error.code);
+    return { success: true, pet: result as PetWithMedicalHistory };
+  } catch (error: unknown) {
+    if (error instanceof PrismaClientKnownRequestError) {
       switch (error.code) {
         case "P2025":
           return { success: false, error: "Pet not found" };
@@ -253,9 +251,10 @@ export async function updatePet(
       }
     }
 
+    const errorMessage = error instanceof Error ? error.message : "Failed to update pet";
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to update pet",
+      error: errorMessage,
     };
   }
 }
@@ -264,27 +263,20 @@ export async function updatePetNeuteredStatus(
   userId: string,
   petId: string,
   isNeutered: boolean
-): Promise<ActionResult<any>> {
-  console.log("Updating neutered status", { userId, petId, isNeutered });
-
+): Promise<ActionResult<Pet>> {
   try {
     const updatedPet = await prisma.pet.update({
       where: {
         id: petId,
-        userId: userId, // Ensure the pet belongs to the user
+        userId: userId,
       },
       data: { isNeutered },
     });
 
-    console.log("Neutered status updated successfully");
     revalidatePath(`/admin/mascotas/${petId}`);
-    return { success: true, pet: updatedPet };
-  } catch (error) {
-    console.error("Failed to update pet neutered status:", error);
-    if (
-      error instanceof Error &&
-      error.message.includes("Record to update not found")
-    ) {
+    return { success: true, pet: updatedPet as Pet };
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes("Record to update not found")) {
       return { success: false, error: "Pet not found or unauthorized" };
     }
     return { success: false, error: "Failed to update pet neutered status" };
@@ -295,27 +287,20 @@ export async function updatePetDeceasedStatus(
   userId: string,
   petId: string,
   isDeceased: boolean
-): Promise<ActionResult<any>> {
-  console.log("Updating deceased status", { userId, petId, isDeceased });
-
+): Promise<ActionResult<Pet>> {
   try {
     const updatedPet = await prisma.pet.update({
       where: {
         id: petId,
-        userId: userId, // Ensure the pet belongs to the user
+        userId: userId,
       },
       data: { isDeceased },
     });
 
-    console.log("Deceased status updated successfully");
     revalidatePath(`/admin/mascotas/${petId}`);
-    return { success: true, pet: updatedPet };
-  } catch (error) {
-    console.error("Failed to update pet deceased status:", error);
-    if (
-      error instanceof Error &&
-      error.message.includes("Record to update not found")
-    ) {
+    return { success: true, pet: updatedPet as Pet };
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes("Record to update not found")) {
       return { success: false, error: "Pet not found or unauthorized" };
     }
     return { success: false, error: "Failed to update pet deceased status" };

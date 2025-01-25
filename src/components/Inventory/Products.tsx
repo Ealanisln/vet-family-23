@@ -17,7 +17,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useRouter } from "next/navigation";
 
 // Componentes UI
 import { Button } from "@/components/ui/button";
@@ -73,7 +72,6 @@ import {
 
 // Componentes
 import InventoryItemForm from "./ui/InventoryItemForm";
-import ItemDetails from "./ui/ItemDetails";
 
 // Funciones auxiliares
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
@@ -112,15 +110,13 @@ const convertInventoryItemToFormData = (
 };
 
 export default function Inventory() {
-  const router = useRouter();
-
   // Estados
   const [data, setData] = useState<InventoryFormItem[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<
     InventoryCategory | "all_categories" | null
   >(null);
@@ -254,18 +250,23 @@ export default function Inventory() {
   const fetchInventory = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       const result: GetInventoryResponse = await getInventory();
       if (result.success && result.items) {
-        setData(
-          result.items.map((item) => convertInventoryItemToFormData(item))
-        );
+        setData(result.items.map((item) => convertInventoryItemToFormData(item)));
       } else {
-        setError(result.error || "Failed to fetch inventory");
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error || "Failed to fetch inventory"
+        });
         setData([]);
       }
-    } catch (error) {
-      setError("An unexpected error occurred");
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An unexpected error occurred"
+      });
       setData([]);
     } finally {
       setLoading(false);
@@ -379,15 +380,20 @@ export default function Inventory() {
     }
   };
 
+  // Cargar inventario inicial
+  React.useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory]);
+
   // Manejar actualizaciones pendientes
   React.useEffect(() => {
     let retryCount = 0;
     const MAX_RETRIES = 3;
-
+  
     const processPendingUpdate = async () => {
       const pendingUpdateStr = sessionStorage.getItem("pendingInventoryUpdate");
       if (!pendingUpdateStr) return;
-
+  
       try {
         const pendingUpdate = JSON.parse(pendingUpdateStr);
         const result: UpdateInventoryResponse = await updateInventoryItem(
@@ -395,7 +401,7 @@ export default function Inventory() {
           pendingUpdate.updateData,
           "system"
         );
-
+  
         if (!result.success) {
           if (result.requiresAuth && retryCount < MAX_RETRIES) {
             retryCount++;
@@ -406,7 +412,7 @@ export default function Inventory() {
             result.error || "Error al procesar actualización pendiente"
           );
         }
-
+  
         sessionStorage.removeItem("pendingInventoryUpdate");
         await fetchInventory();
         toast({
@@ -426,10 +432,10 @@ export default function Inventory() {
         }
       }
     };
-
+  
     const timeoutId = setTimeout(processPendingUpdate, 1000);
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [fetchInventory]); 
 
   // Cargar inventario inicial
   React.useEffect(() => {
@@ -482,9 +488,13 @@ export default function Inventory() {
     onGlobalFilterChange: setGlobalFilter,
   });
 
-  // Renderizar detalles del item
-  const renderItemDetails = () => {
+  type ItemDetailsProps = {
+    selectedItem: InventoryFormItem | null;
+  };
+  
+  function ItemDetails({ selectedItem }: ItemDetailsProps) {
     if (!selectedItem) return null;
+  
 
     return (
       <div className="space-y-4">

@@ -40,7 +40,6 @@ export default function AuthButton() {
     }
   }, [user]);
 
-  console.log("User roles state:", userRoles);
 
   const hasRole = (roleName: string): boolean => {
     const result = userRoles.some(role => role && role.name && role.name.toLowerCase() === roleName.toLowerCase());

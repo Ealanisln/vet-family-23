@@ -1,3 +1,5 @@
+// src/app/(admin)/admin/mascotas/nueva/page.tsx
+
 "use client";
 
 import React, { useState, useTransition } from 'react';

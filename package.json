@@ -11,7 +11,8 @@
     "lint:fix": "eslint --fix .",
     "import-data": "tsx scripts/import-data.ts",
     "postinstall": "prisma generate",
-    "backup": "tsx src/scripts/backup.ts",
+    "backup": "sh src/scripts/backup.sh",
+    "verify-backup": "sh src/scripts/verify-backup.sh",
     "backup:build": "tsc src/scripts/backup.ts && node dist/backup.js",
     "backup:watch": "tsx watch src/scripts/backup.ts"
   },
@@ -26,7 +27,7 @@
     "@kinde-oss/kinde-auth-nextjs": "^2.4.6",
     "@next/third-parties": "^14.2.20",
     "@portabletext/react": "^3.2.0",
-    "@prisma/client": "^6.1.0",
+    "@prisma/client": "^6.2.1",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-avatar": "^1.1.1",
@@ -115,7 +116,7 @@
     "@typescript-eslint/parser": "7.0.0",
     "eslint": "8.56.0",
     "eslint-config-next": "14.1.0",
-    "prisma": "^6.1.0",
+    "prisma": "^6.2.1",
     "tsx": "^4.19.2"
   }
 }

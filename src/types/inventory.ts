@@ -84,6 +84,7 @@ export interface InventoryFormProps {
   initialData: InventoryItem | InventoryFormItem | null;
   onSubmit: (data: InventoryItemFormData) => Promise<void>;
   isSubmitting?: boolean;
+  category?: InventoryCategory; // Add this optional prop
 }
 
 

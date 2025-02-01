@@ -1,10 +1,10 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
 }
 
 model User {
@@ -21,15 +21,15 @@ model User {
   visits                 Int                 @default(0)
   nextVisitFree          Boolean             @default(false)
   lastVisit              DateTime?
-  visitHistory           VisitHistory[]
-  pets                   Pet[]
-  appointments           Appointment[]
-  billings               Billing[]
-  reminders              Reminder[]
-  userRoles              UserRole[]
-  inventoryMovements     InventoryMovement[]
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
+  appointments           Appointment[]
+  billings               Billing[]
+  inventoryMovements     InventoryMovement[]
+  pets                   Pet[]
+  reminders              Reminder[]
+  userRoles              UserRole[]
+  visitHistory           VisitHistory[]
 
   @@index([firstName, lastName, phone])
   @@index([email])
@@ -46,8 +46,8 @@ model UserRole {
   id     String @id @default(uuid())
   userId String
   roleId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, roleId])
 }
@@ -55,17 +55,16 @@ model UserRole {
 model VisitHistory {
   id     String   @id @default(uuid())
   userId String
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date   DateTime @default(now())
   cost   Float
   isFree Boolean  @default(false)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Pet {
   id                  String                @id
   internalId          String?
   userId              String
-  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   name                String
   species             String
   breed               String
@@ -75,30 +74,30 @@ model Pet {
   microchipNumber     String?
   isNeutered          Boolean               @default(false)
   isDeceased          Boolean               @default(false)
-  medicalHistory      MedicalHistory[]
-  vaccinations        Vaccination[]
   appointments        Appointment[]
   billings            Billing[]
+  medicalHistory      MedicalHistory[]
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   reminders           Reminder[]
+  vaccinations        Vaccination[]
   VaccinationSchedule VaccinationSchedule[]
 }
 
 model MedicalHistory {
   id             String   @id @default(uuid())
   petId          String
-  pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   visitDate      DateTime
   reasonForVisit String
   diagnosis      String
   treatment      String
   prescriptions  String[]
   notes          String?
+  pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
 }
 
 model Vaccination {
   id                 String   @id @default(uuid())
   petId              String
-  pet                Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   vaccineType        String
   stage              String
   status             String
@@ -110,6 +109,7 @@ model Vaccination {
   notes              String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  pet                Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
 
   @@index([petId, vaccineType])
   @@index([nextDoseDate, status])
@@ -118,7 +118,6 @@ model Vaccination {
 model VaccinationSchedule {
   id            String            @id @default(uuid())
   petId         String
-  pet           Pet               @relation(fields: [petId], references: [id], onDelete: Cascade)
   vaccineType   VaccineType
   stage         VaccinationStage
   scheduledDate DateTime
@@ -126,6 +125,7 @@ model VaccinationSchedule {
   reminderSent  Boolean           @default(false)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
+  pet           Pet               @relation(fields: [petId], references: [id], onDelete: Cascade)
 
   @@index([petId, scheduledDate, status])
 }
@@ -133,35 +133,35 @@ model VaccinationSchedule {
 model Appointment {
   id       String   @id @default(uuid())
   userId   String
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   petId    String
-  pet      Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   dateTime DateTime
   reason   String
   status   String
+  pet      Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Billing {
   id            String   @id @default(uuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   petId         String?
-  pet           Pet?     @relation(fields: [petId], references: [id])
   date          DateTime
   services      String[]
   cost          Float
   paymentStatus String
+  pet           Pet?     @relation(fields: [petId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Reminder {
   id           String   @id @default(uuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   petId        String
-  pet          Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   reminderType String
   dueDate      DateTime
   status       String
+  pet          Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Staff {
@@ -171,7 +171,49 @@ model Staff {
   contactInformation String
 }
 
-// Enums remain the same
+model InventoryItem {
+  id             String              @id @default(uuid())
+  name           String
+  category       InventoryCategory
+  description    String?
+  activeCompound String?
+  presentation   String?
+  measure        String?
+  brand          String?
+  quantity       Int                 @default(0)
+  minStock       Int?
+  location       String?
+  expirationDate DateTime?
+  status         InventoryStatus     @default(ACTIVE)
+  batchNumber    String?
+  specialNotes   String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  movements      InventoryMovement[]
+
+  @@index([category])
+  @@index([name])
+  @@index([status])
+  @@index([expirationDate])
+}
+
+model InventoryMovement {
+  id              String        @id @default(uuid())
+  itemId          String
+  type            MovementType
+  quantity        Int
+  date            DateTime      @default(now())
+  reason          String?
+  userId          String?
+  relatedRecordId String?
+  notes           String?
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user            User?         @relation(fields: [userId], references: [id])
+
+  @@index([itemId, date])
+  @@index([userId])
+}
+
 enum VaccineType {
   DP_PUPPY
   DHPPI
@@ -181,8 +223,8 @@ enum VaccineType {
   SEXTUPLE
   SEXTUPLE_R
   RABIES
-  TRIPLE_FELINA 
-  LEUCEMIA_FELINA 
+  TRIPLE_FELINA
+  LEUCEMIA_FELINA
   RABIA_FELINA
 }
 
@@ -205,6 +247,29 @@ enum InventoryCategory {
   FOOD
   ACCESSORY
   CONSUMABLE
+  ANTI_INFLAMMATORY_ANALGESICS
+  ANTIBIOTIC
+  ANTIFUNGAL
+  DEWORMERS
+  GASTROPROTECTORS_GASTROENTEROLOGY
+  CARDIOLOGY
+  DERMATOLOGY
+  ENDOCRINOLOGY_HORMONAL
+  ANESTHETICS_SEDATIVES
+  OTIC
+  OINTMENTS
+  RESPIRATORY
+  OPHTHALMIC
+  DRY_FOOD
+  WET_FOOD
+  CHIPS
+  ANTI_EMETIC
+  ANTISEPTICS_HEALING
+  NEPHROLOGY
+  ANTAGONISTS
+  IMMUNOSTIMULANT
+  APPETITE_STIMULANTS_HEMATOPOIESIS
+  SUPPLEMENTS_OTHERS
 }
 
 enum InventoryStatus {
@@ -221,47 +286,4 @@ enum MovementType {
   ADJUSTMENT
   RETURN
   EXPIRED
-}
-
-model InventoryItem {
-  id             String              @id @default(uuid())
-  name           String
-  category       InventoryCategory
-  description    String?
-  activeCompound String?
-  presentation   String?
-  measure        String?
-  brand          String?
-  quantity       Int                 @default(0)
-  minStock       Int?
-  location       String?
-  expirationDate DateTime?
-  status         InventoryStatus     @default(ACTIVE)
-  batchNumber    String?
-  specialNotes   String?
-  movements      InventoryMovement[]
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-
-  @@index([category])
-  @@index([name])
-  @@index([status])
-  @@index([expirationDate])
-}
-
-model InventoryMovement {
-  id              String        @id @default(uuid())
-  itemId          String
-  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  type            MovementType
-  quantity        Int
-  date            DateTime      @default(now())
-  reason          String?
-  userId          String?
-  user            User?         @relation(fields: [userId], references: [id])
-  relatedRecordId String?
-  notes           String?
-
-  @@index([itemId, date])
-  @@index([userId])
 }

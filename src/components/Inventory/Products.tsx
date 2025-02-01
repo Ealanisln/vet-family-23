@@ -31,13 +31,6 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -46,6 +39,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import Loader from "@/components/ui/loader";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge, BadgeProps } from "@/components/ui/custom-badge";
 import { toast } from "@/components/ui/use-toast";
 
@@ -64,15 +64,14 @@ import {
   CreateInventoryResponse,
   InventoryFormItem,
 } from "@/types/inventory";
-import {
-  InventoryCategory,
-  InventoryStatus,
-  MovementType,
-} from "@prisma/client";
+import { InventoryStatus, MovementType } from "@prisma/client";
+import type { InventoryCategory } from "@/types/inventory";
 
 // Componentes
 import InventoryItemForm from "./ui/InventoryItemForm";
 import ItemDetails from "./ui/ItemDetails";
+import { CategoryFilter } from "./CategoryFilter";
+import { CATEGORY_TRANSLATIONS } from "@/utils/category-translations";
 
 // Funciones auxiliares
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
@@ -174,17 +173,11 @@ export default function Inventory() {
     {
       accessorKey: "category",
       header: "Categoría",
-      cell: ({ row }) => {
-        const categoryMap: Record<string, string> = {
-          MEDICINE: "Medicina",
-          SURGICAL_MATERIAL: "Material Quirúrgico",
-          VACCINE: "Vacuna",
-          FOOD: "Alimento",
-          ACCESSORY: "Accesorio",
-          CONSUMABLE: "Consumible",
-        };
-        return <div>{categoryMap[row.original.category]}</div>;
-      },
+      cell: ({ row }) => (
+        <div>
+          {CATEGORY_TRANSLATIONS[row.original.category] || row.original.category}
+        </div>
+      ),
     },
     {
       accessorKey: "quantity",
@@ -513,31 +506,10 @@ export default function Inventory() {
               />
             </div>
             <div className="flex gap-2">
-              <Select
+              <CategoryFilter
                 value={categoryFilter || "all_categories"}
-                onValueChange={(
-                  value: InventoryCategory | "all_categories"
-                ) => {
-                  setCategoryFilter(value);
-                }}
-              >
-                <SelectTrigger className="w-[180px] h-10">
-                  <SelectValue placeholder="Categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all_categories">
-                    Todas las categorías
-                  </SelectItem>
-                  <SelectItem value="MEDICINE">Medicina</SelectItem>
-                  <SelectItem value="SURGICAL_MATERIAL">
-                    Material Quirúrgico
-                  </SelectItem>
-                  <SelectItem value="VACCINE">Vacuna</SelectItem>
-                  <SelectItem value="FOOD">Alimento</SelectItem>
-                  <SelectItem value="ACCESSORY">Accesorio</SelectItem>
-                  <SelectItem value="CONSUMABLE">Consumible</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={(value) => setCategoryFilter(value)}
+              />
 
               <Select
                 value={statusFilter || "all_statuses"}
@@ -545,7 +517,7 @@ export default function Inventory() {
                   setStatusFilter(value);
                 }}
               >
-                <SelectTrigger className="w-[180px] h-10">
+                <SelectTrigger className="min-w-[200px] w-full max-w-[220px] h-10">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -566,7 +538,7 @@ export default function Inventory() {
                 onClick={() => setIsNewItemFormOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                <span>Nuevo registro</span>
+                <p>Nuevo registro</p>
               </Button>
             </div>
           </div>

@@ -8,7 +8,69 @@ export type InventoryCategory =
   | "VACCINE"
   | "FOOD"
   | "ACCESSORY"
-  | "CONSUMABLE";
+  | "CONSUMABLE"
+    // New categories below
+  | "ANTI_INFLAMMATORY_ANALGESICS"
+  | "ANTIBIOTIC"
+  | "ANTIFUNGAL"
+  | "DEWORMERS"
+  | "GASTROPROTECTORS_GASTROENTEROLOGY"
+  | "CARDIOLOGY"
+  | "DERMATOLOGY"
+  | "ENDOCRINOLOGY_HORMONAL"
+  | "ANESTHETICS_SEDATIVES"
+  | "OTIC"
+  | "OINTMENTS"
+  | "RESPIRATORY"
+  | "OPHTHALMIC"
+  | "DRY_FOOD"
+  | "WET_FOOD"
+  | "CHIPS"
+  | "ANTI_EMETIC"
+  | "ANTISEPTICS_HEALING"
+  | "NEPHROLOGY"
+  | "ANTAGONISTS"
+  | "IMMUNOSTIMULANT"
+  | "APPETITE_STIMULANTS_HEMATOPOIESIS"
+  | "SUPPLEMENTS_OTHERS";
+
+// Add validation type for category checking
+export const INVENTORY_CATEGORIES = [
+  "MEDICINE",
+  "SURGICAL_MATERIAL",
+  "VACCINE",
+  "FOOD",
+  "ACCESSORY",
+  "CONSUMABLE",
+  "ANTI_INFLAMMATORY_ANALGESICS",
+  "ANTIBIOTIC",
+  "ANTIFUNGAL",
+  "DEWORMERS",
+  "GASTROPROTECTORS_GASTROENTEROLOGY",
+  "CARDIOLOGY",
+  "DERMATOLOGY",
+  "ENDOCRINOLOGY_HORMONAL",
+  "ANESTHETICS_SEDATIVES",
+  "OTIC",
+  "OINTMENTS",
+  "RESPIRATORY",
+  "OPHTHALMIC",
+  "DRY_FOOD",
+  "WET_FOOD",
+  "CHIPS",
+  "ANTI_EMETIC",
+  "ANTISEPTICS_HEALING",
+  "NEPHROLOGY",
+  "ANTAGONISTS",
+  "IMMUNOSTIMULANT",
+  "APPETITE_STIMULANTS_HEMATOPOIESIS",
+  "SUPPLEMENTS_OTHERS",
+] as const;
+
+// Type guard for category validation
+export function isValidCategory(category: string): category is InventoryCategory {
+  return INVENTORY_CATEGORIES.includes(category as InventoryCategory);
+}
 
 // Base interfaces
 interface InventoryMovementUser {
@@ -54,7 +116,9 @@ export interface InventoryItem {
 export type InventoryItemFormData = Omit<
   InventoryItem,
   "id" | "movements" | "status" | "createdAt" | "updatedAt"
->;
+> & {
+  expirationDate?: string | null; // Match date input format
+};
 
 // interface InventoryFormProps {
 //   open: boolean;
@@ -116,11 +180,10 @@ export interface CreateMovementData {
 
 // Search and filter types
 export interface InventoryFilters {
-  category?: InventoryCategory;
+  category?: InventoryCategory | 'ALL_MEDICINE'; // Add special filter group
   status?: InventoryStatus;
   search?: string;
 }
-
 // Pagination types
 export interface PaginationParams {
   page: number;
@@ -139,3 +202,28 @@ export interface UpdateInventoryResult {
   item?: InventoryItem;
   requiresAuth?: boolean;
 }
+
+// Add helper type for category groups
+export type MedicineSubcategories = Extract<InventoryCategory,
+  | "MEDICINE"
+  | "ANTI_INFLAMMATORY_ANALGESICS"
+  | "ANTIBIOTIC"
+  | "ANTIFUNGAL"
+  | "DEWORMERS"
+  | "GASTROPROTECTORS_GASTROENTEROLOGY"
+  | "CARDIOLOGY"
+  | "DERMATOLOGY"
+  | "ENDOCRINOLOGY_HORMONAL"
+  | "ANESTHETICS_SEDATIVES"
+  | "OTIC"
+  | "OINTMENTS"
+  | "RESPIRATORY"
+  | "OPHTHALMIC"
+  | "ANTI_EMETIC"
+  | "ANTISEPTICS_HEALING"
+  | "NEPHROLOGY"
+  | "ANTAGONISTS"
+  | "IMMUNOSTIMULANT"
+  | "APPETITE_STIMULANTS_HEMATOPOIESIS"
+  | "SUPPLEMENTS_OTHERS"
+>;

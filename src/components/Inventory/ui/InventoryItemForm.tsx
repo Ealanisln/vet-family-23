@@ -26,6 +26,8 @@ import {
   FormErrors,
   InventoryCategory,
 } from "@/types/inventory";
+import { CATEGORY_TRANSLATIONS } from "@/utils/category-translations";
+
 
 const INITIAL_FORM_STATE: InventoryItemFormData = {
   name: "",
@@ -41,15 +43,6 @@ const INITIAL_FORM_STATE: InventoryItemFormData = {
   expirationDate: null,
   batchNumber: null,
   specialNotes: null,
-};
-
-const CATEGORY_LABELS: Record<InventoryCategory, string> = {
-  MEDICINE: "Medicina",
-  SURGICAL_MATERIAL: "Material Quirúrgico",
-  VACCINE: "Vacuna",
-  FOOD: "Alimento",
-  ACCESSORY: "Accesorio",
-  CONSUMABLE: "Consumible",
 };
 
 const InventoryItemForm: React.FC<InventoryFormProps> = ({
@@ -179,9 +172,9 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
                     <SelectValue placeholder="Seleccionar categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(CATEGORY_LABELS) as InventoryCategory[]).map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {CATEGORY_LABELS[category]}
+                    {Object.entries(CATEGORY_TRANSLATIONS).map(([key, value]) => (
+                      <SelectItem key={key} value={key}>
+                        {value}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -342,7 +335,7 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
             </Alert>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0">
+<DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
               variant="outline"

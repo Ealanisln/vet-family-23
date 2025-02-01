@@ -1,76 +1,80 @@
-"use client";
-
 import Image from "next/image";
-import AppointmentDialog, { CustomButton } from "../Clientes/AppointmentDialog";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
   CarouselPrevious,
-} from "../ui/carousel";
+  CarouselNext,
+} from "@/components/ui/carousel";
+import { CalendarDays, Stethoscope, Heart } from "lucide-react";
+import AppointmentDialog, { CustomButton } from "../Clientes/AppointmentDialog";
 
-export default function VetFamilyHero() {
-  const images = [
-    {
-      src: "/assets/banner/julio.png",
-      alt: "Promociones de Julio",
-    },
-    {
-      src: "/assets/banner/vacaciones.png",
-      alt: "Promociones de Vacaciones",
-    },
-  ];
+const images = [
+  {
+    src: "/assets/banner/julio.png",
+    alt: "Promociones de Julio",
+  },
+  {
+    src: "/assets/banner/vacaciones.png",
+    alt: "Promociones de Vacaciones",
+  },
+];
 
+export default function VetHero() {
   return (
     <section
-      className="relative w-full"
+      className="w-full py-20 md:py-28 lg:py-36 xl:py-44 overflow-x-hidden"
       style={{
         background:
           "linear-gradient(120.3deg, #91D8D9 31.56%, rgba(255, 255, 255, 0) 94.83%)",
       }}
     >
-      <div className="container mx-auto px-4 sm:px-6 xl:px-8 pt-16 sm:pt-20 pb-8 sm:pb-12 md:pb-16 lg:pb-24">
-        <div className="grid gap-8 lg:gap-12 lg:grid-cols-12 items-center max-w-7xl mx-auto">
-          {/* Text content */}
-          <div className="lg:col-span-7 flex flex-col justify-center space-y-6 sm:space-y-8">
-            <div className="relative">
-              {/* Decorative star */}
-              <div className="hidden lg:block absolute top-[-74px] right-[51px]">
-                <Image
-                  src="/assets/banner/star.svg"
-                  alt="star-image"
-                  width={95}
-                  height={97}
-                />
-              </div>
-
-              <div className="space-y-4 sm:space-y-6">
-                <h1 className="text-midnightblue text-3xl sm:text-4xl md:text-5xl lg:text-5xl text-center lg:text-start font-semibold leading-tight relative z-10 max-w-4xl">
-                  Bienvenido a Vet For Family
-                </h1>
-
-                <p className="text-black/75 text-base sm:text-lg lg:text-xl leading-relaxed text-center lg:text-start max-w-2xl lg:max-w-3xl mx-auto lg:mx-0 relative z-10">
-                  Expertos en medicina, especialistas en amor. Tu mascota es única. En Vet Family transformamos la atención veterinaria en una experiencia extraordinaria. Con medicina y tecnología de vanguardia cuidamos de la salud y felicidad de quien más quieres. 🐶🐈
-                </p>
-              </div>
+      <div className="container px-4 md:px-6 h-full mx-auto">
+        <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px] h-full">
+          <div className="flex flex-col justify-between h-full space-y-8">
+            <div className="space-y-6">
+              <h1 className="text-3xl font-bold tracking-tight sm:text-5xl xl:text-6xl">
+                Salud y felicidad para tu mejor amigo.
+              </h1>
+              <p className="max-w-[600px] text-lg text-gray-600 md:text-xl py-2">
+                Porque ellos no son solo mascotas, son familia. En Vet Family,
+                cuidamos de tu ser querido con el mismo amor y dedicación que tú
+                le brindas cada día.
+              </p>
             </div>
-
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pt-6 sm:pt-8 mx-auto lg:mx-0">
+            <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <CustomButton href="/promociones">Promociones</CustomButton>
               <AppointmentDialog />
             </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-8">
+              <div className="flex items-center space-x-2">
+                <CalendarDays className="w-5 h-5 text-blue-600" />
+                <span className="text-base font-semibold text-gray-700">
+                  Atención de lunes a sábado
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Stethoscope className="w-5 h-5 text-blue-600" />
+                <span className="text-base font-semibold text-gray-700">
+                  Experiencia veterinaria a tu servicio
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Heart className="w-5 h-5 text-red-500" />
+                <span className="text-base font-semibold text-gray-700">
+                  Amor y profesionalismo en un solo lugar
+                </span>
+              </div>
+            </div>
           </div>
-
-          {/* Image carousel */}
-          <div className="lg:col-span-5 relative">
-            <Carousel className="w-full max-w-xl sm:max-w-2xl mx-auto lg:max-w-none">
-              <CarouselContent>
+          <div className="lg:col-span-1 relative h-full w-full">
+          <Carousel className="w-full mx-auto">
+          <CarouselContent>
                 {images.map((image, index) => (
                   <CarouselItem key={index}>
                     <div className="relative aspect-[4/3] lg:aspect-[3/4] xl:aspect-[4/3] w-full overflow-hidden rounded-xl">
                       <Image
-                        src={image.src}
+                        src={image.src || "/placeholder.svg"}
                         alt={image.alt}
                         fill
                         className="object-cover object-center"

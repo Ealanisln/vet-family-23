@@ -23,7 +23,7 @@ const images = [
 export default function VetHero() {
   return (
     <section
-      className="w-full py-20 md:py-28 lg:py-36 xl:py-44 overflow-x-hidden"
+      className="w-full py-16 md:py-24 lg:py-28 xl:py-32 overflow-x-hidden"
       style={{
         background:
           "linear-gradient(120.3deg, #91D8D9 31.56%, rgba(255, 255, 255, 0) 94.83%)",
@@ -42,25 +42,28 @@ export default function VetHero() {
                 le brindas cada día.
               </p>
             </div>
+
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <CustomButton href="/promociones">Promociones</CustomButton>
               <AppointmentDialog />
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-8">
-              <div className="flex items-center space-x-2">
-                <CalendarDays className="w-5 h-5 text-blue-600" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-6 rounded-lg">
+              <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">
+                <CalendarDays className="w-6 h-6 text-blue-600 flex-shrink-0" />
                 <span className="text-base font-semibold text-gray-700">
                   Atención de lunes a sábado
                 </span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Stethoscope className="w-5 h-5 text-blue-600" />
+
+              <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">
+                <Stethoscope className="w-6 h-6 text-blue-600 flex-shrink-0" />
                 <span className="text-base font-semibold text-gray-700">
                   Experiencia veterinaria a tu servicio
                 </span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Heart className="w-5 h-5 text-red-500" />
+
+              <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">
+                <Heart className="w-6 h-6 text-red-500 flex-shrink-0" />
                 <span className="text-base font-semibold text-gray-700">
                   Amor y profesionalismo en un solo lugar
                 </span>
@@ -68,8 +71,8 @@ export default function VetHero() {
             </div>
           </div>
           <div className="lg:col-span-1 relative h-full w-full">
-          <Carousel className="w-full mx-auto">
-          <CarouselContent>
+            <Carousel className="w-full mx-auto">
+              <CarouselContent>
                 {images.map((image, index) => (
                   <CarouselItem key={index}>
                     <div className="relative aspect-[4/3] lg:aspect-[3/4] xl:aspect-[4/3] w-full overflow-hidden rounded-xl">

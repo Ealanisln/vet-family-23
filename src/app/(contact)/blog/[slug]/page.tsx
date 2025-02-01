@@ -8,15 +8,17 @@ import { client } from "@/sanity/lib/client";
 
 export const revalidate = 30;
 
-// Prepare Next.js to know which routes already exist
 export async function generateStaticParams() {
-  // Important, use the plain Sanity Client here
   const posts = await client.fetch(postPathsQuery);
 
   return posts;
 }
 
-export default async function Page({ params }: { params: any }) {
+interface PageParams {
+  slug: string;
+}
+
+export default async function Page({ params }: { params: PageParams }) {
   const post = await sanityFetch<SanityDocument>({ query: postQuery, params });
 
   return <Post post={post} />;

@@ -66,6 +66,12 @@ export default defineType({
       title: 'Body',
       type: 'blockContent',
     }),
+    // Add the SEO field
+    defineField({
+      name: 'seo',
+      title: 'SEO',
+      type: 'seoMetaFields', // This type comes from the sanity-plugin-seo
+    }),
   ],
   preview: {
     select: {

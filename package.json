@@ -90,6 +90,7 @@
     "react-photo-album": "^2.4.1",
     "react-share": "^5.1.1",
     "sanity": "^3.67.1",
+    "sanity-plugin-seo": "1.2.7-alpha",
     "server-only": "^0.0.1",
     "sharp": "^0.33.5",
     "styled-components": "^6.1.13",
@@ -106,6 +107,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@portabletext/types": "^2.0.13",
     "@tailwindcss/typography": "^0.5.15",
     "@types/bcryptjs": "^2.4.6",
     "@types/google.maps": "^3.58.1",

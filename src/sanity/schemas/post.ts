@@ -1,5 +1,4 @@
 import {defineField, defineType} from 'sanity'
-import type { Reference, ImageDefinition, Rule } from 'sanity'
 
 export default defineType({
   name: 'post',
@@ -10,6 +9,7 @@ export default defineType({
       name: 'title',
       title: 'Title',
       type: 'string',
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'slug',
@@ -19,18 +19,20 @@ export default defineType({
         source: 'title',
         maxLength: 96,
       },
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'smallDescription',
       type: 'text',
       title: 'Small Description'
     }),
-    defineField({
+    // Author field with proper type definition
+    {
       name: 'author',
       title: 'Author',
       type: 'reference',
-      to: {type: 'author'}
-    } as any), // Uso temporal de any para resolver el error de tipos
+      to: {type: 'author'},
+    },
     defineField({
       name: 'mainImage',
       title: 'Main image',
@@ -44,12 +46,16 @@ export default defineType({
       title: 'Main Image Alternative Text',
       type: 'string',
     }),
-    defineField({
+    // Categories field with proper array structure
+    {
       name: 'categories',
       title: 'Categories',
       type: 'array',
-      of: [{type: 'reference', to: {type: 'category'}}]
-    } as any), // Uso temporal de any para resolver el error de tipos
+      of: [{
+        type: 'reference',
+        to: {type: 'category'}
+      }],
+    },
     defineField({
       name: 'publishedAt',
       title: 'Published at',
@@ -61,7 +67,6 @@ export default defineType({
       type: 'blockContent',
     }),
   ],
-
   preview: {
     select: {
       title: 'title',

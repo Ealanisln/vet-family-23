@@ -11,7 +11,7 @@ import AppointmentDialog, { CustomButton } from "../Clientes/AppointmentDialog";
 
 const images = [
   {
-    src: "/assets/banner/julio.png",
+    src: "/assets/banner/2-aniversario.png",
     alt: "Promociones de Julio",
   },
   {

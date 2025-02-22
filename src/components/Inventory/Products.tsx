@@ -597,157 +597,166 @@ export default function Inventory() {
   });
 
   return (
-    <Card className="w-full bg-gradient-to-br from-white via-white to-blue-50 border-none shadow-lg">
-      <div className="p-4 md:p-6 lg:p-8">
-        {/* Header y Filtros */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative w-full sm:w-auto sm:flex-1 max-w-sm">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                <Search className="h-4 w-4 text-[#47b3b6]" />
+<Card className="w-full bg-gradient-to-br from-white via-white to-blue-50 border-none shadow-lg">
+      <div className="flex flex-col h-full">
+        <div className="p-4 md:p-6 lg:p-8">
+          {/* Header y Filtros */}
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative w-full sm:w-auto sm:flex-1 max-w-sm">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                  <Search className="h-4 w-4 text-[#47b3b6]" />
+                </div>
+                <Input
+                  placeholder="Buscar en inventario..."
+                  value={globalFilter}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  className="pl-10 w-full border-[#47b3b6]/20 focus:border-[#47b3b6]/50 bg-white rounded-xl h-11"
+                />
               </div>
-              <Input
-                placeholder="Buscar en inventario..."
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                className="pl-10 w-full border-[#47b3b6]/20 focus:border-[#47b3b6]/50 bg-white rounded-xl h-11"
-              />
-            </div>
-            <div className="flex gap-2">
-              <CategoryFilter
-                value={categoryFilter || "all_categories"}
-                onChange={(value) => setCategoryFilter(value)}
-              />
+              <div className="flex gap-2">
+                <CategoryFilter
+                  value={categoryFilter || "all_categories"}
+                  onChange={(value) => setCategoryFilter(value)}
+                />
 
-              <Select
-                value={statusFilter || "all_statuses"}
-                onValueChange={(value: InventoryStatus | "all_statuses") => {
-                  setStatusFilter(value);
-                }}
-              >
-                <SelectTrigger className="min-w-[200px] w-full max-w-[220px] h-10">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all_statuses">
-                    Todos los estados
-                  </SelectItem>
-                  <SelectItem value="ACTIVE">Activo</SelectItem>
-                  <SelectItem value="INACTIVE">Inactivo</SelectItem>
-                  <SelectItem value="LOW_STOCK">Stock Bajo</SelectItem>
-                  <SelectItem value="OUT_OF_STOCK">Sin Stock</SelectItem>
-                  <SelectItem value="EXPIRED">Expirado</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="default"
-                className="h-10 border-teal-200 hover:bg-teal-50 hover:text-teal-600"
-                onClick={() => setIsNewItemFormOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                <p>Nuevo registro</p>
-              </Button>
+                <Select
+                  value={statusFilter || "all_statuses"}
+                  onValueChange={(value: InventoryStatus | "all_statuses") => {
+                    setStatusFilter(value);
+                  }}
+                >
+                  <SelectTrigger className="min-w-[200px] w-full max-w-[220px] h-10">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all_statuses">Todos los estados</SelectItem>
+                    <SelectItem value="ACTIVE">Activo</SelectItem>
+                    <SelectItem value="INACTIVE">Inactivo</SelectItem>
+                    <SelectItem value="LOW_STOCK">Stock Bajo</SelectItem>
+                    <SelectItem value="OUT_OF_STOCK">Sin Stock</SelectItem>
+                    <SelectItem value="EXPIRED">Expirado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="default"
+                  className="h-10 border-teal-200 hover:bg-teal-50 hover:text-teal-600"
+                  onClick={() => setIsNewItemFormOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  <p>Nuevo registro</p>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <InventoryItemForm
-          open={isNewItemFormOpen}
-          onOpenChange={setIsNewItemFormOpen}
-          initialData={null}
-          onSubmit={handleNewItemSubmit}
-          isSubmitting={isSubmitting}
-        />
-
-        {/* Tabla */}
-        <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
-          <div className="min-w-[800px]">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow
-                    key={headerGroup.id}
-                    className="bg-gradient-to-r from-[#47b3b6]/5 to-[#47b3b6]/10 hover:from-[#47b3b6]/10 hover:to-[#47b3b6]/20"
-                  >
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="text-[#47b3b6] font-semibold whitespace-nowrap"
+          {/* Contenedor de tabla con altura fija */}
+          <div className="flex flex-col">
+            <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
+              <div className="min-w-[800px]">
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow
+                        key={headerGroup.id}
+                        className="bg-gradient-to-r from-[#47b3b6]/5 to-[#47b3b6]/10 hover:from-[#47b3b6]/10 hover:to-[#47b3b6]/20"
                       >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead
+                            key={header.id}
+                            className="text-[#47b3b6] font-semibold whitespace-nowrap"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
                     ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      <Loader size={32} className="mx-auto text-[#47b3b6]" />
-                      <p className="mt-2 text-gray-600">
-                        Cargando inventario...
-                      </p>
-                    </TableCell>
-                  </TableRow>
-                ) : table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      className={`
-                      hover:bg-[#47b3b6]/5 
-                      transition-colors 
-                      duration-200
-                      ${isNearExpiration(row.original.expirationDate as string) ? "bg-orange-100" : ""}
-                    `}
-                    >
-                      {row.getVisibleCells().map((cell) => (
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
                         <TableCell
-                          key={cell.id}
-                          className="text-gray-700 whitespace-nowrap"
+                          colSpan={columns.length}
+                          className="h-24 text-center"
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
+                          <Loader size={32} className="mx-auto text-[#47b3b6]" />
+                          <p className="mt-2 text-gray-600">
+                            Cargando inventario...
+                          </p>
                         </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-gray-600"
-                    >
-                      No se encontraron items en el inventario.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                      </TableRow>
+                    ) : table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow
+                          key={row.id}
+                          className={`
+                          hover:bg-[#47b3b6]/5 
+                          transition-colors 
+                          duration-200
+                          ${
+                            isNearExpiration(row.original.expirationDate as string)
+                              ? "bg-orange-100"
+                              : ""
+                          }
+                        `}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell
+                              key={cell.id}
+                              className="text-gray-700 whitespace-nowrap"
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={columns.length}
+                          className="h-24 text-center text-gray-600"
+                        >
+                          No se encontraron items en el inventario.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Paginación */}
+            <div className="mt-4">
+              <TablePagination
+                currentPage={table.getState().pagination.pageIndex + 1}
+                pageSize={table.getState().pagination.pageSize}
+                totalItems={table.getFilteredRowModel().rows.length}
+                onPageChange={(page) => table.setPageIndex(page - 1)}
+                onPageSizeChange={(size) => table.setPageSize(size)}
+              />
+            </div>
           </div>
         </div>
       </div>
-      {/* Reemplazar la sección actual de paginación con: */}
-      <TablePagination
-        currentPage={table.getState().pagination.pageIndex + 1}
-        pageSize={table.getState().pagination.pageSize}
-        totalItems={table.getFilteredRowModel().rows.length}
-        onPageChange={(page) => table.setPageIndex(page - 1)}
-        onPageSizeChange={(size) => table.setPageSize(size)}
+
+      {/* Mantener los modales y diálogos existentes */}
+      <InventoryItemForm
+        open={isNewItemFormOpen}
+        onOpenChange={setIsNewItemFormOpen}
+        initialData={null}
+        onSubmit={handleNewItemSubmit}
+        isSubmitting={isSubmitting}
       />
 
-      {/* Modal de Detalles */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -780,7 +789,6 @@ export default function Inventory() {
         </DialogContent>
       </Dialog>
 
-      {/* Formulario de Edición */}
       <InventoryItemForm
         open={isEditFormOpen}
         onOpenChange={setIsEditFormOpen}

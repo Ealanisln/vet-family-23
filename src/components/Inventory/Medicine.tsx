@@ -67,6 +67,7 @@ import { InventoryStatus, MovementType } from "@prisma/client";
 // Componentes
 import InventoryItemForm from "./ui/InventoryItemForm";
 import ItemDetails from "./ui/ItemDetails";
+import TablePagination from "../ui/pagination";
 
 // Funciones auxiliares
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
@@ -485,6 +486,7 @@ export default function Medicine() {
 
   return (
     <Card className="w-full bg-gradient-to-br from-white via-white to-blue-50 border-none shadow-lg">
+    <div className="flex flex-col h-full">
       <div className="p-4 md:p-6 lg:p-8">
         {/* Header y Filtros */}
         <div className="flex flex-col gap-4 mb-6">
@@ -507,13 +509,11 @@ export default function Medicine() {
                   setStatusFilter(value);
                 }}
               >
-                <SelectTrigger className="w-[180px] h-10">
+                <SelectTrigger className="min-w-[200px] w-full max-w-[220px] h-10">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all_statuses">
-                    Todos los estados
-                  </SelectItem>
+                  <SelectItem value="all_statuses">Todos los estados</SelectItem>
                   <SelectItem value="ACTIVE">Activo</SelectItem>
                   <SelectItem value="INACTIVE">Inactivo</SelectItem>
                   <SelectItem value="LOW_STOCK">Stock Bajo</SelectItem>
@@ -534,156 +534,146 @@ export default function Medicine() {
           </div>
         </div>
 
-        <InventoryItemForm
-          open={isNewItemFormOpen}
-          onOpenChange={setIsNewItemFormOpen}
-          initialData={null}
-          onSubmit={handleNewItemSubmit}
-          isSubmitting={isSubmitting}
-          category="MEDICINE"
-        />
-
-        {/* Tabla */}
-        <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
-          <div className="min-w-[800px]">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow
-                    key={headerGroup.id}
-                    className="bg-gradient-to-r from-[#47b3b6]/5 to-[#47b3b6]/10 hover:from-[#47b3b6]/10 hover:to-[#47b3b6]/20"
-                  >
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="text-[#47b3b6] font-semibold whitespace-nowrap"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      <Loader size={32} className="mx-auto text-[#47b3b6]" />
-                      <p className="mt-2 text-gray-600">
-                        Cargando medicamentos...
-                      </p>
-                    </TableCell>
-                  </TableRow>
-                ) : table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
+        {/* Contenedor de tabla con altura fija */}
+        <div className="flex flex-col">
+          <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
+            <div className="min-w-[800px]">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow
-                      key={row.id}
-                      className="hover:bg-[#47b3b6]/5 transition-colors duration-200"
+                      key={headerGroup.id}
+                      className="bg-gradient-to-r from-[#47b3b6]/5 to-[#47b3b6]/10 hover:from-[#47b3b6]/10 hover:to-[#47b3b6]/20"
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className="text-gray-700 whitespace-nowrap"
+                      {headerGroup.headers.map((header) => (
+                        <TableHead
+                          key={header.id}
+                          className="text-[#47b3b6] font-semibold whitespace-nowrap"
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
                       ))}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-gray-600"
-                    >
-                      No se encontraron medicamentos en el inventario.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        <Loader size={32} className="mx-auto text-[#47b3b6]" />
+                        <p className="mt-2 text-gray-600">
+                          Cargando medicamentos...
+                        </p>
+                      </TableCell>
+                    </TableRow>
+                  ) : table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        className="hover:bg-[#47b3b6]/5 transition-colors duration-200"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className="text-gray-700 whitespace-nowrap"
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center text-gray-600"
+                      >
+                        No se encontraron medicamentos en el inventario.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        </div>
 
-        {/* Paginación */}
-        <div className="flex items-center justify-between gap-2 mt-4">
-          <div className="text-sm text-gray-500">
-            {table.getFilteredRowModel().rows.length} medicamentos encontrados
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-            >
-              Siguiente
-            </Button>
+          {/* Paginación */}
+          <div className="mt-4">
+            <TablePagination
+              currentPage={table.getState().pagination.pageIndex + 1}
+              pageSize={table.getState().pagination.pageSize}
+              totalItems={table.getFilteredRowModel().rows.length}
+              onPageChange={(page) => table.setPageIndex(page - 1)}
+              onPageSizeChange={(size) => table.setPageSize(size)}
+            />
           </div>
         </div>
       </div>
-      ` {/* Modal de Detalles */}`
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detalles del Medicamento</DialogTitle>
-            <DialogDescription>
-              Información detallada y movimientos del medicamento seleccionado.
-            </DialogDescription>
-          </DialogHeader>
-          <ItemDetails selectedItem={selectedItem} />
-          <DialogFooter>
+    </div>
+
+    {/* Modal de Detalles */}
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Detalles del Medicamento</DialogTitle>
+          <DialogDescription>
+            Información detallada y movimientos del medicamento seleccionado.
+          </DialogDescription>
+        </DialogHeader>
+        <ItemDetails selectedItem={selectedItem} />
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setIsDialogOpen(false)}
+            className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6]"
+          >
+            Cerrar
+          </Button>
+          {selectedItem && (
             <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-              className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6]"
+              onClick={() => {
+                setIsEditFormOpen(true);
+                setIsDialogOpen(false);
+              }}
+              className="bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white"
             >
-              Cerrar
+              Editar Medicamento
             </Button>
-            {selectedItem && (
-              <Button
-                onClick={() => {
-                  setIsEditFormOpen(true);
-                  setIsDialogOpen(false);
-                }}
-                className="bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white"
-              >
-                Editar Medicamento
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      {/* Formulario de Edición */}
-      <InventoryItemForm
-        open={isEditFormOpen}
-        onOpenChange={setIsEditFormOpen}
-        initialData={selectedItem}
-        onSubmit={handleEditSubmit}
-        isSubmitting={isSubmitting}
-        category="MEDICINE"
-      />
-    </Card>
-  );
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Formulario de Edición */}
+    <InventoryItemForm
+      open={isEditFormOpen}
+      onOpenChange={setIsEditFormOpen}
+      initialData={selectedItem}
+      onSubmit={handleEditSubmit}
+      isSubmitting={isSubmitting}
+      category="MEDICINE"
+    />
+
+    {/* Formulario de Nuevo Item */}
+    <InventoryItemForm
+      open={isNewItemFormOpen}
+      onOpenChange={setIsNewItemFormOpen}
+      initialData={null}
+      onSubmit={handleNewItemSubmit}
+      isSubmitting={isSubmitting}
+      category="MEDICINE"
+    />
+  </Card>
+);
 }

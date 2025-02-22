@@ -1,34 +1,47 @@
 import { InventoryCategory } from "@prisma/client";
 
-// category-translations.ts
+// Traducciones base
 export const CATEGORY_TRANSLATIONS: Record<InventoryCategory, string> = {
-    MEDICINE: "Medicina",
-    SURGICAL_MATERIAL: "Material Quirúrgico",
-    VACCINE: "Vacuna",
-    FOOD: "Alimento",
-    ACCESSORY: "Accesorio",
-    CONSUMABLE: "Consumible",
-    ANTI_INFLAMMATORY_ANALGESICS: "Antiinflamatorios/Analgésicos",
-    ANTIBIOTIC: "Antibiótico",
-    ANTIFUNGAL: "Antimicótico",
-    DEWORMERS: "Desparasitantes",
-    GASTROPROTECTORS_GASTROENTEROLOGY: "Protectores gástricos/Gastroenterología",
-    CARDIOLOGY: "Cardiología",
-    DERMATOLOGY: "Dermatología",
-    ENDOCRINOLOGY_HORMONAL: "Endocrinología/Hormonales",
-    ANESTHETICS_SEDATIVES: "Anestésicos y sedantes",
-    OTIC: "Óticos",
-    OINTMENTS: "Ungüentos/Pomadas",
-    RESPIRATORY: "Respiratorio",
-    OPHTHALMIC: "Oftálmico",
-    DRY_FOOD: "Alimento Seco",
-    WET_FOOD: "Alimento Húmedo",
-    CHIPS: "Chips",
-    ANTI_EMETIC: "Antihemético",
-    ANTISEPTICS_HEALING: "Cicatrizantes/antisépticos",
-    NEPHROLOGY: "Nefrología",
-    ANTAGONISTS: "Antagonistas",
-    IMMUNOSTIMULANT: "Inmunoestimulante",
-    APPETITE_STIMULANTS_HEMATOPOIESIS: "Estimulantes de apetito y Hematopoyesis",
-    SUPPLEMENTS_OTHERS: "Suplementos y otros",
-  } as const;
+  ACCESSORY: "Accesorio",
+  ANESTHETICS_SEDATIVES: "Anestésicos y sedantes",
+  ANTAGONISTS: "Antagonistas",
+  ANTI_EMETIC: "Antihemético",
+  ANTI_INFLAMMATORY_ANALGESICS: "Antiinflamatorios/Analgésicos",
+  ANTIBIOTIC: "Antibiótico",
+  ANTIDIARRHEAL: "Antidiarreico",
+  ANTIFUNGAL: "Antimicótico",
+  ANTIHISTAMINE: "Antihistamínico",
+  ANTISEPTICS_HEALING: "Cicatrizantes/antisépticos",
+  APPETITE_STIMULANTS_HEMATOPOIESIS: "Estimulantes de apetito y Hematopoyesis",
+  BRONCHODILATOR: "Broncodilatador",
+  CARDIOLOGY: "Cardiología",
+  CHIPS: "Chips",
+  CONSUMABLE: "Consumible",
+  CORTICOSTEROIDS: "Corticoides",
+  DERMATOLOGY: "Dermatología",
+  DEWORMERS: "Desparasitantes",
+  DRY_FOOD: "Alimento Seco",
+  ENDOCRINOLOGY_HORMONAL: "Endocrinología/Hormonales",
+  EXPECTORANT: "Expectante",
+  FOOD: "Alimento",
+  GASTROPROTECTORS_GASTROENTEROLOGY: "Protectores gástricos/Gastroenterología",
+  IMMUNOSTIMULANT: "Inmunoestimulante",
+  LAXATIVES: "Laxante",
+  MEDICATED_SHAMPOO: "Shampoo",
+  MEDICINE: "Medicina",
+  NEPHROLOGY: "Nefrología",
+  OINTMENTS: "Ungüentos/Pomadas",
+  OPHTHALMIC: "Oftálmico",
+  OTIC: "Óticos",
+  RESPIRATORY: "Respiratorio",
+  SUPPLEMENTS_OTHERS: "Suplementos y otros",
+  SURGICAL_MATERIAL: "Material Quirúrgico",
+  VACCINE: "Vacuna",
+  WET_FOOD: "Alimento Húmedo"
+} as const;
+
+// Versión ordenada alfabéticamente (español)
+export const ORDERED_CATEGORY_TRANSLATIONS = Object.fromEntries(
+  Object.entries(CATEGORY_TRANSLATIONS)
+    .sort(([, a], [, b]) => a.localeCompare(b, 'es'))
+) as typeof CATEGORY_TRANSLATIONS;

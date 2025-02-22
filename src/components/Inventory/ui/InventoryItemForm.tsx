@@ -26,7 +26,7 @@ import {
   FormErrors,
   InventoryCategory,
 } from "@/types/inventory";
-import { CATEGORY_TRANSLATIONS } from "@/utils/category-translations";
+import { ORDERED_CATEGORY_TRANSLATIONS  } from "@/utils/category-translations";
 
 
 const INITIAL_FORM_STATE: InventoryItemFormData = {
@@ -172,7 +172,7 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
                     <SelectValue placeholder="Seleccionar categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CATEGORY_TRANSLATIONS).map(([key, value]) => (
+                    {Object.entries(ORDERED_CATEGORY_TRANSLATIONS ).map(([key, value]) => (
                       <SelectItem key={key} value={key}>
                         {value}
                       </SelectItem>

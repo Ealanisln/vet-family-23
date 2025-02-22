@@ -72,8 +72,19 @@ import InventoryItemForm from "./ui/InventoryItemForm";
 import ItemDetails from "./ui/ItemDetails";
 import { CategoryFilter } from "./CategoryFilter";
 import { CATEGORY_TRANSLATIONS } from "@/utils/category-translations";
+import TablePagination from "../ui/pagination";
 
 // Funciones auxiliares
+const isNearExpiration = (expirationDate: string | null): boolean => {
+  if (!expirationDate) return false;
+  const today = new Date();
+  const expDate = new Date(expirationDate);
+  const daysUntilExpiration = Math.ceil(
+    (expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  return daysUntilExpiration > 0 && daysUntilExpiration <= 30;
+};
+
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
   const statusMap: Record<string, BadgeProps["variant"]> = {
     ACTIVE: "success",
@@ -135,7 +146,22 @@ export default function Inventory() {
   const columns: ColumnDef<InventoryFormItem>[] = [
     {
       accessorKey: "name",
-      header: "Nombre",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Nombre
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const isLowStock = ["LOW_STOCK", "OUT_OF_STOCK"].includes(
           row.original.status
@@ -172,23 +198,69 @@ export default function Inventory() {
     },
     {
       accessorKey: "category",
-      header: "Categoría",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Categoría
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => (
         <div>
-          {CATEGORY_TRANSLATIONS[row.original.category] || row.original.category}
+          {CATEGORY_TRANSLATIONS[row.original.category] ||
+            row.original.category}
         </div>
       ),
     },
     {
       accessorKey: "quantity",
-      header: "Cantidad",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Cantidad
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => (
         <div className="text-right">{row.getValue("quantity")}</div>
       ),
     },
     {
       accessorKey: "status",
-      header: "Estado",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Estado
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const status = row.getValue("status") as InventoryStatus;
         const statusMap: Record<string, string> = {
@@ -207,13 +279,49 @@ export default function Inventory() {
     },
     {
       accessorKey: "expirationDate",
-      header: "Fecha de Expiración",
-      cell: ({ row }) =>
-        formatDate(row.getValue("expirationDate") as string | null),
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Fecha de Expiración
+            {column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const expirationDate = row.getValue("expirationDate") as string | null;
+        const isExpiringSoon = isNearExpiration(expirationDate);
+        return (
+          <div className="flex items-center gap-2">
+            <span>{formatDate(expirationDate)}</span>
+            {isExpiringSoon && (
+              <AlertTriangle className="h-4 w-4 text-orange-500" />
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "movements",
-      header: "Último Movimiento",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Último Movimiento
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const movements = row.original.movements;
         if (!movements?.length) return "-";
@@ -595,7 +703,12 @@ export default function Inventory() {
                   table.getRowModel().rows.map((row) => (
                     <TableRow
                       key={row.id}
-                      className="hover:bg-[#47b3b6]/5 transition-colors duration-200"
+                      className={`
+                      hover:bg-[#47b3b6]/5 
+                      transition-colors 
+                      duration-200
+                      ${isNearExpiration(row.original.expirationDate as string) ? "bg-orange-100" : ""}
+                    `}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
@@ -624,34 +737,15 @@ export default function Inventory() {
             </Table>
           </div>
         </div>
-
-        {/* Paginación */}
-        <div className="flex items-center justify-between gap-2 mt-4">
-          <div className="text-sm text-gray-500">
-            {table.getFilteredRowModel().rows.length} items encontrados
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-            >
-              Siguiente
-            </Button>
-          </div>
-        </div>
       </div>
+      {/* Reemplazar la sección actual de paginación con: */}
+      <TablePagination
+        currentPage={table.getState().pagination.pageIndex + 1}
+        pageSize={table.getState().pagination.pageSize}
+        totalItems={table.getFilteredRowModel().rows.length}
+        onPageChange={(page) => table.setPageIndex(page - 1)}
+        onPageSizeChange={(size) => table.setPageSize(size)}
+      />
 
       {/* Modal de Detalles */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

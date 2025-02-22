@@ -23,7 +23,7 @@ const images = [
 export default function VetHero() {
   return (
     <section
-      className="w-full py-16 md:py-24 lg:py-28 xl:py-32 overflow-x-hidden"
+      className="w-full py-20 overflow-x-hidden"
       style={{
         background:
           "linear-gradient(120.3deg, #91D8D9 31.56%, rgba(255, 255, 255, 0) 94.83%)",

@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
       : undefined;
 
   return {
-    title: seo?.metaTitle ?? `${title} | Your Site Name`,
+    title: seo?.metaTitle ?? `${title} | Vet Family`,
     description: seo?.metaDescription ?? title,
     openGraph: {
       title: seo?.openGraph?.title ?? title,

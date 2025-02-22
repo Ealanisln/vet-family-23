@@ -15,8 +15,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -31,6 +29,7 @@ import { getPets } from "@/app/actions/get-pets";
 import Loader from "@/components/ui/loader";
 import { Checkbox } from "../ui/checkbox";
 import PetActions from "./PetActions";
+import TablePagination from '@/components/ui/pagination';
 
 interface TablePet {
   id: string;
@@ -153,6 +152,18 @@ export default function PetsTable() {
   const table = useReactTable({
     data: filteredData,
     columns,
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      globalFilter,
+    },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -161,13 +172,6 @@ export default function PetsTable() {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-      globalFilter,
-    },
     globalFilterFn: (row, columnId, filterValue) => {
       const searchValue = filterValue.toLowerCase();
       const searchableColumns = ["name", "species", "breed", "ownerName"];
@@ -281,32 +285,13 @@ export default function PetsTable() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4 pt-6">
-          <div className="w-full sm:w-auto text-sm text-[#47b3b6] order-2 sm:order-1">
-            {table.getFilteredSelectedRowModel().rows.length} de{" "}
-            {table.getFilteredRowModel().rows.length} mascota(s) seleccionada(s).
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto order-1 sm:order-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="flex-1 sm:flex-none border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="flex-1 sm:flex-none border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-            >
-              Siguiente
-            </Button>
-          </div>
-        </div>
+        <TablePagination
+          currentPage={table.getState().pagination.pageIndex + 1}
+          pageSize={table.getState().pagination.pageSize}
+          totalItems={table.getFilteredRowModel().rows.length}
+          onPageChange={(page) => table.setPageIndex(page - 1)}
+          onPageSizeChange={(size) => table.setPageSize(size)}
+        />
       </div>
     </Card>
   );

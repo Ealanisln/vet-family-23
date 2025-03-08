@@ -10,13 +10,13 @@ import GaleriaFotos from "@/components/GaleriaFotos/GaleriaFotos";
 import FloatingWhatsApp from "@/components/FloatingWhatsapp/FloatingWhatsapp";
 import { AlertBanner } from "@/components/AlertBanner";
 import VetFamilyHero from "@/components/Banner/Banner";
-import AnniversaryBanner from '@/components/AnniversaryBanner/Anniversary';
+// import AnniversaryBanner from '@/components/AnniversaryBanner/Anniversary';
 
 export default async function Home() {
   return (
     <>
       <VetSEO />
-      <AnniversaryBanner /> 
+      {/* <AnniversaryBanner />  */}
       <FloatingWhatsApp />
       <VetFamilyHero />
       <AlertBanner />

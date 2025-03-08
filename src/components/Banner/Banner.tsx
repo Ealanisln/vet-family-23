@@ -11,13 +11,13 @@ import AppointmentDialog, { CustomButton } from "../Clientes/AppointmentDialog";
 
 const images = [
   {
-    src: "/assets/banner/2-aniversario.png",
-    alt: "Promociones de Julio",
+    src: "/assets/banner/marca-gto.png",
+    alt: "Marca Guanajuato",
   },
-  {
-    src: "/assets/banner/vacaciones.png",
-    alt: "Promociones de Vacaciones",
-  },
+  // {
+  //   src: "/assets/banner/banner.png",
+  //   alt: "Vet Family",
+  // },
 ];
 
 export default function VetHero() {

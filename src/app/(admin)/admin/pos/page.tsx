@@ -1,8 +1,8 @@
 // src/app/(admin)/admin/pos/page.tsx
 import { Metadata } from "next";
-import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, DollarSign, ListChecks, Coffee } from "lucide-react";
@@ -13,12 +13,26 @@ export const metadata: Metadata = {
   description: "Sistema de punto de venta para la clínica veterinaria"
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function POSPage() {
   // Verificar que el usuario actual tiene permisos para usar el POS
-  const session = await getServerSession();
+  const { getRoles, isAuthenticated } = getKindeServerSession();
   
-  if (!session) {
-    return redirect("/login");
+  if (!(await isAuthenticated())) {
+    return redirect("/api/auth/login");
+  }
+  
+  // Obtenemos los roles pero no necesitamos el usuario por ahora
+  const roles = await getRoles();
+  
+  // Verificar permisos específicos del POS - usando Kinde roles
+  const isAdmin = roles?.some((role) => role.key === "admin");
+  const isCashier = roles?.some((role) => role.key === "cashier");
+  
+  // Si no tiene rol de admin o cajero, redirigir
+  if (!isAdmin && !isCashier) {
+    return redirect("/admin");
   }
   
   // Obtener el estado actual de la caja

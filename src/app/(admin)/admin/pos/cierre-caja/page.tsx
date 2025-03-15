@@ -1,7 +1,6 @@
-// src/app/(admin)/admin/pos/cierre-caja/page.tsx
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -17,13 +16,15 @@ export const metadata: Metadata = {
 
 export default async function CloseDrawerPage() {
   // Verificar que el usuario tiene permisos para el POS
-  const session = await getServerSession();
+  const { isAuthenticated, getUser } = getKindeServerSession();
   
-  if (!session) {
-    return redirect("/login");
+  if (!(await isAuthenticated())) {
+    return redirect("/api/auth/login");
   }
   
-  const hasPermission = await userHasPOSPermission(session.user?.id);
+  const user = await getUser();
+  
+  const hasPermission = await userHasPOSPermission(user.id);
   
   if (!hasPermission) {
     return redirect("/admin");
@@ -38,7 +39,7 @@ export default async function CloseDrawerPage() {
       <div className="container py-6">
         <h1 className="text-2xl font-bold mb-6">Cierre de Caja</h1>
         
-        <Alert variant="warning" className="mb-6">
+        <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>No hay caja abierta</AlertTitle>
           <AlertDescription>

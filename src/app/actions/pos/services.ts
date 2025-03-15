@@ -2,26 +2,82 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getServerSession } from "next-auth";
-import prisma from "@/lib/prismaDB";
-import type { Service } from "@/types/pos";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { PrismaClient, Prisma, ServiceCategory } from "@prisma/client";
+import { randomUUID } from "crypto";
+
+// Función auxiliar para verificar errores de Prisma
+function isPrismaError(
+  error: unknown
+): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError;
+}
+
+// Custom error class para utilizar en casos específicos
+class ServerActionError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number = 500
+  ) {
+    super(message);
+    this.name = "ServerActionError";
+  }
+}
+
+// Implement a singleton pattern for PrismaClient
+const prismaClientSingleton = () => {
+  return new PrismaClient();
+};
+
+declare global {
+  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
+}
+
+const prisma = globalThis.prisma ?? prismaClientSingleton();
+if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
 
 export async function createService(data: {
   name: string;
   description?: string;
-  category: string;
+  category: ServiceCategory;
   price: number;
   duration?: number;
 }) {
   try {
-    const session = await getServerSession();
+    const { getUser, isAuthenticated } = getKindeServerSession();
     
-    if (!session) {
-      return { success: false, error: "No autorizado" };
+    // Verificar autenticación
+    if (!(await isAuthenticated())) {
+      throw new ServerActionError("No autorizado", 401);
+    }
+    
+    // Obtener usuario de Kinde
+    const kindeUser = await getUser();
+    
+    // Buscar o crear el usuario en la base de datos local
+    let dbUser = await prisma.user.findFirst({
+      where: {
+        kindeId: kindeUser.id
+      }
+    });
+    
+    // Si el usuario no existe en la base de datos, crearlo
+    if (!dbUser) {
+      dbUser = await prisma.user.create({
+        data: {
+          id: randomUUID(),
+          kindeId: kindeUser.id,
+          firstName: kindeUser.given_name || "",
+          lastName: kindeUser.family_name || "",
+          email: kindeUser.email || "",
+          name: kindeUser.given_name + " " + kindeUser.family_name
+        }
+      });
     }
     
     const service = await prisma.service.create({
       data: {
+        id: randomUUID(),
         name: data.name,
         description: data.description,
         category: data.category,
@@ -34,7 +90,10 @@ export async function createService(data: {
     revalidatePath("/admin/pos/servicios");
     
     return { success: true, service };
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof ServerActionError) {
+      return { success: false, error: error.message, statusCode: error.statusCode };
+    }
     console.error("Error creating service:", error);
     return { success: false, error: "Error al crear el servicio" };
   }
@@ -43,16 +102,17 @@ export async function createService(data: {
 export async function updateService(id: string, data: {
   name: string;
   description?: string;
-  category: string;
+  category: ServiceCategory;
   price: number;
   duration?: number;
   isActive: boolean;
 }) {
   try {
-    const session = await getServerSession();
+    const { isAuthenticated } = getKindeServerSession();
     
-    if (!session) {
-      return { success: false, error: "No autorizado" };
+    // Verificar autenticación
+    if (!(await isAuthenticated())) {
+      throw new ServerActionError("No autorizado", 401);
     }
     
     const service = await prisma.service.update({
@@ -71,7 +131,15 @@ export async function updateService(id: string, data: {
     revalidatePath(`/admin/pos/servicios/${id}`);
     
     return { success: true, service };
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof ServerActionError) {
+      return { success: false, error: error.message, statusCode: error.statusCode };
+    }
+    if (isPrismaError(error)) {
+      if (error.code === "P2025") {
+        return { success: false, error: "Servicio no encontrado" };
+      }
+    }
     console.error("Error updating service:", error);
     return { success: false, error: "Error al actualizar el servicio" };
   }
@@ -79,10 +147,11 @@ export async function updateService(id: string, data: {
 
 export async function deleteService(id: string) {
   try {
-    const session = await getServerSession();
+    const { isAuthenticated } = getKindeServerSession();
     
-    if (!session) {
-      return { success: false, error: "No autorizado" };
+    // Verificar autenticación
+    if (!(await isAuthenticated())) {
+      throw new ServerActionError("No autorizado", 401);
     }
     
     // Verificar si el servicio está siendo utilizado en alguna venta
@@ -115,7 +184,15 @@ export async function deleteService(id: string) {
     revalidatePath("/admin/pos/servicios");
     
     return { success: true };
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof ServerActionError) {
+      return { success: false, error: error.message, statusCode: error.statusCode };
+    }
+    if (isPrismaError(error)) {
+      if (error.code === "P2025") {
+        return { success: false, error: "Servicio no encontrado" };
+      }
+    }
     console.error("Error deleting service:", error);
     return { success: false, error: "Error al eliminar el servicio" };
   }
@@ -126,7 +203,7 @@ export async function getServiceById(id: string) {
     return await prisma.service.findUnique({
       where: { id },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching service:", error);
     throw error;
   }
@@ -140,11 +217,14 @@ export async function getServices({
 }: {
   page?: number;
   limit?: number;
-  category?: string | null;
+  category?: ServiceCategory | null;
   isActive?: boolean | null;
 }) {
   try {
-    const whereClause: any = {};
+    const whereClause: {
+      category?: ServiceCategory;
+      isActive?: boolean;
+    } = {};
     
     if (category) {
       whereClause.category = category;
@@ -177,7 +257,7 @@ export async function getServices({
         limit,
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching services:", error);
     throw error;
   }
@@ -190,12 +270,19 @@ export async function searchServices({
   limit = 24,
 }: {
   searchTerm?: string;
-  category?: string | null;
+  category?: ServiceCategory | null;
   isActive?: boolean | null;
   limit?: number;
 }) {
   try {
-    const whereClause: any = {};
+    const whereClause: {
+      OR?: Array<{
+        name?: { contains: string; mode: 'insensitive' };
+        description?: { contains: string; mode: 'insensitive' };
+      }>;
+      category?: ServiceCategory;
+      isActive?: boolean;
+    } = {};
     
     if (searchTerm) {
       whereClause.OR = [
@@ -231,7 +318,7 @@ export async function searchServices({
     });
     
     return services;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error searching services:", error);
     throw error;
   }

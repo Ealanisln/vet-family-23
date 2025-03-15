@@ -1,11 +1,10 @@
 // src/app/(admin)/admin/pos/servicios/[id]/page.tsx
 import { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Trash2, Calendar, Clock } from "lucide-react";
 import { getServiceById } from "@/app/actions/pos/services";
@@ -29,13 +28,15 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 export default async function ServiceDetailPage({ params }: { params: { id: string } }) {
   // Verificar que el usuario tiene permisos para el POS
-  const session = await getServerSession();
+  const { isAuthenticated, getUser } = getKindeServerSession();
   
-  if (!session) {
-    return redirect("/login");
+  if (!(await isAuthenticated())) {
+    return redirect("/api/auth/login");
   }
   
-  const hasPermission = await userHasPOSPermission(session.user?.id);
+  const user = await getUser();
+  
+  const hasPermission = await userHasPOSPermission(user.id);
   
   if (!hasPermission) {
     return redirect("/admin");

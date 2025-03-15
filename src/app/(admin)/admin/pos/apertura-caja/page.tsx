@@ -1,27 +1,32 @@
 // src/app/(admin)/admin/pos/apertura-caja/page.tsx
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { getCurrentDrawer } from "@/app/actions/pos/cash-drawer";
 import OpenDrawerForm from "@/components/POS/CashDrawer/OpenDrawerForm";
-import { userHasPOSPermission } from "@/utils/pos-helpers";
 
 export const metadata: Metadata = {
   title: "Apertura de Caja | POS",
   description: "Apertura de caja para el sistema POS"
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function OpenDrawerPage() {
   // Verificar que el usuario tiene permisos para el POS
-  const session = await getServerSession();
+  const { isAuthenticated, getRoles } = getKindeServerSession();
   
-  if (!session) {
-    return redirect("/login");
+  if (!(await isAuthenticated())) {
+    return redirect("/api/auth/login");
   }
   
-  const hasPermission = await userHasPOSPermission(session.user?.id);
+  // Verificar roles mediante Kinde en lugar de la base de datos
+  const roles = await getRoles();
+  const isAdmin = roles?.some((role) => role.key === "admin");
+  const isCashier = roles?.some((role) => role.key === "cashier");
   
-  if (!hasPermission) {
+  // Si no tiene rol de admin o cajero, redirigir
+  if (!isAdmin && !isCashier) {
     return redirect("/admin");
   }
   

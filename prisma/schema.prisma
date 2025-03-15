@@ -178,7 +178,7 @@ model Staff {
 }
 
 model InventoryItem {
-  id             String              @id @default(uuid())
+  id             String            @id @default(uuid())
   name           String
   category       InventoryCategory
   description    String?
@@ -186,8 +186,10 @@ model InventoryItem {
   presentation   String?
   measure        String?
   brand          String?
-  quantity       Int                 @default(0)
+  quantity       Int               @default(0)
   minStock       Int?
+  price          Float? // Campo para almacenar el precio
+  cost           Float? // Campo para almacenar el costo
   location       String?
   expirationDate DateTime?
   status         InventoryStatus     @default(ACTIVE)
@@ -223,27 +225,27 @@ model InventoryMovement {
 
 // Modelos para POS
 model Sale {
-  id              String          @id @default(uuid())
-  receiptNumber   String          @unique
-  date            DateTime        @default(now())
-  userId          String?
-  petId           String?
-  subtotal        Float
-  tax             Float
-  discount        Float           @default(0)
-  total           Float
-  paymentMethod   PaymentMethod
-  status          SaleStatus      @default(COMPLETED)
-  notes           String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  
+  id            String        @id @default(uuid())
+  receiptNumber String        @unique
+  date          DateTime      @default(now())
+  userId        String?
+  petId         String?
+  subtotal      Float
+  tax           Float
+  discount      Float         @default(0)
+  total         Float
+  paymentMethod PaymentMethod
+  status        SaleStatus    @default(COMPLETED)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
   // Relaciones
-  items           SaleItem[]
-  user            User?           @relation(fields: [userId], references: [id])
-  pet             Pet?            @relation(fields: [petId], references: [id])
-  transactions    CashTransaction[]
-  
+  items        SaleItem[]
+  user         User?             @relation(fields: [userId], references: [id])
+  pet          Pet?              @relation(fields: [petId], references: [id])
+  transactions CashTransaction[]
+
   @@index([date])
   @@index([userId])
   @@index([paymentMethod])
@@ -251,79 +253,79 @@ model Sale {
 }
 
 model SaleItem {
-  id              String        @id @default(uuid())
-  saleId          String
-  itemId          String?
-  serviceId       String?
-  description     String
-  quantity        Int
-  unitPrice       Float
-  discount        Float        @default(0)
-  total           Float
-  
+  id          String  @id @default(uuid())
+  saleId      String
+  itemId      String?
+  serviceId   String?
+  description String
+  quantity    Int
+  unitPrice   Float
+  discount    Float   @default(0)
+  total       Float
+
   // Relaciones
-  sale            Sale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  inventoryItem   InventoryItem? @relation(fields: [itemId], references: [id])
-  service         Service?     @relation(fields: [serviceId], references: [id])
-  
+  sale          Sale           @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  inventoryItem InventoryItem? @relation(fields: [itemId], references: [id])
+  service       Service?       @relation(fields: [serviceId], references: [id])
+
   @@index([saleId])
   @@index([itemId])
   @@index([serviceId])
 }
 
 model Service {
-  id              String        @id @default(uuid())
-  name            String
-  description     String?
-  category        ServiceCategory
-  price           Float
-  duration        Int?          // Duración en minutos
-  isActive        Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  category    ServiceCategory
+  price       Float
+  duration    Int? // Duración en minutos
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
   // Relaciones
-  saleItems       SaleItem[]
-  
+  saleItems SaleItem[]
+
   @@index([category])
   @@index([isActive])
 }
 
 model CashDrawer {
-  id              String        @id @default(uuid())
-  openedAt        DateTime      @default(now())
-  closedAt        DateTime?
-  openedBy        String
-  closedBy        String?
-  initialAmount   Float
-  finalAmount     Float?
-  expectedAmount  Float?
-  difference      Float?
-  status          DrawerStatus  @default(OPEN)
-  notes           String?
-  
+  id             String       @id @default(uuid())
+  openedAt       DateTime     @default(now())
+  closedAt       DateTime?
+  openedBy       String
+  closedBy       String?
+  initialAmount  Float
+  finalAmount    Float?
+  expectedAmount Float?
+  difference     Float?
+  status         DrawerStatus @default(OPEN)
+  notes          String?
+
   // Relaciones
-  openUser        User          @relation("OpenedDrawers", fields: [openedBy], references: [id])
-  closeUser       User?         @relation("ClosedDrawers", fields: [closedBy], references: [id])
-  transactions    CashTransaction[]
-  
+  openUser     User              @relation("OpenedDrawers", fields: [openedBy], references: [id])
+  closeUser    User?             @relation("ClosedDrawers", fields: [closedBy], references: [id])
+  transactions CashTransaction[]
+
   @@index([openedAt])
   @@index([status])
 }
 
 model CashTransaction {
-  id              String            @id @default(uuid())
-  drawerId        String
-  amount          Float
-  type            TransactionType
-  description     String?
-  createdAt       DateTime          @default(now())
-  saleId          String?
-  
+  id          String          @id @default(uuid())
+  drawerId    String
+  amount      Float
+  type        TransactionType
+  description String?
+  createdAt   DateTime        @default(now())
+  saleId      String?
+
   // Relaciones
-  drawer          CashDrawer        @relation(fields: [drawerId], references: [id], onDelete: Cascade)
-  sale            Sale?             @relation(fields: [saleId], references: [id])
-  
+  drawer CashDrawer @relation(fields: [drawerId], references: [id], onDelete: Cascade)
+  sale   Sale?      @relation(fields: [saleId], references: [id])
+
   @@index([drawerId])
   @@index([type])
   @@index([saleId])

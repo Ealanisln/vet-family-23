@@ -1,4 +1,5 @@
 // src/types/pos.ts
+
 export type PaymentMethod = 
   | "CASH"
   | "CREDIT_CARD"
@@ -66,13 +67,33 @@ export interface SaleFormData {
   items: SaleItemData[];
 }
 
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: string;
+  description?: string | null;
+  activeCompound?: string | null;
+  presentation?: string | null;
+  measure?: string | null;
+  brand?: string | null;
+  quantity: number;
+  minStock?: number | null;
+  location?: string | null;
+  expirationDate?: Date | null;
+  status: string;
+  batchNumber?: string | null;
+  specialNotes?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Service {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   category: string;
   price: number;
-  duration?: number;
+  duration?: number | null;
   isActive: boolean;
 }
 
@@ -88,14 +109,14 @@ export interface Sale {
   total: number;
   paymentMethod: PaymentMethod;
   status: SaleStatus;
-  notes?: string;
+  notes?: string | null;
   createdAt: Date;
   updatedAt: Date;
   user?: {
     id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
   } | null;
   pet?: {
     id: string;
@@ -116,33 +137,33 @@ export interface SaleItem {
   unitPrice: number;
   discount: number;
   total: number;
-  inventoryItem?: any | null;
+  inventoryItem?: InventoryItem | null;
   service?: Service | null;
 }
 
 export interface CashDrawer {
   id: string;
   openedAt: Date;
-  closedAt?: Date;
+  closedAt?: Date | null;
   openedBy: string;
-  closedBy?: string;
+  closedBy?: string | null;
   initialAmount: number;
-  finalAmount?: number;
-  expectedAmount?: number;
-  difference?: number;
+  finalAmount?: number | null;
+  expectedAmount?: number | null;
+  difference?: number | null;
   status: DrawerStatus;
-  notes?: string;
+  notes?: string | null;
   openUser: {
     id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
   };
   closeUser?: {
     id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
   } | null;
   transactions: CashTransaction[];
 }
@@ -152,7 +173,7 @@ export interface CashTransaction {
   drawerId: string;
   amount: number;
   type: TransactionType;
-  description?: string;
+  description?: string | null;
   createdAt: Date;
   saleId?: string | null;
   sale?: Sale | null;

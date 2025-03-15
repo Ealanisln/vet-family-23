@@ -1,7 +1,7 @@
 // src/app/(admin)/admin/pos/ventas/page.tsx
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { getSales } from "@/app/actions/pos/sales";
 import SalesTable from "@/components/POS/Sales/SalesTable";
 import { userHasPOSPermission } from "@/utils/pos-helpers";
@@ -25,13 +25,15 @@ interface SalesPageProps {
 
 export default async function SalesPage({ searchParams }: SalesPageProps) {
   // Verificar que el usuario tiene permisos para el POS
-  const session = await getServerSession();
+  const { isAuthenticated, getUser } = getKindeServerSession();
   
-  if (!session) {
-    return redirect("/login");
+  if (!(await isAuthenticated())) {
+    return redirect("/api/auth/login");
   }
   
-  const hasPermission = await userHasPOSPermission(session.user?.id);
+  const user = await getUser();
+  
+  const hasPermission = await userHasPOSPermission(user.id);
   
   if (!hasPermission) {
     return redirect("/admin");
@@ -41,8 +43,17 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   const page = parseInt(searchParams.page || "1");
   const limit = parseInt(searchParams.limit || "10");
   
+  // Definir interfaz para los filtros
+  interface SalesFilters {
+    search?: string;
+    status?: string;
+    paymentMethod?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }
+
   // Construir filtros
-  const filters: any = {};
+  const filters: SalesFilters = {};
   
   if (searchParams.search) {
     filters.search = searchParams.search;

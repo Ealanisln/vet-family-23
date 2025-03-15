@@ -1,146 +1,267 @@
 // src/app/(admin)/admin/pos/servicios/page.tsx
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
 import Link from "next/link";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2 } from "lucide-react";
+import { 
+  Search, 
+  Plus, 
+  Filter, 
+  MoreHorizontal, 
+  Edit2, 
+  Trash2,
+  ArrowLeft
+} from "lucide-react";
 import { getServices } from "@/app/actions/pos/services";
-import { formatCurrency, translateServiceCategory } from "@/utils/pos-helpers";
-import { userHasPOSPermission } from "@/utils/pos-helpers";
+import { translateServiceCategory } from "@/utils/pos-helpers";
+import { ServiceCategory } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "Servicios | POS",
-  description: "Gestión de servicios para el sistema POS"
+  description: "Administración de servicios en el sistema POS"
 };
 
-export default async function ServicesPage() {
-  // Verificar que el usuario tiene permisos para el POS
-  const session = await getServerSession();
+export const dynamic = "force-dynamic"; // Asegurarse de que la página se renderiza en cada solicitud
+
+export default async function ServiciosPage({
+  searchParams,
+}: {
+  searchParams: { 
+    page?: string;
+    category?: string;
+    isActive?: string;
+  };
+}) {
+  // Verificar que el usuario actual tiene permisos para usar el POS
+  const { getRoles, isAuthenticated } = getKindeServerSession();
   
-  if (!session) {
-    return redirect("/login");
+  if (!(await isAuthenticated())) {
+    redirect("/api/auth/login");
   }
   
-  const hasPermission = await userHasPOSPermission(session.user?.id);
+  // Obtenemos los roles usando el mismo enfoque que en el componente principal del POS
+  const roles = await getRoles();
   
-  if (!hasPermission) {
-    return redirect("/admin");
+  // Verificar permisos específicos del POS - usando Kinde roles
+  const isAdmin = roles?.some((role) => role.key === "admin");
+  const isCashier = roles?.some((role) => role.key === "cashier");
+  
+  // Si no tiene rol de admin o cajero, redirigir
+  if (!isAdmin && !isCashier) {
+    redirect("/admin");
   }
+  
+  // Obtener parámetros de búsqueda y filtrado
+  const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
+  const category = searchParams.category as ServiceCategory | null;
+  const isActive = searchParams.isActive 
+    ? searchParams.isActive === "true" 
+    : null;
   
   // Obtener los servicios
-  const { services } = await getServices({
-    page: 1,
-    limit: 100,
-    isActive: null
+  const { 
+    services, 
+    pagination 
+  } = await getServices({ 
+    page, 
+    category, 
+    isActive,
+    limit: 10
   });
   
-  // Agrupar servicios por categoría
-  const servicesByCategory: Record<string, any[]> = {};
-  
-  services.forEach(service => {
-    if (!servicesByCategory[service.category]) {
-      servicesByCategory[service.category] = [];
-    }
-    servicesByCategory[service.category].push(service);
-  });
-  
-  // Ordenar categorías
-  const sortedCategories = Object.keys(servicesByCategory).sort();
+  // Categorías de servicios para filtrar
+  const serviceCategories: ServiceCategory[] = [
+    "CONSULTATION",
+    "SURGERY",
+    "VACCINATION",
+    "GROOMING",
+    "DENTAL",
+    "LABORATORY",
+    "IMAGING",
+    "HOSPITALIZATION",
+    "OTHER"
+  ];
   
   return (
     <div className="container py-6">
+      <div className="mb-6">
+        <Link
+          href="/admin/pos"
+          className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Volver al POS
+        </Link>
+      </div>
+      
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Servicios</h1>
-        
         <Button asChild>
           <Link href="/admin/pos/servicios/nuevo">
-            <PlusCircle className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Nuevo Servicio
           </Link>
         </Button>
       </div>
       
-      {services.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-10">
-            <p className="text-gray-500 mb-4">No hay servicios registrados</p>
-            <Button asChild>
-              <Link href="/admin/pos/servicios/nuevo">
-                Crear Primer Servicio
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+          <CardDescription>Filtra los servicios por diferentes criterios</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input 
+                placeholder="Buscar servicios..." 
+                className="pl-10"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-500">Categoría:</span>
+              <select 
+                className="flex-1 px-3 py-2 border rounded-md text-sm"
+                defaultValue=""
+              >
+                <option value="">Todas</option>
+                {serviceCategories.map(cat => (
+                  <option key={cat} value={cat}>{translateServiceCategory(cat)}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-500">Estado:</span>
+              <select 
+                className="flex-1 px-3 py-2 border rounded-md text-sm"
+                defaultValue=""
+              >
+                <option value="">Todos</option>
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableCaption>
+              {services.length === 0 
+                ? "No hay servicios disponibles." 
+                : `Mostrando ${services.length} de ${pagination.total} servicios.`
+              }
+            </TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Categoría</TableHead>
+                <TableHead className="text-right">Precio</TableHead>
+                <TableHead>Duración</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {services.map((service) => (
+                <TableRow key={service.id}>
+                  <TableCell className="font-medium">{service.name}</TableCell>
+                  <TableCell>{translateServiceCategory(service.category)}</TableCell>
+                  <TableCell className="text-right">${service.price.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {service.duration 
+                      ? `${service.duration} min` 
+                      : "No especificada"
+                    }
+                  </TableCell>
+                  <TableCell>
+                    {service.isActive 
+                      ? <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Activo</Badge>
+                      : <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Inactivo</Badge>
+                    }
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menú</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/pos/servicios/${service.id}`}>
+                            <Edit2 className="h-4 w-4 mr-2" />
+                            Editar
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-red-600"
+                          // Aquí normalmente agregarías un onClick para confirmar eliminación
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+      {/* Paginación */}
+      {pagination.pages > 1 && (
+        <div className="flex justify-center mt-6">
+          <div className="flex space-x-2">
+            {Array.from({ length: pagination.pages }).map((_, i) => (
+              <Link
+                key={i}
+                href={`/admin/pos/servicios?page=${i + 1}${
+                  category ? `&category=${category}` : ''
+                }${
+                  isActive !== null ? `&isActive=${isActive}` : ''
+                }`}
+              >
+                <Button
+                  variant={i + 1 === pagination.page ? "default" : "outline"}
+                  size="sm"
+                  className="w-8 h-8 p-0"
+                >
+                  {i + 1}
+                </Button>
               </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          {sortedCategories.map(category => (
-            <Card key={category}>
-              <CardHeader className="pb-3">
-                <CardTitle>
-                  {translateServiceCategory(category)}
-                </CardTitle>
-                <CardDescription>
-                  {servicesByCategory[category].length} servicio(s) en esta categoría
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Descripción</TableHead>
-                      <TableHead>Precio</TableHead>
-                      <TableHead>Duración</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {servicesByCategory[category].map(service => (
-                      <TableRow key={service.id}>
-                        <TableCell className="font-medium">{service.name}</TableCell>
-                        <TableCell>{service.description || "-"}</TableCell>
-                        <TableCell>{formatCurrency(service.price)}</TableCell>
-                        <TableCell>
-                          {service.duration ? `${service.duration} min.` : "-"}
-                        </TableCell>
-                        <TableCell>
-                          {service.isActive ? (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              Activo
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                              Inactivo
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              asChild
-                            >
-                              <Link href={`/admin/pos/servicios/${service.id}/editar`}>
-                                <Edit className="h-4 w-4" />
-                                <span className="sr-only">Editar</span>
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                              asChild
-                            >
-                              <Link href={`/admin/pos/servicios/${service.id}/eliminar`}>
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Eliminar</span>
-                              </Link>
-                            </Button>
-                          </div
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

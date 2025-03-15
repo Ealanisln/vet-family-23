@@ -1,6 +1,6 @@
 "use server";
 
-import { PrismaClient, Role, User, UserRole } from "@prisma/client";
+import { PrismaClient, Role, User } from "@prisma/client";
 import { createKindeManagementAPIClient } from "@kinde-oss/kinde-auth-nextjs/server";
 import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";

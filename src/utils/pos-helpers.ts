@@ -1,7 +1,20 @@
 // src/utils/pos-helpers.ts
-import prisma from "@/lib/prismaDB";
-import { format, parse, isToday, isYesterday, isThisWeek, isThisMonth } from "date-fns";
+import { PrismaClient, InventoryCategory } from "@prisma/client";
+import { format, isToday, isYesterday, isThisWeek, isThisMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { CashTransaction, CashDrawer, TransactionType } from "../types/pos";
+
+// Implement a singleton pattern for PrismaClient
+const prismaClientSingleton = () => {
+  return new PrismaClient();
+};
+
+declare global {
+  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
+}
+
+const prisma = globalThis.prisma ?? prismaClientSingleton();
+if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
 
 /**
  * Genera un número de recibo único basado en la fecha y un contador incremental
@@ -87,7 +100,7 @@ export function formatCurrency(amount: number): string {
 /**
  * Traduce los tipos de transacción a español
  */
-export function translateTransactionType(type: string): string {
+export function translateTransactionType(type: TransactionType | string): string {
   const translations: Record<string, string> = {
     SALE: "Venta",
     REFUND: "Devolución",
@@ -135,9 +148,82 @@ export function translateServiceCategory(category: string): string {
 }
 
 /**
+ * Traduce las categorías de inventario a español
+ */
+export function translateInventoryCategory(category: InventoryCategory | string): string {
+  const translations: Record<string, string> = {
+    ACCESSORY: "Accesorios",
+    ANESTHETICS_SEDATIVES: "Anestésicos/Sedantes",
+    ANTAGONISTS: "Antagonistas",
+    ANTI_EMETIC: "Antieméticos",
+    ANTI_INFLAMMATORY_ANALGESICS: "Antiinflamatorios/Analgésicos",
+    ANTIBIOTIC: "Antibióticos",
+    ANTIDIARRHEAL: "Antidiarreicos",
+    ANTIFUNGAL: "Antifúngicos",
+    ANTIHISTAMINE: "Antihistamínicos",
+    ANTISEPTICS_HEALING: "Antisépticos",
+    APPETITE_STIMULANTS_HEMATOPOIESIS: "Estimulantes del apetito",
+    BRONCHODILATOR: "Broncodilatadores",
+    CARDIOLOGY: "Cardiología",
+    CHIPS: "Microchips",
+    CONSUMABLE: "Consumibles",
+    CORTICOSTEROIDS: "Corticosteroides",
+    DERMATOLOGY: "Dermatología",
+    DEWORMERS: "Antiparasitarios",
+    DRY_FOOD: "Alimento seco",
+    ENDOCRINOLOGY_HORMONAL: "Endocrinología",
+    EXPECTORANT: "Expectorantes",
+    FOOD: "Alimentos",
+    GASTROPROTECTORS_GASTROENTEROLOGY: "Gastroprotectores",
+    IMMUNOSTIMULANT: "Inmunoestimulantes",
+    LAXATIVES: "Laxantes",
+    MEDICATED_SHAMPOO: "Shampoo medicado",
+    MEDICINE: "Medicamentos",
+    NEPHROLOGY: "Nefrología",
+    OINTMENTS: "Ungüentos",
+    OPHTHALMIC: "Oftálmicos",
+    OTIC: "Óticos",
+    RESPIRATORY: "Respiratorios",
+    SUPPLEMENTS_OTHERS: "Suplementos y otros",
+    SURGICAL_MATERIAL: "Material quirúrgico",
+    VACCINE: "Vacunas",
+    WET_FOOD: "Alimento húmedo"
+  };
+  
+  return translations[category] || category;
+}
+
+/**
+ * Traduce los estados de caja a español
+ */
+export function translateDrawerStatus(status: string): string {
+  const translations: Record<string, string> = {
+    OPEN: "Abierta",
+    CLOSED: "Cerrada",
+    RECONCILED: "Conciliada"
+  };
+  
+  return translations[status] || status;
+}
+
+/**
+ * Traduce los estados de venta a español
+ */
+export function translateSaleStatus(status: string): string {
+  const translations: Record<string, string> = {
+    PENDING: "Pendiente",
+    COMPLETED: "Completada",
+    CANCELLED: "Cancelada",
+    REFUNDED: "Reembolsada"
+  };
+  
+  return translations[status] || status;
+}
+
+/**
  * Calcula el total de ventas para una caja registradora
  */
-export function calculateDrawerSalesTotal(transactions: any[]): number {
+export function calculateDrawerSalesTotal(transactions: CashTransaction[]): number {
   return transactions
     .filter(tx => tx.type === "SALE")
     .reduce((sum, tx) => sum + tx.amount, 0);
@@ -146,7 +232,7 @@ export function calculateDrawerSalesTotal(transactions: any[]): number {
 /**
  * Calcula el total de devoluciones para una caja registradora
  */
-export function calculateDrawerRefundsTotal(transactions: any[]): number {
+export function calculateDrawerRefundsTotal(transactions: CashTransaction[]): number {
   return transactions
     .filter(tx => tx.type === "REFUND")
     .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
@@ -155,7 +241,7 @@ export function calculateDrawerRefundsTotal(transactions: any[]): number {
 /**
  * Calcula el total de entradas y salidas para una caja registradora
  */
-export function calculateDrawerFlowTotal(transactions: any[]): number {
+export function calculateDrawerFlowTotal(transactions: CashTransaction[]): number {
   return transactions
     .filter(tx => tx.type === "DEPOSIT" || tx.type === "WITHDRAWAL")
     .reduce((sum, tx) => sum + tx.amount, 0);
@@ -168,17 +254,23 @@ export async function userHasPOSPermission(userId: string): Promise<boolean> {
   if (!userId) return false;
   
   try {
-    // Verificar si el usuario tiene rol de administrador o cajero
-    const userRoles = await prisma.userRole.findMany({
+    // Buscar al usuario y sus roles
+    const user = await prisma.user.findUnique({
       where: {
-        userId,
+        id: userId
       },
       include: {
-        role: true,
-      },
+        userRoles: {
+          include: {
+            role: true
+          }
+        }
+      }
     });
     
-    return userRoles.some(ur => 
+    if (!user || !user.userRoles) return false;
+    
+    return user.userRoles.some(ur => 
       ur.role.key === "ADMIN" || 
       ur.role.key === "CASHIER"
     );
@@ -191,9 +283,9 @@ export async function userHasPOSPermission(userId: string): Promise<boolean> {
 /**
  * Obtiene el balance actual de una caja registradora
  */
-export function calculateDrawerBalance(drawer: any): number {
+export function calculateDrawerBalance(drawer: CashDrawer | null): number {
   if (!drawer) return 0;
   
-  const transactionsTotal = drawer.transactions.reduce((sum: number, tx: any) => sum + tx.amount, 0);
+  const transactionsTotal = drawer.transactions.reduce((sum: number, tx: CashTransaction) => sum + tx.amount, 0);
   return drawer.initialAmount + transactionsTotal;
 }

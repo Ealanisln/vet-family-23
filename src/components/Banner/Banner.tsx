@@ -6,31 +6,49 @@ import {
   CarouselPrevious,
   CarouselNext,
 } from "@/components/ui/carousel";
-import { CalendarDays, Stethoscope, Heart } from "lucide-react";
+import { CalendarDays, Stethoscope, Heart, Home } from "lucide-react";
 import AppointmentDialog, { CustomButton } from "../Clientes/AppointmentDialog";
 
 const images = [
   {
+    src: "/assets/banner/march-25.png",
+    alt: "Vet Family",
+  },
+  {
     src: "/assets/banner/marca-gto.png",
     alt: "Marca Guanajuato",
   },
-  // {
-  //   src: "/assets/banner/banner.png",
-  //   alt: "Vet Family",
-  // },
 ];
 
 export default function VetHero() {
   return (
     <section
-      className="w-full py-20 overflow-x-hidden"
+      className="w-full py-12 overflow-x-hidden"
       style={{
         background:
           "linear-gradient(120.3deg, #91D8D9 31.56%, rgba(255, 255, 255, 0) 94.83%)",
       }}
     >
-      <div className="container px-4 md:px-6 h-full mx-auto">
-        <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px] h-full">
+      <div className="container px-4 md:px-6 h-fu ll mx-auto pb-8">
+        {/* Banner promocional de Semana Santa */}
+        <div className="mb-8 p-4 bg-yellow-100 rounded-lg border-2 border-yellow-300 shadow-md">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="flex items-center mb-3 md:mb-0">
+              <Home className="w-8 h-8 text-orange-500 mr-3 flex-shrink-0" />
+              <h3 className="text-xl font-bold text-orange-600">
+                ¡Especial de Semana Santa! Hotel para tu mascota
+              </h3>
+            </div>
+            <CustomButton href="/hotel-mascotas" className="bg-orange-500 hover:bg-orange-600">
+              Reserva Ahora
+            </CustomButton>
+          </div>
+          <p className="mt-2 text-orange-800">
+            Mientras disfrutas de tus vacaciones, tu mejor amigo también merece unas vacaciones de lujo. ¡10% de descuento en estancias de 8+ días pagando en efectivo!
+          </p>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px] h-full pt-8">
           <div className="flex flex-col justify-between h-full space-y-8">
             <div className="space-y-6">
               <h1 className="text-3xl font-bold tracking-tight sm:text-5xl xl:text-6xl">
@@ -46,6 +64,9 @@ export default function VetHero() {
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <CustomButton href="/promociones">Promociones</CustomButton>
               <AppointmentDialog />
+              <CustomButton href="/hotel-mascotas" className="bg-orange-500 hover:bg-orange-600">
+                Hotel Canino
+              </CustomButton>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-6 rounded-lg">
               <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">

@@ -2,23 +2,17 @@
 
 import sendEmail from "@/app/actions/email";
 import { useForm, SubmitHandler } from "react-hook-form";
-import React, { useState } from "react";
+import React from "react";
 import toast, { Toaster } from "react-hot-toast";
 
+// This matches the ContactFormInputs in your action
 interface FormInputs {
   name: string;
   email: string;
   message: string;
 }
 
-interface Message {
-  type: string;
-  text: string;
-}
-
 const Form = () => {
-  const [message, setMessage] = useState<Message | null>(null);
-
   const {
     register,
     handleSubmit,
@@ -28,24 +22,13 @@ const Form = () => {
 
   const onSubmit: SubmitHandler<FormInputs> = async (data) => {
     try {
-      const result = await sendEmail(data);
-      // Handle confirmation here
-      setMessage({ type: "success", text: result });
-
-      // Clear the message after 3 seconds
-      setTimeout(() => {
-        setMessage(null);
-        reset();
-      }, 3000);
+      await sendEmail(data);
+      toast.success("Mensaje enviado exitosamente");
+      
+      // Clear form after successful submission
+      reset();
     } catch (error) {
-      setMessage({
-        type: "error",
-        text: "Error sending email: " + error,
-      });
-      // Clear the error message after 3 seconds
-      setTimeout(() => {
-        setMessage(null);
-      }, 3000);
+      toast.error(`Error al enviar mensaje: ${error}`);
     }
   };
 
@@ -82,7 +65,7 @@ const Form = () => {
                         placeholder="Escribe aquí tu nombre"
                         className="w-full rounded-sm border border-stroke bg-[#f8f8f8] px-6 py-3 text-base text-body-color outline-none focus:border-primary dark:border-transparent dark:bg-[#2C303B] dark:text-body-color-dark dark:shadow-two dark:focus:border-primary dark:focus:shadow-none"
                       />
-                      {errors.name && <span>Este campo es requerido</span>}
+                      {errors.name && <span className="text-red-500 text-sm">Este campo es requerido</span>}
                     </div>
                   </div>
                   <div className="w-full px-4 md:w-1/2">
@@ -94,12 +77,22 @@ const Form = () => {
                         Tú correo
                       </label>
                       <input
-                        {...register("email", { required: true })}
+                        {...register("email", { 
+                          required: true,
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: "Dirección de correo inválida"
+                          }
+                        })}
                         type="email"
                         placeholder="Escribe tu email"
                         className="w-full rounded-sm border border-stroke bg-[#f8f8f8] px-6 py-3 text-base text-body-color outline-none focus:border-primary dark:border-transparent dark:bg-[#2C303B] dark:text-body-color-dark dark:shadow-two dark:focus:border-primary dark:focus:shadow-none"
                       />
-                      {errors.email && <span>Este campo es requerido</span>}
+                      {errors.email && (
+                        <span className="text-red-500 text-sm">
+                          {errors.email.message || "Este campo es requerido"}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="w-full px-4">
@@ -115,14 +108,17 @@ const Form = () => {
                           required: true,
                           maxLength: 500,
                         })}
-                        name="message"
                         rows={5}
                         placeholder="Aquí escribe tu mensaje"
                         className="w-full resize-none rounded-sm border border-stroke bg-[#f8f8f8] px-6 py-3 text-base text-body-color outline-none focus:border-primary dark:border-transparent dark:bg-[#2C303B] dark:text-body-color-dark dark:shadow-two dark:focus:border-primary dark:focus:shadow-none"
-                      >
-                      </textarea>
-                      {errors.email && <span>Este campo es requerido - </span>}
-                      <span>Max: 500 caracteres</span>
+                      />
+                      {errors.message && (
+                        <span className="text-red-500 text-sm">
+                          {errors.message.type === "required" ? "Este campo es requerido" : ""}
+                          {errors.message.type === "maxLength" ? "El mensaje no puede exceder 500 caracteres" : ""}
+                        </span>
+                      )}
+                      <span className="text-sm text-gray-500">Max: 500 caracteres</span>
                     </div>
                   </div>
                   <div className="w-full px-4">

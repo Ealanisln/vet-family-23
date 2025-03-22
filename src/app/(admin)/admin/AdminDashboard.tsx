@@ -9,20 +9,10 @@ import {
   UserX,
   LucideIcon,
   UserPlus,
-  FolderClock,
   Package,
-  Syringe,
-  AlertTriangle,
-  History,
-  Calendar,
-  CircleDollarSign,
-  ScrollText,
-  Users,
-  ClipboardList,
-  Bell,
-  UserCog,
-  SyringeIcon,
   Pill,
+  SyringeIcon,
+  Users,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -33,17 +23,9 @@ import {
 } from "@/components/ui/accordion";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 import { MedicalRecordDialog } from "./AddMedicalRecordDialog";
-import { MedicalHistory } from "@prisma/client";
-
 
 interface MenuOptionProps {
   href: string;
@@ -63,14 +45,6 @@ interface SectionProps {
 interface AdminDashboardProps {
   username: string;
   isAdmin: boolean;
-}
-
-interface MedicalRecordDialogProps {
-  existingRecord?: MedicalHistory;
-  petId?: string;
-  triggerButton?: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 }
 
 // Componente MenuOption mejorado
@@ -148,11 +122,8 @@ const Section: React.FC<SectionProps> = ({ icon: Icon, title, children }) => (
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   username,
-  isAdmin,
 }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [openMedicalRecord, setOpenMedicalRecord] = useState(false);
-
 
   const clientOptions: MenuOptionProps[] = [
     {
@@ -173,12 +144,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       href: "/admin/mascotas",
       description: "Gestionar registro de mascotas",
     },
-    // {
-    //   title: "Historial Médico",
-    //   icon: ClipboardList,
-    //   href: "/admin/historial-medico",
-    //   description: "Ver historiales clínicos",
-    // },
   ];
 
   const inventoryOptions: MenuOptionProps[] = [
@@ -200,42 +165,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       href: "/admin/inventario/vacunas",
       description: "Control de vacunas",
     },
-    // {
-    //   title: "Movimientos",
-    //   icon: History,
-    //   href: "/admin/inventario/movimientos",
-    //   description: "Registro de movimientos",
-    // },
-  ];
-
-  const appointmentOptions: MenuOptionProps[] = [
-    {
-      title: "Citas",
-      icon: Calendar,
-      href: "/admin/citas",
-      description: "Gestionar agenda",
-    },
-    {
-      title: "Vacunación",
-      icon: SyringeIcon,
-      href: "/admin/vacunacion",
-      description: "Calendario de vacunación",
-    },
-  ];
-
-  const administrationOptions: MenuOptionProps[] = [
-    {
-      title: "Archivo",
-      icon: FolderClock,
-      href: "/admin/archivo-historico",
-      description: "Archivo histórico",
-    },
-    // {
-    //   title: "Stock Bajo",
-    //   icon: AlertTriangle,
-    //   href: "/admin/inventario/bajo-stock",
-    //   description: "Productos por reordenar",
-    // },
   ];
 
   const quickActions: MenuOptionProps[] = [
@@ -311,18 +240,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <Section title="Inventario" icon={Package}>
             {inventoryOptions.map((option, index) => (
-              <MenuOption key={index} {...option} />
-            ))}
-          </Section>
-
-          {/* <Section title="Citas y Agenda" icon={Calendar}>
-            {appointmentOptions.map((option, index) => (
-              <MenuOption key={index} {...option} />
-            ))}
-          </Section> */}
-
-          <Section title="Administración" icon={UserCog}>
-            {administrationOptions.map((option, index) => (
               <MenuOption key={index} {...option} />
             ))}
           </Section>

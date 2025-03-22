@@ -1,15 +1,15 @@
-// src/app/actions/get-photos.ts
+// src/app/actions/get-hotel-photos.ts
 
 "use server";
 
 import cloudinaryV2 from "@/utils/cloudinary";
 import { CloudinaryPhoto, CloudinaryResource } from "@/types/cloudinary";
 
-export const getCloudinaryPhotos = async (): Promise<CloudinaryPhoto[]> => {
+export const getHotelPhotos = async (): Promise<CloudinaryPhoto[]> => {
   try {
-    // Create a properly typed response
+    // Specifically query for photos in the hotel-perros folder
     const { resources } = await cloudinaryV2.search
-      .expression("resource_type:image")
+      .expression("resource_type:image AND folder:vet-for-family/hotel-perros")
       .sort_by("public_id", "desc")
       .max_results(30)
       .with_field('tags')
@@ -44,7 +44,7 @@ export const getCloudinaryPhotos = async (): Promise<CloudinaryPhoto[]> => {
       };
     });
   } catch (error) {
-    console.error("Error fetching photos:", error);
-    throw new Error("Error al obtener fotografias.");
+    console.error("Error fetching hotel photos:", error);
+    throw new Error("Error al obtener fotografías del hotel.");
   }
 };

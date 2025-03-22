@@ -6,10 +6,16 @@ import {
   CarouselPrevious,
   CarouselNext,
 } from "@/components/ui/carousel";
-import { CalendarDays, Stethoscope, Heart, Home } from "lucide-react";
+import { CalendarDays, Stethoscope, Heart } from "lucide-react";
 import AppointmentDialog, { CustomButton } from "../Clientes/AppointmentDialog";
+import BannerSemanaSanta from "../Promociones/BannerSemanaSanta";
 
-const images = [
+interface BannerImage {
+  src: string;
+  alt: string;
+}
+
+const images: BannerImage[] = [
   {
     src: "/assets/banner/march-25.png",
     alt: "Vet Family",
@@ -23,67 +29,76 @@ const images = [
 export default function VetHero() {
   return (
     <section
-      className="w-full py-12 overflow-x-hidden"
+      className="w-full py-8 md:py-12 overflow-hidden"
       style={{
         background:
           "linear-gradient(120.3deg, #91D8D9 31.56%, rgba(255, 255, 255, 0) 94.83%)",
       }}
     >
-      <div className="container px-4 md:px-6 h-fu ll mx-auto pb-8">
+      <div className="container px-4 md:px-6 mx-auto pb-6 md:pb-8">
         {/* Banner promocional de Semana Santa */}
-        <div className="mb-8 p-4 bg-yellow-100 rounded-lg border-2 border-yellow-300 shadow-md">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center mb-3 md:mb-0">
-              <Home className="w-8 h-8 text-orange-500 mr-3 flex-shrink-0" />
-              <h3 className="text-xl font-bold text-orange-600">
-                ¡Especial de Semana Santa! Hotel para tu mascota
-              </h3>
-            </div>
-            <CustomButton href="/hotel-mascotas" className="bg-orange-500 hover:bg-orange-600">
-              Reserva Ahora
-            </CustomButton>
-          </div>
-          <p className="mt-2 text-orange-800">
-            Mientras disfrutas de tus vacaciones, tu mejor amigo también merece unas vacaciones de lujo. ¡10% de descuento en estancias de 8+ días pagando en efectivo!
-          </p>
-        </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px] h-full pt-8">
-          <div className="flex flex-col justify-between h-full space-y-8">
-            <div className="space-y-6">
-              <h1 className="text-3xl font-bold tracking-tight sm:text-5xl xl:text-6xl">
+        <BannerSemanaSanta />
+        <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px] h-full pt-4 md:pt-8">
+          <div className="flex flex-col justify-between h-full space-y-6 md:space-y-8">
+            <div className="space-y-4 md:space-y-6">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight">
                 Salud y felicidad para tu mejor amigo.
               </h1>
-              <p className="max-w-[600px] text-lg text-gray-600 md:text-xl py-2">
+              <p className="max-w-[600px] text-base md:text-lg lg:text-xl text-gray-600 py-1 md:py-2">
                 Porque ellos no son solo mascotas, son familia. En Vet Family,
                 cuidamos de tu ser querido con el mismo amor y dedicación que tú
                 le brindas cada día.
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 min-[400px]:flex-row">
-              <CustomButton href="/promociones">Promociones</CustomButton>
-              <AppointmentDialog />
-              <CustomButton href="/hotel-mascotas" className="bg-orange-500 hover:bg-orange-600">
-                Hotel Canino
-              </CustomButton>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-6 rounded-lg">
-              <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">
+            {/* Botones principales - Alineados correctamente con el mismo alineamiento */}
+      {/* Buttons with proper mobile/desktop layout */}
+<div className="flex flex-col items-center w-full md:items-start md:flex-row md:flex-wrap gap-3">
+  {/* Each button in its own centered container */}
+  <div className="flex justify-center w-full md:w-auto md:justify-start">
+    <div className="w-64 md:w-auto">
+      <CustomButton
+        href="/promociones"
+        className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white"
+      >
+        Promociones
+      </CustomButton>
+    </div>
+  </div>
+  
+  <div className="flex justify-center w-full md:w-auto md:justify-start">
+    <div className="w-64 md:w-auto">
+      <AppointmentDialog />
+    </div>
+  </div>
+  
+  <div className="flex justify-center w-full md:w-auto md:justify-start">
+    <div className="w-64 md:w-auto">
+      <CustomButton
+        href="/hotel-mascotas"
+        className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+      >
+        Hotel Canino
+      </CustomButton>
+    </div>
+  </div>
+</div>
+            {/* Info cards */}
+            <div className="grid grid-cols-1 gap-3 p-3 md:p-6 rounded-lg">
+              <div className="flex items-center space-x-3 p-3 md:p-4 bg-white rounded-lg shadow-sm">
                 <CalendarDays className="w-6 h-6 text-blue-600 flex-shrink-0" />
                 <span className="text-base font-semibold text-gray-700">
                   Atención de lunes a sábado
                 </span>
               </div>
-
-              <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">
+              <div className="flex items-center space-x-3 p-3 md:p-4 bg-white rounded-lg shadow-sm">
                 <Stethoscope className="w-6 h-6 text-blue-600 flex-shrink-0" />
                 <span className="text-base font-semibold text-gray-700">
                   Experiencia veterinaria a tu servicio
                 </span>
               </div>
-
-              <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">
+              <div className="flex items-center space-x-3 p-3 md:p-4 bg-white rounded-lg shadow-sm">
                 <Heart className="w-6 h-6 text-red-500 flex-shrink-0" />
                 <span className="text-base font-semibold text-gray-700">
                   Amor y profesionalismo en un solo lugar
@@ -91,12 +106,14 @@ export default function VetHero() {
               </div>
             </div>
           </div>
+
+          {/* Carousel image section */}
           <div className="lg:col-span-1 relative h-full w-full">
             <Carousel className="w-full mx-auto">
               <CarouselContent>
                 {images.map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="relative aspect-[4/3] lg:aspect-[3/4] xl:aspect-[4/3] w-full overflow-hidden rounded-xl">
+                    <div className="relative aspect-square sm:aspect-[4/3] lg:aspect-[3/4] xl:aspect-[4/3] w-full overflow-hidden rounded-xl">
                       <Image
                         src={image.src || "/placeholder.svg"}
                         alt={image.alt}

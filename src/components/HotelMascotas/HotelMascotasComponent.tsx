@@ -12,7 +12,6 @@ import {
   Calendar,
   Phone,
   MessageCircle,
-  Utensils,
   Bath,
   AlertCircle,
   PawPrint,
@@ -118,8 +117,8 @@ export default function HotelMascotasComponent() {
 
   // Información de contacto
   const contactInfo = {
-    phone: "+52 477 123 4567",
-    whatsapp: "+52 477 123 4567",
+    phone: "+52 477-332-7152",
+    whatsapp: "+52 477-260-57-43",
   };
 
   // Características del hotel
@@ -129,12 +128,6 @@ export default function HotelMascotasComponent() {
       title: "Habitaciones cómodas",
       description:
         "Espacios amplios y seguros diseñados para el máximo confort de tu mascota.",
-    },
-    {
-      icon: <Utensils className="w-10 h-10 text-orange-500" />,
-      title: "Alimentación Premium",
-      description:
-        "Ofrecemos alimentos de alta calidad adaptados a las necesidades de cada mascota.",
     },
     {
       icon: <Calendar className="w-10 h-10 text-[#5dade2]" />,

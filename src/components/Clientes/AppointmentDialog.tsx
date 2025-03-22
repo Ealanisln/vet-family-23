@@ -22,25 +22,26 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const CustomButton = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ href, children, onClick, icon, className, ...props }, ref) => {
-    const buttonClass = `text-white text-lg font-medium py-4 px-8 rounded-full transition duration-300 ease-in-out bg-[#8B5CF6] hover:bg-[#7C3AED] shadow-lg hover:shadow-xl transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 flex items-center justify-center ${className || ''}`
-
+    // Simple base styling that won't conflict
+    const buttonClass = `font-medium py-3 px-6 rounded-full flex items-center justify-center ${className || ''}`
+    
     const content = (
       <>
         {children}
         {icon && <span className="ml-1.5">{icon}</span>}
       </>
     )
-
+    
     if (href) {
       return (
-        <Link href={href} passHref>
+        <Link href={href} className="block w-full">
           <button ref={ref} className={buttonClass} onClick={onClick} {...props}>
             {content}
           </button>
         </Link>
       )
     }
-
+    
     return (
       <button
         ref={ref}
@@ -62,7 +63,7 @@ const AppointmentDialog = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <CustomButton icon={<FaPhone size={16} />}>
+        <CustomButton className="bg-rose-500 hover:bg-rose-600 text-white" icon={<FaPhone size={16} />}>
           Agenda una cita
         </CustomButton>
       </DialogTrigger>

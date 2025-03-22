@@ -1,4 +1,4 @@
-// pages/index.js
+// src/app/(main)/page.tsx
 import VetSEO from '@/components/SEO/VetSeo';
 import Reviews from "../../components/Reviews/index";
 import Servicios from "../../components/Servicios/index";

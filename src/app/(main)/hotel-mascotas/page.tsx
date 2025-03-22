@@ -7,10 +7,10 @@ export const metadata: Metadata = {
   keywords: "hotel mascotas, hospedaje perros, guardería canina León, pensión mascotas, cuidado mascotas vacaciones, Semana Santa 2025",
   openGraph: {
     title: "Hotel para Mascotas en León | Vet Family",
-    description: "Hospedaje de lujo para mascotas con alimentación premium, paseos diarios y servicio veterinario. Promoción especial: 15% OFF en Semana Santa 2025.",
+    description: "Hospedaje de lujo para mascotas con alimentación premium, paseos diarios y servicio veterinario. Promoción especial: 10% OFF en Semana Santa 2025.",
     images: [
       {
-        url: "/assets/hotel/og-image.jpg",
+        url: "/assets/og-image.png",
         width: 1200,
         height: 630,
         alt: "Hotel para Mascotas Vet Family",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     images: ["/assets/hotel/twitter-image.jpg"],
   },
   alternates: {
-    canonical: "https://vetfamily.mx/hotel-mascotas",
+    canonical: "https://vetforfamily.com/hotel-mascotas",
   },
   robots: {
     index: true,
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   authors: [
     {
       name: "Vet Family",
-      url: "https://vetfamily.mx",
+      url: "https://vetforfamily.mx",
     },
   ],
   creator: "Vet Family",

@@ -1,8 +1,8 @@
-
 // src/app/api/pos/inventory/price/preview/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, InventoryCategory, Prisma } from '@prisma/client';
+import { userHasPOSPermission } from '@/utils/pos-helpers';
 
 // Implementación del patrón singleton para PrismaClient
 const prismaClientSingleton = () => {
@@ -19,22 +19,36 @@ if (process.env.NODE_ENV !== 'production') {
   globalThis.prisma = prisma;
 }
 
+export const dynamic = "force-dynamic";
+
 // Obtener vista previa de ajuste de precios
 export async function POST(request: NextRequest) {
-  const { isAuthenticated, getRoles } = getKindeServerSession();
-  
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-  }
-
-  const roles = await getRoles();
-  const isAdmin = roles?.some((role) => role.key === 'admin');
-  
-  if (!isAdmin) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-  }
-
   try {
+    // Verificar autenticación con Kinde
+    const { isAuthenticated, getUser } = getKindeServerSession();
+    
+    if (!(await isAuthenticated())) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+    }
+    
+    // Obtener usuario de Kinde
+    const user = await getUser();
+    if (!user || !user.id) {
+      return NextResponse.json(
+        { error: "No se pudo obtener la información del usuario" },
+        { status: 401 }
+      );
+    }
+    
+    // Verificar permisos
+    const hasPermission = await userHasPOSPermission(user.id);
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: "No tiene permisos para acceder al sistema POS" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { 
       category,
@@ -49,10 +63,10 @@ export async function POST(request: NextRequest) {
     }
     
     // Construir la consulta
-    const whereClause: any = {};
+    const whereClause: Prisma.InventoryItemWhereInput = {};
     
     if (category) {
-      whereClause.category = category;
+      whereClause.category = category as InventoryCategory;
     }
     
     // Filtrar productos que tienen precio o costo dependiendo del componente a ajustar
@@ -149,5 +163,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error al generar vista previa:', error);
     return NextResponse.json({ error: 'Error al generar la vista previa del ajuste' }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

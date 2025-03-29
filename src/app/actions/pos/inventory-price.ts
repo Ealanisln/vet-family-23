@@ -1,4 +1,3 @@
-// src/app/actions/pos/inventory-price.ts
 'use server';
 
 import { Prisma, InventoryCategory } from '@prisma/client';
@@ -6,38 +5,47 @@ import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prismaDB';
 
-// Estas son funciones utilitarias, no server actions
-export function calculateMargin(price: number | null, cost: number | null): number | null {
-  if (!price || !cost || cost <= 0 || price <= 0) {
+/**
+ * Calculates the profit margin percentage between price and cost
+ * @param price The selling price
+ * @param cost The cost price
+ * @returns The margin percentage or null if either price or cost is null
+ */
+export async function calculateMargin(price: number | null, cost: number | null): Promise<number | null> {
+  if (price === null || cost === null || cost === 0) {
     return null;
   }
   
-  // Fórmula: Margen = ((Precio - Costo) / Precio) * 100
   const margin = ((price - cost) / price) * 100;
-  return parseFloat(margin.toFixed(2));
+  return Number(margin.toFixed(1)); // Round to 1 decimal place
 }
 
-// Función utilitaria, no server action
-export function calculateMarkup(price: number | null, cost: number | null): number | null {
-  if (!price || !cost || cost <= 0 || price <= 0) {
-    return null;
-  }
-  
-  // Fórmula: Markup = ((Precio - Costo) / Costo) * 100
-  const markup = ((price - cost) / cost) * 100;
-  return parseFloat(markup.toFixed(2));
-}
-
-// Actualizar el precio y costo de un producto
+/**
+ * Updates the price and cost of an inventory item
+ * @param id The ID of the item to update
+ * @param price The new price value
+ * @param cost The new cost value
+ * @returns Object with success status and updated item
+ */
 export async function updateItemPriceAndCost(id: string, price: number | null, cost: number | null) {
-  const { isAuthenticated, getRoles } = getKindeServerSession();
+  const { isAuthenticated, getUser } = getKindeServerSession();
   
   if (!(await isAuthenticated())) {
     throw new Error('No autenticado');
   }
 
-  const roles = await getRoles();
-  const isAdmin = roles?.some((role) => role.key === 'admin');
+  const user = await getUser();
+  if (!user || !user.id) {
+    throw new Error('No se pudo obtener la información del usuario');
+  }
+  
+  // Verificar permisos de administrador
+  const userInDb = await prisma.user.findUnique({
+    where: { kindeId: user.id },
+    include: { userRoles: { include: { role: true } } }
+  });
+  
+  const isAdmin = userInDb?.userRoles.some(userRole => userRole.role.key === "ADMIN");
   
   if (!isAdmin) {
     throw new Error('No autorizado');
@@ -61,7 +69,9 @@ export async function updateItemPriceAndCost(id: string, price: number | null, c
   }
 }
 
-// Aplicar ajuste de precios masivos
+/**
+ * Parameters for bulk price adjustment operations
+ */
 interface BulkPriceAdjustmentParams {
   category: InventoryCategory | null;
   adjustmentType: 'percent' | 'fixed';
@@ -70,7 +80,9 @@ interface BulkPriceAdjustmentParams {
   adjustmentValue: number;
 }
 
-// Obtener vista previa de ajuste de precios masivos
+/**
+ * Generate a preview of bulk price adjustments without applying them
+ */
 export async function previewBulkPriceAdjustment({
   category,
   adjustmentType,
@@ -78,14 +90,24 @@ export async function previewBulkPriceAdjustment({
   adjustmentDirection,
   adjustmentValue,
 }: BulkPriceAdjustmentParams) {
-  const { isAuthenticated, getRoles } = getKindeServerSession();
+  const { isAuthenticated, getUser } = getKindeServerSession();
   
   if (!(await isAuthenticated())) {
     throw new Error('No autenticado');
   }
 
-  const roles = await getRoles();
-  const isAdmin = roles?.some((role) => role.key === 'admin');
+  const user = await getUser();
+  if (!user || !user.id) {
+    throw new Error('No se pudo obtener la información del usuario');
+  }
+  
+  // Verificar permisos de administrador
+  const userInDb = await prisma.user.findUnique({
+    where: { kindeId: user.id },
+    include: { userRoles: { include: { role: true } } }
+  });
+  
+  const isAdmin = userInDb?.userRoles.some(userRole => userRole.role.key === "ADMIN");
   
   if (!isAdmin) {
     throw new Error('No autorizado');
@@ -103,11 +125,11 @@ export async function previewBulkPriceAdjustment({
     const orConditions: Prisma.InventoryItemWhereInput[] = [];
     
     if (priceComponent === 'price' || priceComponent === 'both') {
-      orConditions.push({ price: { not: null } as Prisma.NullableFloatFilter });
+      orConditions.push({ price: { not: null } });
     }
     
     if (priceComponent === 'cost' || priceComponent === 'both') {
-      orConditions.push({ cost: { not: null } as Prisma.NullableFloatFilter });
+      orConditions.push({ cost: { not: null } });
     }
     
     if (orConditions.length > 0) {
@@ -202,7 +224,9 @@ export async function previewBulkPriceAdjustment({
   }
 }
 
-// Aplicar ajuste de precios masivos
+/**
+ * Apply bulk price adjustments to inventory items
+ */
 export async function applyBulkPriceAdjustment({
   category,
   adjustmentType,
@@ -210,14 +234,24 @@ export async function applyBulkPriceAdjustment({
   adjustmentDirection,
   adjustmentValue,
 }: BulkPriceAdjustmentParams) {
-  const { isAuthenticated, getRoles } = getKindeServerSession();
+  const { isAuthenticated, getUser } = getKindeServerSession();
   
   if (!(await isAuthenticated())) {
     throw new Error('No autenticado');
   }
 
-  const roles = await getRoles();
-  const isAdmin = roles?.some((role) => role.key === 'admin');
+  const user = await getUser();
+  if (!user || !user.id) {
+    throw new Error('No se pudo obtener la información del usuario');
+  }
+  
+  // Verificar permisos de administrador
+  const userInDb = await prisma.user.findUnique({
+    where: { kindeId: user.id },
+    include: { userRoles: { include: { role: true } } }
+  });
+  
+  const isAdmin = userInDb?.userRoles.some(userRole => userRole.role.key === "ADMIN");
   
   if (!isAdmin) {
     throw new Error('No autorizado');
@@ -235,11 +269,11 @@ export async function applyBulkPriceAdjustment({
     const orConditions: Prisma.InventoryItemWhereInput[] = [];
     
     if (priceComponent === 'price' || priceComponent === 'both') {
-      orConditions.push({ price: { not: null } as Prisma.NullableFloatFilter });
+      orConditions.push({ price: { not: null } });
     }
     
     if (priceComponent === 'cost' || priceComponent === 'both') {
-      orConditions.push({ cost: { not: null } as Prisma.NullableFloatFilter });
+      orConditions.push({ cost: { not: null } });
     }
     
     if (orConditions.length > 0) {

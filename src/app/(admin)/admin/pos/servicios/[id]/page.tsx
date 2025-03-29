@@ -9,6 +9,7 @@ import { userHasPOSPermission } from "@/utils/pos-helpers";
 import { AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/pos-helpers";
+import { ServiceWithRelations } from "@/types/pos"; // Import the correct type
 
 export const metadata: Metadata = {
   title: "Detalle de Servicio | POS",
@@ -32,7 +33,7 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
   }
   
   // Obtener los detalles del servicio
-  const service = await getServiceById(params.id);
+  const service = await getServiceById(params.id) as ServiceWithRelations | null;
   
   if (!service) {
     return (
@@ -101,9 +102,9 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
                 <dt className="text-sm font-medium text-gray-500">Estado</dt>
                 <dd className="mt-1">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    service.active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    service.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                   }`}>
-                    {service.active ? "Activo" : "Inactivo"}
+                    {service.isActive ? "Activo" : "Inactivo"}
                   </span>
                 </dd>
               </div>
@@ -118,7 +119,7 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
           <CardContent>
             {service.products && service.products.length > 0 ? (
               <div className="space-y-4">
-                {service.products.map((product: { id: string; name: string; quantity: number; price: number }) => (
+                {service.products.map((product) => (
                   <div key={product.id} className="flex justify-between border-b pb-2">
                     <div>
                       <p className="font-medium">{product.name}</p>
@@ -153,13 +154,7 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {service.sales.map((sale: { 
-                        id: string; 
-                        date: string | Date; 
-                        customer?: { name?: string } | null; 
-                        price: number;
-                        saleId: string;
-                      }) => (
+                    {service.sales.map((sale) => (
                       <tr key={sale.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {new Date(sale.date).toLocaleDateString()}

@@ -1,5 +1,6 @@
 // src/types/pos.ts
 
+// Enums as string literal types
 export type PaymentMethod = 
   | "CASH"
   | "CREDIT_CARD"
@@ -37,13 +38,17 @@ export type TransactionType =
   | "WITHDRAWAL"
   | "ADJUSTMENT";
 
+// Core interfaces
 export interface CartItem {
-  id: string;
+  id: string; 
   type: 'product' | 'service';
   name: string;
   description: string;
   quantity: number;
   unitPrice: number;
+  category?: string;
+  activeCompound?: string;
+  stock?: number;
 }
 
 export interface SaleItemData {
@@ -84,20 +89,61 @@ export interface InventoryItem {
   batchNumber?: string | null;
   specialNotes?: string | null;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
+  price: number;
+  cost?: number | null;
 }
 
 export interface Service {
   id: string;
   name: string;
-  description?: string | null;
-  category: string;
+  description: string | null;
+  category: ServiceCategory;
   price: number;
-  duration?: number | null;
-  isActive: boolean;
+  duration: number | null;
+  isActive: boolean; // This is the correct property name, not 'active'
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface Sale {
+// Extended service interfaces with related data
+export interface ServiceWithSales extends Service {
+  sales: Array<{
+    id: string;
+    date: string | Date;
+    customer?: { name?: string } | null;
+    price: number;
+    saleId: string;
+  }>;
+}
+
+export interface ServiceWithProducts extends Service {
+  products: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+}
+
+export interface ServiceWithRelations extends Partial<ServiceWithSales>, Partial<ServiceWithProducts> {
+  sales?: Array<{
+    id: string;
+    date: string | Date;
+    customer?: { name?: string } | null;
+    price: number;
+    saleId: string;
+  }>;
+  products?: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+}
+
+// Basic sale list item type (for tables and lists)
+export interface SaleListItem {
   id: string;
   receiptNumber: string;
   date: Date;
@@ -124,6 +170,10 @@ export interface Sale {
     species: string;
     breed: string;
   } | null;
+}
+
+// Full sale detail type (with items)
+export interface Sale extends SaleListItem {
   items: SaleItem[];
 }
 

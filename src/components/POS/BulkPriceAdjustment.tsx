@@ -1,4 +1,6 @@
 // src/components/POS/BulkPriceAdjustment.tsx
+"use client";
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -267,7 +269,7 @@ export function BulkPriceAdjustment({ categories }: BulkPriceAdjustmentProps) {
             <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
               <AlertCircle className="h-12 w-12 text-gray-300" />
               <p className="text-gray-500">
-                Haga clic en "Vista Previa" para visualizar el impacto de los ajustes antes de aplicarlos.
+                Haga clic en &quot;Vista Previa&quot; para visualizar el impacto de los ajustes antes de aplicarlos.
               </p>
             </div>
           )}

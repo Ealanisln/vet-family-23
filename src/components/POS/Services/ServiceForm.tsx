@@ -3,18 +3,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  Card, 
-  CardContent, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save, DollarSign, Clock } from "lucide-react";
@@ -28,10 +34,13 @@ interface ServiceFormProps {
   isEditing?: boolean;
 }
 
-export default function ServiceForm({ service, isEditing = false }: ServiceFormProps) {
+export default function ServiceForm({
+  service,
+  isEditing = false,
+}: ServiceFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Valores iniciales
   const [name, setName] = useState(service?.name || "");
   const [description, setDescription] = useState(service?.description || "");
@@ -39,7 +48,7 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
   const [price, setPrice] = useState(service?.price?.toString() || "");
   const [duration, setDuration] = useState(service?.duration?.toString() || "");
   const [isActive, setIsActive] = useState(service?.isActive !== false);
-  
+
   const serviceCategories = [
     "CONSULTATION",
     "SURGERY",
@@ -49,12 +58,12 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
     "LABORATORY",
     "IMAGING",
     "HOSPITALIZATION",
-    "OTHER"
+    "OTHER",
   ];
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name || !category || !price || isNaN(parseFloat(price))) {
       toast({
         title: "Error",
@@ -63,9 +72,9 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       if (isEditing && service) {
         // Actualizar servicio existente
@@ -77,13 +86,13 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
           duration: duration ? parseInt(duration) : undefined,
           isActive,
         });
-        
+
         if (result.success) {
           toast({
             title: "Servicio actualizado",
             description: "El servicio ha sido actualizado correctamente.",
           });
-          
+
           router.push(`/admin/pos/servicios/${service.id}`);
           router.refresh();
         } else {
@@ -98,13 +107,13 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
           price: parseFloat(price),
           duration: duration ? parseInt(duration) : undefined,
         });
-        
+
         if (result.success) {
           toast({
             title: "Servicio creado",
             description: "El servicio ha sido creado correctamente.",
           });
-          
+
           router.push("/admin/pos/servicios");
           router.refresh();
         } else {
@@ -115,20 +124,25 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
       console.error("Error:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Ocurrió un error al procesar el servicio",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error al procesar el servicio",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isEditing ? "Editar servicio" : "Nuevo servicio"}</CardTitle>
+        <CardTitle>
+          {isEditing ? "Editar servicio" : "Nuevo servicio"}
+        </CardTitle>
         <CardDescription>
-          {isEditing 
+          {isEditing
             ? "Actualiza la información del servicio existente"
             : "Ingresa los detalles del nuevo servicio"}
         </CardDescription>
@@ -137,7 +151,9 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="required">Nombre</Label>
+              <Label htmlFor="name" className="required">
+                Nombre
+              </Label>
               <Input
                 id="name"
                 value={name}
@@ -147,12 +163,16 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
                 disabled={isSubmitting}
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="category" className="required">Categoría</Label>
-              <Select 
-                value={category} 
-                onValueChange={setCategory} 
+              <Label htmlFor="category" className="required">
+                Categoría
+              </Label>
+              <Select
+                value={category}
+                onValueChange={(value: string) => {
+                  setCategory(value as typeof category);
+                }}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="category">
@@ -167,9 +187,11 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="price" className="required">Precio</Label>
+              <Label htmlFor="price" className="required">
+                Precio
+              </Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                 <Input
@@ -186,7 +208,7 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="duration">Duración (minutos)</Label>
               <div className="relative">
@@ -205,7 +227,7 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>
             <Textarea
@@ -217,7 +239,7 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
               disabled={isSubmitting}
             />
           </div>
-          
+
           {isEditing && (
             <div className="flex items-center space-x-2">
               <Switch
@@ -231,9 +253,9 @@ export default function ServiceForm({ service, isEditing = false }: ServiceFormP
           )}
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => router.back()}
             disabled={isSubmitting}
           >

@@ -1,3 +1,5 @@
+// src/app/actions/get-customers.ts
+
 "use server";
 
 import { PrismaClient, Role, User } from "@prisma/client";
@@ -40,7 +42,7 @@ declare global {
 const prisma = globalThis.prisma ?? prismaClientSingleton();
 if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
 
-export async function getUsers(token: string): Promise<UserWithRoles[]> {
+export async function getUsers(): Promise<UserWithRoles[]> {
   try {
     const users = await prisma.user.findMany({
       include: {

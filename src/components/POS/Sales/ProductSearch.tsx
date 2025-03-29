@@ -11,6 +11,7 @@ import { searchInventoryItems } from "@/app/actions/inventory";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CategoryFilter } from "@/components/Inventory/CategoryFilter";
 import type { InventoryItem } from "@/types/inventory";
+import { InventoryCategory } from "@prisma/client";
 
 interface ProductSearchProps {
   onSelectProduct: (product: InventoryItem) => void;
@@ -18,7 +19,7 @@ interface ProductSearchProps {
 
 export default function ProductSearch({ onSelectProduct }: ProductSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<InventoryCategory | "all_categories">("all_categories");
   const [products, setProducts] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   
@@ -28,7 +29,7 @@ export default function ProductSearch({ onSelectProduct }: ProductSearchProps) {
       try {
         const result = await searchInventoryItems({
           searchTerm,
-          category: selectedCategory,
+          category: selectedCategory === "all_categories" ? null : selectedCategory,
           status: "ACTIVE", // Solo productos activos
           limit: 24,
         });
@@ -47,6 +48,10 @@ export default function ProductSearch({ onSelectProduct }: ProductSearchProps) {
     
     return () => clearTimeout(handler);
   }, [searchTerm, selectedCategory]);
+
+  const handleCategoryChange = (value: InventoryCategory | "all_categories") => {
+    setSelectedCategory(value);
+  };
   
   return (
     <div className="space-y-4">
@@ -62,8 +67,8 @@ export default function ProductSearch({ onSelectProduct }: ProductSearchProps) {
       </div>
       
       <CategoryFilter
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        value={selectedCategory}
+        onChange={handleCategoryChange}
       />
       
       {loading ? (
@@ -95,7 +100,7 @@ export default function ProductSearch({ onSelectProduct }: ProductSearchProps) {
                         </div>
                         <div className="mt-1 flex items-center justify-between">
                           <Badge variant="outline">{product.category}</Badge>
-                          <span className="font-semibold">${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}</span>
+                          <span className="font-semibold">${product.price !== undefined && typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}</span>
                         </div>
                         <div className="text-sm text-gray-500 mt-1">
                           Stock: {product.quantity}

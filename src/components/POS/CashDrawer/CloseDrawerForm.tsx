@@ -1,4 +1,5 @@
 // src/components/POS/CashDrawer/CloseDrawerForm.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,26 +15,34 @@ import { getCurrentDrawer, closeCashDrawer } from "@/app/actions/pos/cash-drawer
 import { formatCurrency, calculateDrawerBalance } from "@/utils/pos-helpers";
 import TransactionHistory from "./TransactionHistory";
 import type { CashDrawer } from "@/types/pos";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 
 export default function CloseDrawerForm() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useKindeBrowserClient();
   const [drawer, setDrawer] = useState<CashDrawer | null>(null);
   const [finalAmount, setFinalAmount] = useState(0);
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   const expectedAmount = drawer ? calculateDrawerBalance(drawer) : 0;
   const difference = finalAmount - expectedAmount;
-  
+
   useEffect(() => {
     const fetchDrawer = async () => {
+      if (isLoading) return;
+
+      if (!isAuthenticated) {
+        router.push('/api/auth/login');
+        return;
+      }
+
       try {
         const currentDrawer = await getCurrentDrawer();
         setDrawer(currentDrawer);
-        
+
         if (currentDrawer) {
-          // Pre-llenar el campo de monto final con el monto esperado
           setFinalAmount(calculateDrawerBalance(currentDrawer));
         }
       } catch (error) {
@@ -47,13 +56,13 @@ export default function CloseDrawerForm() {
         setLoading(false);
       }
     };
-    
+
     fetchDrawer();
-  }, []);
-  
+  }, [isAuthenticated, isLoading, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!drawer) {
       toast({
         title: "Error",
@@ -62,7 +71,7 @@ export default function CloseDrawerForm() {
       });
       return;
     }
-    
+
     if (finalAmount < 0) {
       toast({
         title: "Error",
@@ -71,27 +80,55 @@ export default function CloseDrawerForm() {
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
+      console.log("Intentando cerrar caja con datos:", { finalAmount, notes });
+
       const result = await closeCashDrawer({
         finalAmount,
         notes,
       });
-      
+
+      console.log("Resultado del cierre de caja:", result);
+
       if (result.success) {
         toast({
           title: "Caja cerrada",
           description: "La caja ha sido cerrada correctamente.",
         });
+
+        // Limpiar estado local
+        setDrawer(null);
         
-        router.push("/admin/pos");
+        // Usar setTimeout para asegurar que todas las actualizaciones
+        // de estado se hayan completado antes de navegar
+        setTimeout(() => {
+          try {
+            // Intentar la navegación primero con replace para evitar historial
+            window.location.replace('/admin/pos');
+            
+            // Como fallback, después de un tiempo verificamos si seguimos en la misma página
+            setTimeout(() => {
+              if (window.location.pathname.includes('/cierre-caja')) {
+                console.log('Fallback navigation activated');
+                window.location.href = '/admin/pos';
+              }
+            }, 300);
+          } catch (e) {
+            console.error('Navigation error:', e);
+            // Si hay algún error, forzar la navegación
+            window.location.href = '/admin/pos';
+          }
+        }, 300);
+        
+        return; // Importante: salir temprano para evitar actualizaciones de estado adicionales
       } else {
         throw new Error(result.error || "Error al cerrar la caja");
       }
     } catch (error) {
-      console.error("Error al cerrar la caja:", error);
+      console.error("Error detallado al cerrar la caja:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Ocurrió un error al cerrar la caja",
@@ -101,15 +138,19 @@ export default function CloseDrawerForm() {
       setIsSubmitting(false);
     }
   };
-  
-  if (loading) {
+
+  if (isLoading || loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
       </div>
     );
   }
-  
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
   if (!drawer) {
     return (
       <Card className="max-w-md mx-auto">
@@ -130,7 +171,7 @@ export default function CloseDrawerForm() {
       </Card>
     );
   }
-  
+
   return (
     <div className="space-y-6">
       <Card>
@@ -149,14 +190,14 @@ export default function CloseDrawerForm() {
                   {formatCurrency(drawer.initialAmount)}
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Monto esperado</Label>
                 <div className="p-2 bg-gray-50 rounded border font-medium">
                   {formatCurrency(expectedAmount)}
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="finalAmount">Monto final (conteo real)</Label>
                 <div className="relative">
@@ -175,26 +216,26 @@ export default function CloseDrawerForm() {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Diferencia</Label>
                 <div className={`p-2 rounded border font-medium ${
-                  difference === 0 ? 'bg-green-50 text-green-600' : 
-                  difference > 0 ? 'bg-blue-50 text-blue-600' : 
+                  difference === 0 ? 'bg-green-50 text-green-600' :
+                  difference > 0 ? 'bg-blue-50 text-blue-600' :
                   'bg-red-50 text-red-600'
                 }`}>
                   {formatCurrency(difference)}
                   {difference !== 0 && (
                     <div className="text-xs font-normal mt-1 flex items-center">
                       <Info className="h-3 w-3 mr-1" />
-                      {difference > 0 
-                        ? "Sobrante: Hay más dinero del esperado" 
+                      {difference > 0
+                        ? "Sobrante: Hay más dinero del esperado"
                         : "Faltante: Hay menos dinero del esperado"}
                     </div>
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="notes">Notas (opcional)</Label>
                 <Textarea
@@ -207,7 +248,7 @@ export default function CloseDrawerForm() {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end space-x-2">
               <Button
                 type="button"
@@ -237,7 +278,7 @@ export default function CloseDrawerForm() {
           </form>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Histórico de Transacciones</CardTitle>

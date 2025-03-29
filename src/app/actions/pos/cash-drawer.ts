@@ -1,12 +1,11 @@
 // src/app/actions/pos/cash-drawer.ts
-
 "use server";
 
 import { revalidatePath } from "next/cache";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { Prisma } from '@prisma/client';
 import { randomUUID } from "crypto";
-import { prisma } from "@/lib/prismaDB"; // Importar desde tu utilidad en lugar de crear una nueva instancia
+import { prisma } from "@/lib/prismaDB";
 
 // Definición de tipos para las transacciones
 type TransactionType = "SALE" | "REFUND" | "DEPOSIT" | "WITHDRAWAL" | "ADJUSTMENT";
@@ -40,6 +39,9 @@ export async function openCashDrawer(initialAmount: number) {
     
     // Obtener usuario de Kinde
     const kindeUser = await getUser();
+    if (!kindeUser || !kindeUser.id) {
+      return { success: false, error: "No se pudo obtener la información del usuario" };
+    }
     
     // Buscar o crear el usuario en la base de datos local
     let dbUser = await prisma.user.findFirst({
@@ -57,7 +59,7 @@ export async function openCashDrawer(initialAmount: number) {
           firstName: kindeUser.given_name || "",
           lastName: kindeUser.family_name || "",
           email: kindeUser.email || "",
-          name: kindeUser.given_name + " " + kindeUser.family_name
+          name: (kindeUser.given_name || "") + " " + (kindeUser.family_name || "")
         }
       });
     }
@@ -93,6 +95,8 @@ export async function openCashDrawer(initialAmount: number) {
   }
 }
 
+// Reemplaza la función closeCashDrawer en src/app/actions/pos/cash-drawer.ts
+
 export async function closeCashDrawer(data: { 
   finalAmount: number;
   notes?: string;
@@ -102,11 +106,32 @@ export async function closeCashDrawer(data: {
     
     // Verificar autenticación
     if (!(await isAuthenticated())) {
-      throw new ServerActionError("No autorizado", 401);
+      console.log("Cierre de caja: Usuario no autorizado");
+      return { success: false, error: "No autorizado", statusCode: 401 };
     }
     
     // Obtener usuario
     const user = await getUser();
+    if (!user || !user.id) {
+      console.log("Cierre de caja: No se pudo obtener información del usuario");
+      return { success: false, error: "No se pudo obtener la información del usuario", statusCode: 401 };
+    }
+    
+    console.log(`Cierre de caja: Usuario autenticado (${user.id})`);
+    
+    // Buscar al usuario en la base de datos
+    const dbUser = await prisma.user.findFirst({
+      where: {
+        kindeId: user.id
+      }
+    });
+    
+    if (!dbUser) {
+      console.log("Cierre de caja: Usuario no encontrado en la base de datos");
+      return { success: false, error: "Usuario no encontrado en la base de datos", statusCode: 404 };
+    }
+    
+    console.log(`Cierre de caja: Usuario encontrado en la base de datos (${dbUser.id})`);
     
     // Buscar la caja abierta
     const openDrawer = await prisma.cashDrawer.findFirst({
@@ -119,8 +144,11 @@ export async function closeCashDrawer(data: {
     });
     
     if (!openDrawer) {
-      throw new ServerActionError("No hay caja abierta para cerrar", 404);
+      console.log("Cierre de caja: No hay caja abierta para cerrar");
+      return { success: false, error: "No hay caja abierta para cerrar", statusCode: 404 };
     }
+    
+    console.log(`Cierre de caja: Caja encontrada (${openDrawer.id})`);
     
     // Calcular el monto esperado basado en las transacciones
     const totalTransactions = openDrawer.transactions.reduce((sum, tx) => sum + tx.amount, 0);
@@ -129,12 +157,14 @@ export async function closeCashDrawer(data: {
     // Calcular la diferencia
     const difference = data.finalAmount - expectedAmount;
     
+    console.log(`Cierre de caja: Montos calculados - Inicial: ${openDrawer.initialAmount}, Transacciones: ${totalTransactions}, Esperado: ${expectedAmount}, Final: ${data.finalAmount}, Diferencia: ${difference}`);
+    
     // Cerrar la caja
     const closedDrawer = await prisma.cashDrawer.update({
       where: { id: openDrawer.id },
       data: {
         closedAt: new Date(),
-        closedBy: user.id, // Usar el ID de Kinde
+        closedBy: dbUser.id,
         finalAmount: data.finalAmount,
         expectedAmount,
         difference,
@@ -143,20 +173,26 @@ export async function closeCashDrawer(data: {
       },
     });
     
+    console.log(`Cierre de caja: Caja cerrada correctamente (${closedDrawer.id}, ${closedDrawer.status})`);
+    
     revalidatePath("/admin/pos");
     revalidatePath("/admin/pos/cierre-caja");
     
     return { success: true, drawer: closedDrawer };
   } catch (error: unknown) {
+    console.error("Error al cerrar la caja (detallado):", error);
+    
     if (error instanceof ServerActionError) {
       return { success: false, error: error.message, statusCode: error.statusCode };
     }
+    
     if (isPrismaError(error)) {
+      console.error("Prisma error code:", error.code);
       if (error.code === "P2025") {
         return { success: false, error: "Caja no encontrada", statusCode: 404 };
       }
     }
-    console.error("Error closing cash drawer:", error);
+    
     return { success: false, error: "Error al cerrar la caja", statusCode: 500 };
   }
 }
@@ -295,11 +331,17 @@ export async function addCashTransaction(data: {
   description: string;
 }) {
   try {
-    const { isAuthenticated } = getKindeServerSession();
+    const { getUser, isAuthenticated } = getKindeServerSession();
     
     // Verificar autenticación
     if (!(await isAuthenticated())) {
       throw new ServerActionError("No autorizado", 401);
+    }
+    
+    // Obtener usuario
+    const user = await getUser();
+    if (!user || !user.id) {
+      throw new ServerActionError("No se pudo obtener la información del usuario", 401);
     }
     
     // Buscar la caja abierta

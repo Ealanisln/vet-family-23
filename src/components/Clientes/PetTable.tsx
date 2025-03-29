@@ -1,3 +1,4 @@
+// src/components/Clientes/PetsTable.tsx
 "use client";
 
 import * as React from "react";
@@ -29,23 +30,8 @@ import { getPets } from "@/app/actions/get-pets";
 import Loader from "@/components/ui/loader";
 import { Checkbox } from "../ui/checkbox";
 import PetActions from "./PetActions";
-import TablePagination from '@/components/ui/pagination';
-
-interface TablePet {
-  id: string;
-  userId: string;
-  name: string;
-  species: string;
-  breed: string;
-  ownerName: string;
-  isDeceased: boolean;
-  internalId: string | null;
-  dateOfBirth: Date;
-  gender: string;
-  weight: number;
-  microchipNumber: string | null;
-  isNeutered: boolean;
-}
+import TablePagination from '@/components/ui/table-pagination';
+import { TablePet } from "@/types/pet"; // Import the shared type
 
 export default function PetsTable() {
   const [data, setData] = React.useState<TablePet[]>([]);

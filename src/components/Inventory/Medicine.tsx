@@ -67,7 +67,7 @@ import { InventoryStatus, MovementType } from "@prisma/client";
 // Componentes
 import InventoryItemForm from "./ui/InventoryItemForm";
 import ItemDetails from "./ui/ItemDetails";
-import TablePagination from "../ui/pagination";
+import TablePagination from "../ui/table-pagination";
 
 // Funciones auxiliares
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {

@@ -1,14 +1,15 @@
 // src/components/POS/Sales/Receipt.tsx
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { PrinterIcon, Share2Icon, DownloadIcon } from "lucide-react";
+import { PrinterIcon, Share2Icon } from "lucide-react";
 import { formatDateTime, formatCurrency, translatePaymentMethod } from "@/utils/pos-helpers";
 import type { Sale } from "@/types/pos";
+import type { MouseEvent } from "react";
 
 interface ReceiptProps {
   sale: Sale;
@@ -19,23 +20,28 @@ export default function Receipt({ sale, printMode = false }: ReceiptProps) {
   const [isPrinting, setIsPrinting] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
   
-  const handlePrint = useReactToPrint({
+  const handleBeforePrint = useCallback(async () => {
+    setIsPrinting(true);
+    return Promise.resolve();
+  }, []);
+
+  const handleAfterPrint = useCallback(() => {
+    setIsPrinting(false);
+  }, []);
+
+  const reactToPrintTrigger = useReactToPrint({
+    documentTitle: `Recibo-${sale.receiptNumber}`,
+    onBeforePrint: handleBeforePrint,
+    onAfterPrint: handleAfterPrint,
     content: () => receiptRef.current,
-    onBeforeprint: () => setIsPrinting(true),
-    onAfterPrint: () => setIsPrinting(false),
-    pageStyle: `
-      @page {
-        size: 80mm 297mm;
-        margin: 0;
-      }
-      @media print {
-        body {
-          margin: 0;
-          padding: 0;
-        }
-      }
-    `,
-  });
+    pageStyle: `...`,
+  } as any);
+
+  // Create a proper MouseEventHandler that calls the print function
+  const handlePrintClick = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    reactToPrintTrigger();
+  }, [reactToPrintTrigger]);
   
   const handleShare = async () => {
     try {
@@ -165,7 +171,7 @@ export default function Receipt({ sale, printMode = false }: ReceiptProps) {
               size="sm"
               variant="outline"
               className="h-8 w-8 p-0"
-              onClick={handlePrint}
+              onClick={handlePrintClick}
               disabled={isPrinting}
             >
               <PrinterIcon className="h-4 w-4" />

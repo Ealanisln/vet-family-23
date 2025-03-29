@@ -1,5 +1,7 @@
+// src/components/Clientes/PetActions.tsx
+
 import * as React from "react";
-import { MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -21,22 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { deletePet } from "@/app/actions/delete-pets";
-
-interface TablePet {
-  id: string;
-  name: string;
-  species: string;
-  breed: string;
-  ownerName: string;
-  isDeceased: boolean;
-  userId: string; // Ya está incluido en tu interfaz Pet
-  internalId: string | null;
-  dateOfBirth: Date;
-  gender: string;
-  weight: number;
-  microchipNumber: string | null;
-  isNeutered: boolean;
-}
+import { TablePet } from "@/types/pet"; // Import the shared type
 
 interface PetActionsProps {
   pet: TablePet;

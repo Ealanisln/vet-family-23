@@ -1,7 +1,7 @@
 // src/contexts/CartContext.tsx
 'use client';
 
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useCallback } from 'react';
 import type { CartItem, PaymentMethod, SaleItemData } from '@/types/pos';
 
 // Interfaces adicionales para el contexto del carrito
@@ -177,7 +177,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const total = subtotal + tax;
 
   // Método para obtener datos estructurados para crear una venta
-  const getSaleData = (discount: number = 0) => {
+  const getSaleData = useCallback((discount: number = 0) => {
     return {
       userId: state.client?.id,
       petId: state.pet?.id,
@@ -196,40 +196,40 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         total: item.quantity * item.unitPrice,
       })),
     };
-  };
+  }, [state.client, state.pet, subtotal, tax, total, state.paymentMethod, state.notes, state.items]);
 
-  // Acciones
-  const addItem = (item: CartItem) => {
+  // Acciones envueltas en useCallback
+  const addItem = useCallback((item: CartItem) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
-  };
+  }, [dispatch]);
 
-  const removeItem = (id: string) => {
+  const removeItem = useCallback((id: string) => {
     dispatch({ type: 'REMOVE_ITEM', payload: id });
-  };
+  }, [dispatch]);
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
-  };
+  }, [dispatch]);
 
-  const setClient = (client: CartClientProps | null) => {
+  const setClient = useCallback((client: CartClientProps | null) => {
     dispatch({ type: 'SET_CLIENT', payload: client });
-  };
+  }, [dispatch]);
 
-  const setPet = (pet: CartPetProps | null) => {
+  const setPet = useCallback((pet: CartPetProps | null) => {
     dispatch({ type: 'SET_PET', payload: pet });
-  };
+  }, [dispatch]);
 
-  const setPaymentMethod = (method: PaymentMethod | null) => {
+  const setPaymentMethod = useCallback((method: PaymentMethod | null) => {
     dispatch({ type: 'SET_PAYMENT_METHOD', payload: method });
-  };
+  }, [dispatch]);
 
-  const setNotes = (notes: string) => {
+  const setNotes = useCallback((notes: string) => {
     dispatch({ type: 'SET_NOTES', payload: notes });
-  };
+  }, [dispatch]);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     dispatch({ type: 'CLEAR_CART' });
-  };
+  }, [dispatch]);
 
   return (
     <CartContext.Provider

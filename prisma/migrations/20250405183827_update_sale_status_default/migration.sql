@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Sale" ALTER COLUMN "status" SET DEFAULT 'PENDING';

@@ -1,7 +1,7 @@
 // src/app/actions/pos/inventory.ts
 "use server";
 
-import { Prisma, InventoryCategory } from "@prisma/client";
+import { Prisma, InventoryCategory, InventoryItem } from "@prisma/client";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { prisma } from "@/lib/prismaDB";
 
@@ -24,7 +24,7 @@ class ServerActionError extends Error {
 }
 
 // Agregar precio predeterminado si es necesario
-function applyDefaultPrice(products: any[]) {
+function applyDefaultPrice(products: InventoryItem[]) {
   return products.map(product => {
     // Si el producto no tiene un precio definido, asignar 0.00
     if (product.price === undefined || product.price === null) {
@@ -182,8 +182,15 @@ export async function searchInventory({
       take: limit,
     });
     
-    // Aplicar precio predeterminado
-    return applyDefaultPrice(products);
+    // Aplicar precio predeterminado y convertir fechas a ISO string
+    const productsWithPrice = applyDefaultPrice(products);
+    return productsWithPrice.map(product => ({
+      ...product,
+      price: product.price as number,
+      expirationDate: product.expirationDate?.toISOString() || null,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt?.toISOString() || null,
+    }));
     
   } catch (error: unknown) {
     if (error instanceof ServerActionError) {

@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EditIcon, ArrowLeftIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import PetForm from "@/components/Admin/ui/PetForm";
 import { MedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
@@ -83,15 +83,10 @@ const calculateAge = (dateOfBirth: Date): string => {
 };
 
 export default function PetDetailsView({ pet }: { pet: Pet }) {
-  const [open, setOpen] = useState(false);
   const [isNeutered, setIsNeutered] = useState(pet.isNeutered);
   const [isDeceased, setIsDeceased] = useState(pet.isDeceased);
   const params = useParams();
   const pathname = usePathname();
-
-  const handleClose = () => {
-    setOpen(false);
-  };
 
   const handleNeuteredChange = async (checked: boolean) => {
     setIsNeutered(checked);
@@ -186,7 +181,6 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
           <PetForm
             isEditing={true}
             initialPet={formatPetForForm(pet)}
-            onClose={handleClose}
             userId={pet.userId}
           />
         </div>
@@ -280,6 +274,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                             existingRecord={{
                               id: record.id,
                               petId: record.petId,
+                              userId: pet.userId,
                               visitDate: record.visitDate
                                 .toISOString()
                                 .split("T")[0],

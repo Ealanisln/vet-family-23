@@ -139,7 +139,23 @@ export async function closeCashDrawer(data: {
         status: "OPEN",
       },
       include: {
-        transactions: true,
+        User_CashDrawer_openedByToUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        User_CashDrawer_closedByToUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        CashTransaction: true,
       },
     });
     
@@ -151,7 +167,7 @@ export async function closeCashDrawer(data: {
     console.log(`Cierre de caja: Caja encontrada (${openDrawer.id})`);
     
     // Calcular el monto esperado basado en las transacciones
-    const totalTransactions = openDrawer.transactions.reduce((sum, tx) => sum + tx.amount, 0);
+    const totalTransactions = openDrawer.CashTransaction.reduce((sum, tx) => sum + tx.amount, 0);
     const expectedAmount = openDrawer.initialAmount + totalTransactions;
     
     // Calcular la diferencia
@@ -199,26 +215,40 @@ export async function closeCashDrawer(data: {
 
 export async function getCurrentDrawer() {
   try {
-    return await prisma.cashDrawer.findFirst({
+    const drawer = await prisma.cashDrawer.findFirst({
       where: {
         status: "OPEN",
       },
       include: {
-        openUser: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-        transactions: {
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
+        CashTransaction: true,
       },
     });
+
+    if (!drawer) {
+      return null;
+    }
+
+    // Siempre buscar el usuario que abrió la caja
+    const openUser = await prisma.user.findUnique({
+      where: { id: drawer.openedBy },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+      },
+    });
+
+    // Si no se encuentra el usuario, retornar null
+    if (!openUser) {
+      return null;
+    }
+
+    return {
+      ...drawer,
+      openUser,
+      transactions: drawer.CashTransaction,
+    };
   } catch (error: unknown) {
     console.error("Error fetching current drawer:", error);
     return null;
@@ -232,7 +262,7 @@ export async function getDrawerTransactions(drawerId: string) {
         drawerId,
       },
       include: {
-        sale: true,
+        Sale: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -282,7 +312,7 @@ export async function getDrawerHistory({
       prisma.cashDrawer.findMany({
         where: whereClause,
         include: {
-          openUser: {
+          User_CashDrawer_openedByToUser: {
             select: {
               id: true,
               firstName: true,
@@ -290,7 +320,7 @@ export async function getDrawerHistory({
               email: true,
             },
           },
-          closeUser: {
+          User_CashDrawer_closedByToUser: {
             select: {
               id: true,
               firstName: true,
@@ -298,6 +328,7 @@ export async function getDrawerHistory({
               email: true,
             },
           },
+          CashTransaction: true,
         },
         orderBy: {
           openedAt: "desc",

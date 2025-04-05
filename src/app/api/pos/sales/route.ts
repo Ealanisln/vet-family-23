@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { userHasPOSPermission } from "@/utils/pos-helpers";
 import { prisma } from "@/lib/prismaDB";
-import { Prisma } from "@prisma/client";
+import { Prisma, PaymentMethod, SaleStatus } from "@prisma/client";
+import crypto from "crypto";
 
 interface SaleItemInput {
   itemId?: string;
@@ -13,6 +14,19 @@ interface SaleItemInput {
   unitPrice: number;
   discount?: number;
   total: number;
+}
+
+// Added interface for POST request body
+interface SaleCreateRequest {
+  userId?: string;
+  petId?: string;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+  items: SaleItemInput[];
 }
 
 export const dynamic = "force-dynamic";
@@ -67,7 +81,7 @@ export async function GET(request: NextRequest) {
           },
         },
         {
-          user: {
+          User: {
             OR: [
               {
                 firstName: {
@@ -122,7 +136,7 @@ export async function GET(request: NextRequest) {
       prisma.sale.findMany({
         where: whereClause,
         include: {
-          user: {
+          User: {
             select: {
               id: true,
               firstName: true,
@@ -130,7 +144,7 @@ export async function GET(request: NextRequest) {
               email: true,
             },
           },
-          pet: {
+          Pet: {
             select: {
               id: true,
               name: true,
@@ -138,7 +152,7 @@ export async function GET(request: NextRequest) {
               breed: true,
             },
           },
-          items: true,
+          SaleItem: true,
         },
         orderBy: {
           date: "desc",
@@ -208,7 +222,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener datos de la venta
-    const data = await request.json();
+    const data: SaleCreateRequest = await request.json(); // Typed data variable
 
     // Obtener el cajón de caja abierto actualmente
     const openDrawer = await prisma.cashDrawer.findFirst({
@@ -255,6 +269,7 @@ export async function POST(request: NextRequest) {
       // 1. Crear la venta
       const sale = await tx.sale.create({
         data: {
+          id: crypto.randomUUID(),
           receiptNumber,
           userId: data.userId || null,
           petId: data.petId || null,
@@ -263,10 +278,11 @@ export async function POST(request: NextRequest) {
           discount: data.discount,
           total: data.total,
           paymentMethod: data.paymentMethod,
-          status: "COMPLETED",
+          status: "COMPLETED" as SaleStatus, // Added type assertion
           notes: data.notes,
-          items: {
+          SaleItem: {
             create: data.items.map((item: SaleItemInput) => ({
+              id: crypto.randomUUID(),
               itemId: item.itemId,
               serviceId: item.serviceId,
               description: item.description,
@@ -278,12 +294,12 @@ export async function POST(request: NextRequest) {
           },
         },
         include: {
-          items: true,
+          SaleItem: true,
         },
       });
 
       // 2. Actualizar inventario si es un producto
-      for (const item of sale.items) {
+      for (const item of sale.SaleItem) {
         if (item.itemId) {
           // Obtener el producto
           const product = await tx.inventoryItem.findUnique({
@@ -315,7 +331,7 @@ export async function POST(request: NextRequest) {
                 type: "OUT",
                 quantity: item.quantity,
                 reason: "Venta",
-                userId: data.userId,
+                userId: data.userId, // Kept data.userId
                 relatedRecordId: sale.id,
                 notes: `Venta #${sale.receiptNumber}`,
               },
@@ -327,8 +343,9 @@ export async function POST(request: NextRequest) {
       // 3. Registrar transacción de caja
       await tx.cashTransaction.create({
         data: {
+          id: crypto.randomUUID(),
           drawerId: openDrawer.id,
-          amount: data.total,
+          amount: data.total, // Kept data.total
           type: "SALE",
           description: `Venta #${sale.receiptNumber}`,
           saleId: sale.id,

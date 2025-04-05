@@ -69,6 +69,7 @@ export interface SaleFormData {
   total: number;
   paymentMethod: string;
   notes?: string;
+  status: SaleStatus;
   items: SaleItemData[];
 }
 
@@ -174,7 +175,7 @@ export interface SaleListItem {
 
 // Full sale detail type (with items)
 export interface Sale extends SaleListItem {
-  items: SaleItem[];
+  SaleItem: SaleItem[];
 }
 
 export interface SaleItem {

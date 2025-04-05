@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { prisma } from "@/lib/prisma";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";import { prisma } from "@/lib/prismaDB";
 
 // Verificar si el usuario es admin
 async function isUserAdmin(userId: string) {

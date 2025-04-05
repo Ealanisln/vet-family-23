@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
 import { IDewormingInput } from "@/types/pet";
-import { DewormingType, DewormingStage } from "@prisma/client";
+import { DewormingType, DewormingStage, DewormingStatus } from "@prisma/client";
 
 export async function addDeworming(petId: string, data: IDewormingInput) {
   try {
@@ -16,16 +16,18 @@ export async function addDeworming(petId: string, data: IDewormingInput) {
 
     const deworming = await prisma.deworming.create({
       data: {
+        id: crypto.randomUUID(),
         petId,
         dewormingType: data.dewormingType as DewormingType,
         stage: data.stage as DewormingStage,
-        status: 'SCHEDULED',
+        status: 'SCHEDULED' as DewormingStatus,
         administrationDate: data.administrationDate,
         nextDoseDate: data.nextDoseDate,
         batchNumber: data.batchNumber || null,
         manufacturer: data.manufacturer || null,
         veterinarianName: data.veterinarianName || null,
         notes: data.notes || null,
+        updatedAt: new Date()
       }
     });
     

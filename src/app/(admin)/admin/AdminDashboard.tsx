@@ -199,12 +199,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       href: "/admin/usuarios",
       description: "Administrar usuarios del sistema",
     },
-    {
-      title: "Roles y Permisos",
-      icon: ShieldCheck,
-      href: "/admin/usuarios/roles",
-      description: "Gestionar roles y permisos",
-    },
   ];
 
   const quickActions: MenuOptionProps[] = [

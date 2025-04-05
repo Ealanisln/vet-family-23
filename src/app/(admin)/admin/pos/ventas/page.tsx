@@ -5,6 +5,8 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { getSales } from "@/app/actions/pos/sales";
 import SalesTable from "@/components/POS/Sales/SalesTable";
 import { userHasPOSPermission } from "@/utils/pos-helpers";
+import { Suspense } from "react";
+import PendingMedicalOrders from "@/components/POS/PendingMedicalOrders";
 
 export const metadata: Metadata = {
   title: "Ventas | POS",
@@ -93,6 +95,16 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
         sales={sales}
         pagination={pagination}
       />
+      
+      <div className="space-y-8 p-8">
+        <h1 className="text-2xl font-bold">Punto de Venta</h1>
+        
+        <div className="grid gap-8">
+          <Suspense fallback={<div>Cargando órdenes médicas...</div>}>
+            <PendingMedicalOrders />
+          </Suspense>
+        </div>
+      </div>
     </div>
   );
 }

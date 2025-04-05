@@ -29,6 +29,8 @@ export default function Receipt({ sale, printMode = false }: ReceiptProps) {
     setIsPrinting(false);
   }, []);
 
+  // TODO: Properly type this once react-to-print types are better documented
+  // Currently using 'any' due to incomplete type definitions in react-to-print
   const reactToPrintTrigger = useReactToPrint({
     documentTitle: `Recibo-${sale.receiptNumber}`,
     onBeforePrint: handleBeforePrint,
@@ -108,7 +110,7 @@ export default function Receipt({ sale, printMode = false }: ReceiptProps) {
           <div className="w-20 text-right">Total</div>
         </div>
         
-        {sale.items.map((item) => (
+        {sale.SaleItem.map((item) => (
           <div key={item.id} className="flex justify-between py-1 text-sm">
             <div className="w-16 text-left">{item.quantity}</div>
             <div className="flex-1 text-left">{item.description}</div>

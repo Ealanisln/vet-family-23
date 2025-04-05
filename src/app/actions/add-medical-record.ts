@@ -11,6 +11,7 @@ export interface PetForMedicalRecord {
   species: string;
   ownerName: string;
   isDeceased: boolean;
+  userId: string;
 }
 
 type GetPetsForMedicalRecordResult =
@@ -26,6 +27,7 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
         name: true,
         species: true,
         isDeceased: true,
+        userId: true,
         user: {
           select: {
             firstName: true,
@@ -51,6 +53,7 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
         .filter(Boolean)
         .join(' ') || 'N/A',
       isDeceased: pet.isDeceased,
+      userId: pet.userId,
     }));
 
     return { success: true, pets: formattedPets };
@@ -78,7 +81,8 @@ interface MedicalHistoryInput {
   diagnosis: string;
   treatment: string;
   prescriptions: string[];
-  notes?: string | null;
+  notes?: string;
+  medicalOrderId?: string;
 }
 
 type MedicalHistoryResult =

@@ -84,6 +84,8 @@ export async function createService(data: {
         price: data.price,
         duration: data.duration,
         isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
     

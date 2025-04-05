@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";
 import { DataTable } from "../../../../../components/ui/data-table";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prismaDB";
 import { columns } from "./columns";
 
 export const metadata: Metadata = {

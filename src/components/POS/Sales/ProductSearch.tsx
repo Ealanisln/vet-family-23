@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { searchInventoryItems } from "@/app/actions/inventory";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -108,12 +108,21 @@ export default function ProductSearch({ onSelectProduct }: ProductSearchProps) {
                       </div>
                       <Button 
                         size="sm" 
-                        className="mt-2 w-full"
+                        className="mt-2 w-full bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center justify-center gap-2"
                         onClick={() => onSelectProduct(product)}
                         disabled={product.quantity <= 0}
                       >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Agregar
+                        {product.quantity <= 0 ? (
+                          <>
+                            <XCircle className="h-4 w-4" />
+                            Sin stock
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-4 w-4" />
+                            Agregar al carrito
+                          </>
+                        )}
                       </Button>
                     </div>
                   </CardContent>

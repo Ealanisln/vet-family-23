@@ -15,8 +15,8 @@ const PromocionDelDia: React.FC<PromocionDelDiaProps> = ({ promocion, size = 'no
       <Image
         src={promocion.imagen}
         alt={promocion.titulo}
-        layout="fill"
-        objectFit="cover"
+        fill
+        className="object-cover"
       />
     </div>
     <div className="p-4">

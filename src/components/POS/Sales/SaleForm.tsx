@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,18 +42,16 @@ import {
 import type {
   InventoryItem as PosInventoryItem,
   Service,
-  SaleFormData,
-  PaymentMethod, // Asegúrate que esté importado
+  PaymentMethod,
+  SaleFormData
 } from "@/types/pos";
 import type { InventoryItem as InvInventoryItem } from "@/types/inventory"; // Alias para el tipo de Inventory
 import type { Client } from "@/components/Clientes/ClientSearch";
 import { Pet } from "@/types/pet";
-
-// (Opcional pero recomendado) Definir el tipo de resultado esperado de createSale
-
-type CreateSaleResult =
-  | { success: true; id: string; receiptNumber: string }
-  | { success: false; error: string };
+import { getPetDetails } from "@/app/(admin)/admin/mascotas/[petId]/getPetDetails";
+import { getUserById } from "@/app/actions/get-customers";
+import { addMedicalHistory } from "@/app/actions/add-medical-record";
+import { completeMedicalOrder } from "@/app/actions/medical-orders";
 
 export default function SaleForm() {
   const router = useRouter();
@@ -78,6 +76,68 @@ export default function SaleForm() {
     tax,
     total,
   } = useCart();
+
+  // Cargar productos preseleccionados del historial médico
+  useEffect(() => {
+    const loadPendingSale = async () => {
+      const pendingSale = localStorage.getItem('pending_pos_sale');
+      if (pendingSale) {
+        try {
+          const { products, petId, notes } = JSON.parse(pendingSale);
+          // Agregar los productos al carrito
+          products.forEach((product: { id: string; name: string; quantity: number; unitPrice: number }) => {
+            const cartItem = {
+              id: product.id,
+              type: 'product' as const,
+              name: product.name,
+              description: product.name,
+              quantity: product.quantity,
+              unitPrice: product.unitPrice
+            };
+            addItem(cartItem);
+          });
+
+          // Si hay un petId, buscar la información completa de la mascota
+          if (petId) {
+            try {
+              const pet = await getPetDetails(petId);
+              if (pet) {
+                const cartPet = adaptPetToCartPet(pet);
+                if (cartPet) {
+                  setPet(cartPet);
+                  // Buscar y establecer el cliente
+                  const user = await getUserById(pet.userId);
+                  if (user) {
+                    const cartClient = adaptClientToCartClient({
+                      id: user.id,
+                      firstName: user.firstName || null,
+                      lastName: user.lastName || null,
+                      email: user.email || null,
+                      phone: user.phone || null,
+                    });
+                    setClient(cartClient);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error al obtener detalles de la mascota:', error);
+            }
+          }
+
+          // Si hay notas, establecerlas
+          if (notes) {
+            setNotes(notes);
+          }
+          // Limpiar localStorage después de cargar
+          localStorage.removeItem('pending_pos_sale');
+        } catch (error) {
+          console.error('Error al cargar productos preseleccionados:', error);
+        }
+      }
+    };
+
+    loadPendingSale();
+  }, [addItem, setNotes, setPet, setClient]);
 
   // Calcular el total final después del descuento
 
@@ -222,7 +282,6 @@ export default function SaleForm() {
         description: "El carrito está vacío",
         variant: "destructive",
       });
-
       return;
     }
 
@@ -232,7 +291,6 @@ export default function SaleForm() {
         description: "Selecciona un método de pago",
         variant: "destructive",
       });
-
       return;
     }
 
@@ -246,101 +304,95 @@ export default function SaleForm() {
         description: "El monto recibido en efectivo es menor al total a pagar.",
         variant: "destructive",
       });
-
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Construir los datos de la venta
-
+      // Procesar la venta
       const saleData: SaleFormData = {
         userId: state.client?.id,
-
         petId: state.pet?.id,
-
-        subtotal,
-
-        tax,
-
-        discount: discountAmount,
-
-        total: finalTotal, // Usa el total después del descuento
-
-        paymentMethod: state.paymentMethod, // Ya validamos que no es null
-
+        subtotal: subtotal,
+        tax: tax,
+        discount: discountAmount || 0,
+        total: finalTotal,
+        paymentMethod: state.paymentMethod,
         notes: state.notes,
-
-        items: state.items.map((item) => ({
-          itemId: item.type === "product" ? item.id : null,
-
-          serviceId: item.type === "service" ? item.id : null,
-
-          description: item.name, // O usa item.description si lo tienes en CartItem
-
+        status: 'COMPLETED',
+        items: state.items.map(item => ({
+          itemId: item.type === 'product' ? item.id : null,
+          serviceId: item.type === 'service' ? item.id : null,
+          description: item.name,
           quantity: item.quantity,
-
           unitPrice: item.unitPrice,
-
-          total: item.quantity * item.unitPrice,
-        })),
+          total: item.quantity * item.unitPrice
+        }))
       };
 
-      // Llamar a la acción del servidor y tipar el resultado (opcional pero recomendado)
+      const saleResult = await createSale(saleData);
 
-      const result: CreateSaleResult = await createSale(saleData);
-
-      // --- CORRECCIÓN AQUÍ ---
-
-      // Primero verifica solo 'success'. TypeScript estrechará el tipo dentro de cada bloque.
-
-      if (result.success) {
-        // DENTRO de este bloque, TypeScript sabe que 'result' tiene 'id' y 'receiptNumber'.
-
-        toast({
-          title: "Venta procesada",
-
-          description: `Venta #${result.receiptNumber} completada exitosamente`, // Acceso SEGURO
-        });
-
-        clearCart();
-
-        setDiscountAmount(0);
-
-        setCashAmount("");
-
-        router.push(`/admin/pos/ventas/${result.id}`); // Acceso SEGURO
-      } else {
-        // DENTRO de este bloque, TypeScript sabe que 'result' tiene 'error'.
-
-        console.error("Error devuelto por createSale:", result.error); // Acceso SEGURO
-
-        // Lanza el error para que lo capture el bloque 'catch'.
-
-        throw new Error(
-          result.error || "Error desconocido al procesar la venta" // Acceso SEGURO
-        );
+      if (!saleResult.success) {
+        throw new Error(saleResult.error);
       }
 
-      // --- FIN CORRECCIÓN ---
-    } catch (error) {
-      console.error("Error al procesar la venta (catch):", error);
+      // Si hay una orden médica pendiente, actualizarla
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.has('orderId')) {
+        const orderId = searchParams.get('orderId');
+        if (orderId) {
+          const orderResult = await completeMedicalOrder(orderId, saleResult.id);
+          if (!orderResult.success) {
+            toast({
+              title: "Advertencia",
+              description: "La venta se completó pero hubo un error al actualizar la orden médica: " + orderResult.error,
+              variant: "destructive",
+            });
+          }
+        }
+      }
 
-      const errorMessage =
-        error instanceof Error ? error.message : "Ocurrió un error inesperado.";
+      // Si hay información médica pendiente, actualizamos el historial
+      if (searchParams.has('diagnosis') && state.pet?.id) {
+        const medicalRecord = {
+          visitDate: new Date(searchParams.get('visitDate') || new Date()),
+          diagnosis: searchParams.get('diagnosis') || '',
+          treatment: searchParams.get('treatment') || '',
+          prescriptions: JSON.parse(searchParams.get('prescriptions') || '[]'),
+          notes: searchParams.get('notes') || '',
+          reasonForVisit: 'Consulta médica'
+        };
+
+        const recordResult = await addMedicalHistory(state.pet.id, medicalRecord);
+        
+        if (!recordResult.success) {
+          toast({
+            title: "Advertencia",
+            description: "La venta se completó pero hubo un error al actualizar el historial médico: " + recordResult.error,
+            variant: "destructive",
+          });
+        }
+      }
 
       toast({
-        title: "Error al Procesar Venta",
+        title: "Éxito",
+        description: "Venta procesada correctamente",
+      });
 
-        description: errorMessage,
-
+      // Limpiar el carrito y redirigir
+      clearCart();
+      router.push("/admin/pos");
+    } catch (error) {
+      console.error("Error processing sale:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al procesar la venta",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
-
-      setConfirmDialogOpen(false); // Asegúrate de cerrar el diálogo siempre
+      setConfirmDialogOpen(false);
     }
   };
 

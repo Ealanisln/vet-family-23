@@ -124,7 +124,7 @@ export default function Receipt({ sale, printMode = false }: ReceiptProps) {
       
       <div className="space-y-1">
         <div className="flex justify-between">
-          <span>Subtotal:</span>
+          <span>Subtotal (con IVA):</span>
           <span>{formatCurrency(sale.subtotal)}</span>
         </div>
         {sale.discount > 0 && (
@@ -134,7 +134,7 @@ export default function Receipt({ sale, printMode = false }: ReceiptProps) {
           </div>
         )}
         <div className="flex justify-between">
-          <span>IVA (16%):</span>
+          <span>IVA incluido (16%):</span>
           <span>{formatCurrency(sale.tax)}</span>
         </div>
         <div className="flex justify-between font-bold text-base">

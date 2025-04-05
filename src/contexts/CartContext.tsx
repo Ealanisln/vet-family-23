@@ -88,18 +88,19 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       );
 
       if (existingItemIndex !== -1) {
-        // El producto ya existe, incrementar cantidad
+        // El producto ya existe, sumar la nueva cantidad a la existente
         const updatedItems = [...state.items];
+        const existingItem = updatedItems[existingItemIndex];
         updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + 1,
+          ...existingItem,
+          quantity: existingItem.quantity + action.payload.quantity, // Sumar la cantidad del payload
         };
         return { ...state, items: updatedItems };
       } else {
-        // Agregar nuevo producto con cantidad 1
+        // Agregar nuevo producto con la cantidad especificada en el payload
         return {
           ...state,
-          items: [...state.items, action.payload],
+          items: [...state.items, action.payload], // La cantidad ya está en el payload
         };
       }
     }
@@ -173,8 +174,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     0
   );
   const taxRate = 0.16; // 16% de IVA
-  const tax = subtotal * taxRate;
-  const total = subtotal + tax;
+  const priceWithoutTax = subtotal / (1 + taxRate);
+  const tax = subtotal - priceWithoutTax;
+  const total = subtotal;
 
   // Método para obtener datos estructurados para crear una venta
   const getSaleData = useCallback((discount: number = 0) => {

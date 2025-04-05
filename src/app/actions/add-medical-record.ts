@@ -110,7 +110,7 @@ export async function addMedicalHistory(
 
     // Start a transaction
     const result = await prisma.$transaction(async (tx) => {
-      const { ...data } = recordData;
+      const { medicalOrderId, ...data } = recordData;
       
       const newRecord = await tx.medicalHistory.create({
         data: {
@@ -121,6 +121,7 @@ export async function addMedicalHistory(
           treatment: data.treatment,
           prescriptions: data.prescriptions,
           notes: data.notes || null,
+          medicalOrderId: medicalOrderId || null,
         },
       });
 
@@ -172,7 +173,7 @@ export async function updateMedicalHistory(
       return { success: false, error: "Medical history record not found or unauthorized" };
     }
 
-    const { id, ...data } = recordData;
+    const { id, medicalOrderId, ...data } = recordData;
     
     const updatedRecord = await prisma.medicalHistory.update({
       where: { 
@@ -186,6 +187,7 @@ export async function updateMedicalHistory(
         treatment: data.treatment,
         prescriptions: data.prescriptions,
         notes: data.notes || null,
+        medicalOrderId: medicalOrderId || null,
       },
     });
 

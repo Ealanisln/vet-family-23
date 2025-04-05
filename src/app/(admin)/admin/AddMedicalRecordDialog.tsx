@@ -41,11 +41,11 @@ import {
   getPetsForMedicalRecord,
   PetForMedicalRecord,
 } from "@/app/actions/add-medical-record";
-import { searchInventory, getProductById } from "@/app/actions/pos/inventory";
 import { useToast } from "@/components/ui/use-toast";
 import { EditIcon, PlusCircle, Search, X } from "lucide-react";
-import { InventoryItemWithPrice } from "@/lib/type-adapters";
 import { createMedicalOrder } from "@/app/actions/medical-orders";
+import { searchInventory } from "@/app/actions/pos/inventory";
+import { InventoryItemWithPrice } from "@/lib/type-adapters";
 
 interface MedicalHistory {
   id?: string;
@@ -105,6 +105,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
     treatment: existingRecord?.treatment || "",
     prescriptions: existingRecord?.prescriptions || [],
     notes: existingRecord?.notes || "",
+    medicalOrderId: existingRecord?.medicalOrderId || undefined,
   });
 
   const [productsSection, setProductsSection] = useState<ProductSection>({
@@ -124,9 +125,9 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
       if (!isOpen) return;
 
       if (!petId && !existingRecord) {
+        // Fetch all pets when no specific petId is given and not editing
         const result = await getPetsForMedicalRecord();
         if (result.success) {
-          // Filter out deceased pets
           const alivePets = result.pets.filter((pet) => !pet.isDeceased);
           setPets(alivePets);
           setError(null);
@@ -137,20 +138,40 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
           );
         }
       } else {
-        // Si tenemos un petId o existingRecord, cargar solo esa mascota
+        // Fetch all pets even if petId or existingRecord is present, to get the userId
         const result = await getPetsForMedicalRecord();
         if (result.success) {
           const targetPetId = petId || existingRecord?.petId;
           const targetPet = result.pets.find(pet => pet.id === targetPetId);
           if (targetPet) {
-            setPets([targetPet]);
+            // Set the list to only the target pet for display/selection if needed
+            // setPets([targetPet]); 
+            // Keep all pets available if the dropdown might be used in other contexts
+            setPets(result.pets.filter((p) => !p.isDeceased));
+            
+            // If adding a new record (no existingRecord) and we have a petId,
+            // set the userId in the record state.
+            if (!existingRecord && petId && targetPet.userId) {
+              setRecord(prev => ({ ...prev, userId: targetPet.userId }));
+            }
             setError(null);
+          } else {
+             // Handle case where the provided petId doesn't match any fetched pet
+             console.error("Target pet not found with ID:", targetPetId);
+             setError("La mascota especificada no fue encontrada.");
+             // Optionally clear the petId in the record state
+             // setRecord(prev => ({ ...prev, petId: '', userId: '' })); 
           }
+        } else {
+          console.error("Error fetching pets:", result.error);
+          setError(
+            "No se pudieron cargar los datos de las mascotas. Por favor, intente de nuevo más tarde."
+          );
         }
       }
     };
     fetchPets();
-  }, [petId, existingRecord, isOpen]);
+  }, [petId, existingRecord, isOpen]); // Removed setRecord from dependency array to avoid potential loops
 
   // Efecto para búsqueda automática mientras se escribe
   useEffect(() => {
@@ -196,15 +217,19 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
   };
 
   const handleAddProduct = (product: InventoryItemWithPrice) => {
+    const fullName = product.presentation 
+      ? `${product.name} - ${product.presentation}`
+      : product.name;
+
     setProductsSection((prev) => ({
       ...prev,
       selectedProducts: [
         ...prev.selectedProducts,
         {
           id: product.id,
-          name: product.name,
+          name: fullName,
           quantity: 1,
-          unitPrice: product.price || 0,
+          unitPrice: product.price || 0
         },
       ],
       searchValue: "",
@@ -221,12 +246,12 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
     }));
   };
 
-  const handleQuantityChange = (productId: string, quantity: number) => {
+  const handleQuantityChange = (productId: string, value: number) => {
     setProductsSection((prev) => ({
       ...prev,
       selectedProducts: prev.selectedProducts.map((p) =>
         p.id === productId
-          ? { ...p, quantity: Math.max(1, quantity) }
+          ? { ...p, quantity: Math.max(1, value) }
           : p
       ),
     }));
@@ -234,45 +259,26 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    let medicalOrderId = record.medicalOrderId;
+
     try {
-      // Validar stock antes de crear la orden
-      for (const product of productsSection.selectedProducts) {
-        const stockResult = await getProductById(product.id);
-        
-        if (!stockResult || stockResult.quantity < product.quantity) {
-          toast({
-            title: "Error de Stock",
-            description: `No hay suficiente stock de ${product.name}. Stock disponible: ${stockResult?.quantity || 0}`,
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-      
-      // Si no hay userId pero tenemos petId, obtener el userId de la mascota seleccionada
-      let userId = record.userId;
-      if (!userId && record.petId) {
-        const selectedPet = pets.find(pet => pet.id === record.petId);
-        userId = selectedPet?.userId || "";
+      if (!record.petId || !record.userId) {
+        throw new Error("Se requiere seleccionar una mascota");
       }
 
-      if (!userId) {
-        toast({
-          title: "Error",
-          description: "No se pudo identificar al dueño de la mascota",
-          variant: "destructive",
-        });
-        return;
+      if (!record.visitDate) {
+        throw new Error("Se requiere la fecha de visita");
       }
-      
-      // Primero crear la orden médica si hay productos seleccionados
-      let medicalOrderId: string | undefined;
-      
+
+      if (!record.reasonForVisit) {
+        throw new Error("Se requiere la razón de la visita");
+      }
+
+      // Si hay productos seleccionados, crear la orden médica primero
       if (productsSection.selectedProducts.length > 0) {
         const orderData = {
           petId: record.petId,
-          userId: userId,
+          userId: record.userId,
           visitDate: new Date(record.visitDate),
           diagnosis: record.diagnosis,
           treatment: record.treatment,
@@ -301,7 +307,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         // Mostrar toast con instrucciones claras
         toast({
           title: "Orden Médica Creada",
-          description: "La orden médica se ha creado correctamente. Serás redirigido al POS para procesar el pago.",
+          description: "La orden médica se ha creado correctamente.",
           duration: 5000,
         });
       }
@@ -327,22 +333,19 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
             : "El nuevo historial médico ha sido agregado correctamente.",
         });
         
-        // Si hay una orden médica, redirigir al POS después de un breve delay
-        if (medicalOrderId) {
-          setTimeout(() => {
-            window.location.href = `/admin/pos/ventas/nueva?orderId=${medicalOrderId}`;
-          }, 2000);
-        } else {
-          setIsOpen(false);
-        }
+        setIsOpen(false);
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
       console.error("Error al procesar el historial médico:", error);
+      let errorMessage = "No se pudo procesar el historial médico. Por favor, intente de nuevo.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       toast({
         title: "Error",
-        description: "No se pudo procesar el historial médico. Por favor, intente de nuevo.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -528,30 +531,13 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
               <div className="sm:col-span-3 space-y-6">
                 <div className="border rounded-lg p-4 bg-white">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b pb-2">
-                      <h4 className="text-base font-medium">Productos del Inventario</h4>
-                      <span className="text-sm text-gray-500">Seleccione los productos a dispensar</span>
-                    </div>
-                    
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         <Input
-                          placeholder="Buscar medicamento o producto..."
+                          placeholder="Buscar medicamento..."
                           value={productsSection.searchValue}
                           onChange={(e) => setProductsSection(prev => ({ ...prev, searchValue: e.target.value }))}
                           className="w-full pl-9"
-                          onKeyDown={async (e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              if (productsSection.searchValue.trim().length > 0) {
-                                const results = await searchInventory({
-                                  searchTerm: productsSection.searchValue,
-                                  limit: 5,
-                                });
-                                setProductsSection(prev => ({ ...prev, searchResults: results }));
-                              }
-                            }
-                          }}
                         />
                         <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       </div>
@@ -567,16 +553,8 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                                 onSelect={() => handleAddProduct(product)}
                                 className="cursor-pointer hover:bg-gray-50"
                               >
-                                <div className="flex items-center justify-between w-full py-1">
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{product.name}</span>
-                                    <span className="text-sm text-gray-500">
-                                      {product.presentation || 'N/A'} • Stock: {product.quantity || 0}
-                                    </span>
-                                  </div>
-                                  <span className="text-sm font-medium">
-                                    ${product.price}
-                                  </span>
+                                <div className="flex items-center w-full py-1">
+                                  <span>{product.name}</span>
                                 </div>
                               </CommandItem>
                             ))}
@@ -594,15 +572,13 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                               <TableRow className="bg-gray-100">
                                 <TableHead>Producto</TableHead>
                                 <TableHead>Cantidad</TableHead>
-                                <TableHead>Precio Unit.</TableHead>
-                                <TableHead>Total</TableHead>
                                 <TableHead></TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
                               {productsSection.selectedProducts.map((product) => (
                                 <TableRow key={product.id}>
-                                  <TableCell className="font-medium">{product.name}</TableCell>
+                                  <TableCell>{product.name}</TableCell>
                                   <TableCell>
                                     <Input
                                       type="number"
@@ -617,10 +593,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                                       className="w-20"
                                     />
                                   </TableCell>
-                                  <TableCell>${product.unitPrice}</TableCell>
-                                  <TableCell className="font-medium">
-                                    ${(product.quantity * product.unitPrice).toFixed(2)}
-                                  </TableCell>
                                   <TableCell>
                                     <Button
                                       type="button"
@@ -633,20 +605,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                                   </TableCell>
                                 </TableRow>
                               ))}
-                              <TableRow className="bg-gray-100">
-                                <TableCell colSpan={3} className="text-right font-medium">
-                                  Total a Cobrar:
-                                </TableCell>
-                                <TableCell className="font-medium text-lg">
-                                  $
-                                  {productsSection.selectedProducts.reduce(
-                                    (acc, product) =>
-                                      acc + product.quantity * product.unitPrice,
-                                    0
-                                  ).toFixed(2)}
-                                </TableCell>
-                                <TableCell></TableCell>
-                              </TableRow>
                             </TableBody>
                           </Table>
                         </div>

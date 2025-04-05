@@ -484,17 +484,14 @@ export default function SaleForm() {
 
             <div className="mt-4 space-y-2 border-t pt-4">
               <div className="flex justify-between text-sm">
-                <span>Subtotal:</span>
-
+                <span>Subtotal (con IVA):</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between text-sm">
                 <span>
-                  IVA ({subtotal > 0 ? ((tax / subtotal) * 100).toFixed(0) : 0}
-                  %):
+                  IVA incluido (16%):
                 </span>
-
                 <span>${tax.toFixed(2)}</span>
               </div>
 

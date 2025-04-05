@@ -28,7 +28,19 @@ type PetWithRelations = Prisma.PetGetPayload<{
     user: true;
     vaccinations: true;
     Deworming: true;
-    medicalHistory: true;
+    medicalHistory: {
+      include: {
+        medicalOrder: {
+          include: {
+            products: {
+              include: {
+                product: true;
+              };
+            };
+          };
+        };
+      };
+    };
   };
 }>;
 
@@ -44,6 +56,17 @@ export default async function PetDetailsPage({
       vaccinations: true,
       Deworming: true,
       medicalHistory: {
+        include: {
+          medicalOrder: {
+            include: {
+              products: {
+                include: {
+                  product: true
+                }
+              }
+            }
+          }
+        },
         orderBy: {
           visitDate: 'desc'
         }
@@ -206,37 +229,58 @@ export default async function PetDetailsPage({
                           <TableHead>Razón</TableHead>
                           <TableHead>Diagnóstico</TableHead>
                           <TableHead>Tratamiento</TableHead>
+                          <TableHead>Medicamentos</TableHead>
                           <TableHead>Notas</TableHead>
                           <TableHead className="w-[80px]">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {pet.medicalHistory.map((record) => (
-                          <TableRow key={record.id}>
-                            <TableCell className="font-medium">
-                              {format(new Date(record.visitDate), "dd/MM/yyyy")}
-                            </TableCell>
-                            <TableCell>{record.reasonForVisit}</TableCell>
-                            <TableCell>{record.diagnosis}</TableCell>
-                            <TableCell>{record.treatment}</TableCell>
-                            <TableCell>{record.notes || "N/A"}</TableCell>
-                            <TableCell>
-                              <MedicalRecordDialog
-                                existingRecord={{
-                                  id: record.id,
-                                  petId: record.petId,
-                                  userId: pet.userId,
-                                  visitDate: new Date(record.visitDate).toISOString().split("T")[0],
-                                  reasonForVisit: record.reasonForVisit,
-                                  diagnosis: record.diagnosis,
-                                  treatment: record.treatment,
-                                  prescriptions: record.prescriptions,
-                                  notes: record.notes || undefined,
-                                }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {pet.medicalHistory.map((record) => {
+                          console.log("Medical Record Data:", JSON.stringify(record, null, 2));
+                          return (
+                            <TableRow key={record.id}>
+                              <TableCell className="font-medium">
+                                {format(new Date(record.visitDate), "dd/MM/yyyy")}
+                              </TableCell>
+                              <TableCell>{record.reasonForVisit}</TableCell>
+                              <TableCell>{record.diagnosis}</TableCell>
+                              <TableCell>{record.treatment}</TableCell>
+                              <TableCell>
+                                {(() => {
+                                  const prescriptions = (record.prescriptions || []).map(prescription => 
+                                    prescription.replace(/Prueba\s*-\s*Testing,?\s*/g, '')
+                                  ).filter(p => p.trim());
+                                  
+                                  const products = record.medicalOrder?.products.map(
+                                    p => p && p.product ? `${p.product.name} (x${p.quantity})` : ''
+                                  ).filter(Boolean) || [];
+                                  
+                                  const allMeds = [...prescriptions, ...products];
+                                  
+                                  return allMeds.length > 0 
+                                    ? allMeds.join(", ") 
+                                    : "N/A";
+                                })()}
+                              </TableCell>
+                              <TableCell>{record.notes || "N/A"}</TableCell>
+                              <TableCell>
+                                <MedicalRecordDialog
+                                  existingRecord={{
+                                    id: record.id,
+                                    petId: record.petId,
+                                    userId: pet.userId,
+                                    visitDate: new Date(record.visitDate).toISOString().split("T")[0],
+                                    reasonForVisit: record.reasonForVisit,
+                                    diagnosis: record.diagnosis,
+                                    treatment: record.treatment,
+                                    prescriptions: record.prescriptions,
+                                    notes: record.notes || undefined,
+                                  }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>

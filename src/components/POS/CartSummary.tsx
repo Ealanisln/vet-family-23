@@ -8,6 +8,7 @@ import { Minus, Plus, X, AlertTriangle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/utils/pos-helpers';
 import type { CartItem } from '@/types/pos';
+import { CATEGORY_TRANSLATIONS } from '@/utils/category-translations';
 
 interface CartSummaryProps {
   className?: string;
@@ -71,9 +72,7 @@ export function CartSummary({ className }: CartSummaryProps) {
                         </div>
 
                         <div className="text-xs text-gray-500 mt-0.5">
-                          {/* Usa item.category si existe, si no el tipo */}
-                          {item.category ? item.category : item.type}
-                          {/* Usa item.activeCompound si existe */}
+                          {item.category ? CATEGORY_TRANSLATIONS[item.category as keyof typeof CATEGORY_TRANSLATIONS] : item.type}
                           {item.activeCompound && ` - ${item.activeCompound}`}
                         </div>
 

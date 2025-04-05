@@ -84,6 +84,8 @@ model Pet {
   reminders           Reminder[]
   vaccinations        Vaccination[]
   VaccinationSchedule VaccinationSchedule[]
+  deworming           Deworming[]
+  DewormingSchedule   DewormingSchedule[]
   sales               Sale[]
 
   @@index([userId])
@@ -453,4 +455,59 @@ enum TransactionType {
   DEPOSIT
   WITHDRAWAL
   ADJUSTMENT
+}
+
+// Nuevos modelos para desparasitaciones
+model Deworming {
+  id                 String   @id @default(uuid())
+  petId             String
+  dewormingType     DewormingType
+  stage             DewormingStage
+  status            DewormingStatus @default(PENDING)
+  administrationDate DateTime
+  nextDoseDate      DateTime
+  batchNumber       String?
+  manufacturer      String?
+  veterinarianName  String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  pet               Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, dewormingType])
+  @@index([nextDoseDate, status])
+}
+
+model DewormingSchedule {
+  id            String          @id @default(uuid())
+  petId         String
+  dewormingType DewormingType
+  stage         DewormingStage
+  scheduledDate DateTime
+  status        DewormingStatus @default(PENDING)
+  reminderSent  Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  pet           Pet             @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, scheduledDate, status])
+}
+
+// Nuevos enums para desparasitaciones
+enum DewormingType {
+  INTERNAL
+  EXTERNAL
+  BOTH
+}
+
+enum DewormingStage {
+  PUPPY
+  ADULT
+}
+
+enum DewormingStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  SCHEDULED
 }

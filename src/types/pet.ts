@@ -24,6 +24,23 @@ interface PrismaVaccination {
   notes?: string | null;
 }
 
+// Esta interfaz coincide con la estructura exacta que devuelve Prisma
+export interface PrismaDeworming {
+  id: string;
+  petId: string;
+  dewormingType: string;
+  stage: string;
+  status: string;
+  administrationDate: Date;
+  nextDoseDate: Date;
+  batchNumber?: string | null;
+  manufacturer?: string | null;
+  veterinarianName?: string | null;
+  notes?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Pet {
   id: string;
   userId: string;
@@ -55,4 +72,23 @@ export interface TablePet {
   weight: number | null; // Allow null
   microchipNumber: string | null;
   isNeutered: boolean | null; // Allow null
+}
+
+export interface IDewormingInput {
+  dewormingType: string;
+  stage: string;
+  administrationDate: Date;
+  nextDoseDate: Date;
+  batchNumber?: string;
+  manufacturer?: string;
+  veterinarianName?: string;
+  notes?: string;
+}
+
+export interface IDeworming extends IDewormingInput {
+  id: string;
+  petId: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

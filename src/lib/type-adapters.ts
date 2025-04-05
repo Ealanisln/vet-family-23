@@ -1,18 +1,32 @@
 // src/lib/type-adapters.ts
 import type { CartClientProps, CartPetProps } from "@/contexts/CartContext";
 import type { Client } from "@/components/Clientes/ClientSearch";
-import type { InventoryItem } from "@/types/pos";
+import type { InventoryCategory, InventoryStatus } from "@prisma/client";
 import { Pet } from "@/types/pet";
 
 /**
  * Interface for inventory item data that includes price property
  */
-export interface InventoryItemWithPrice
-  extends Omit<InventoryItem, "createdAt" | "updatedAt"> {
-  price: number;
-  cost?: number;
+export interface InventoryItemWithPrice {
+  id: string;
+  name: string;
+  category: InventoryCategory;
+  description: string | null;
+  activeCompound: string | null;
+  presentation: string | null;
+  measure: string | null;
+  brand: string | null;
+  quantity: number;
+  minStock: number | null;
+  location: string | null;
+  expirationDate: string | null;
+  status: InventoryStatus;
+  batchNumber: string | null;
+  specialNotes: string | null;
   createdAt: Date | string;
-  updatedAt: Date | string;
+  updatedAt: Date | string | null;
+  price: number;
+  cost?: number | null;
 }
 
 /**
@@ -104,7 +118,7 @@ export function adaptInventoryItem(
   return {
     id: typeof item.id === "string" ? item.id : "",
     name: typeof item.name === "string" ? item.name : "",
-    category: typeof item.category === "string" ? item.category : "",
+    category: typeof item.category === "string" ? item.category as InventoryCategory : "MEDICINE" as InventoryCategory,
     description: typeof item.description === "string" ? item.description : null,
     activeCompound:
       typeof item.activeCompound === "string" ? item.activeCompound : null,
@@ -117,11 +131,11 @@ export function adaptInventoryItem(
     location: typeof item.location === "string" ? item.location : null,
     expirationDate:
       item.expirationDate instanceof Date
-        ? item.expirationDate
+        ? item.expirationDate.toISOString()
         : typeof item.expirationDate === "string"
-          ? new Date(item.expirationDate)
+          ? item.expirationDate
           : null,
-    status: typeof item.status === "string" ? item.status : "",
+    status: typeof item.status === "string" ? item.status as InventoryStatus : "ACTIVE" as InventoryStatus,
     batchNumber: typeof item.batchNumber === "string" ? item.batchNumber : null,
     specialNotes:
       typeof item.specialNotes === "string" ? item.specialNotes : null,

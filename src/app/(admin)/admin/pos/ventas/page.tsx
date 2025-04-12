@@ -26,12 +26,14 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   // Verificar que el usuario tiene permisos para el POS
   const { isAuthenticated, getUser } = getKindeServerSession();
   
-  if (!(await isAuthenticated())) {
+  const user = await getUser();
+
+  // If user is null or not authenticated, redirect to login
+  if (!user || !(await isAuthenticated())) {
     return redirect("/api/auth/login");
   }
   
-  const user = await getUser();
-  
+  // Now that we know user is not null, we can safely access user.id
   const hasPermission = await userHasPOSPermission(user.id);
   
   if (!hasPermission) {

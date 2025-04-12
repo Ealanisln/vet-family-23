@@ -9,10 +9,10 @@ import { userHasPOSPermission } from "@/utils/pos-helpers";
 import { AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/pos-helpers";
-import { ServiceWithRelations } from "@/types/pos"; // Import the correct type
+import { ServiceWithRelations } from "@/types/pos";
 
 export const metadata: Metadata = {
-  title: "Detalle de Servicio | POS",
+  title: "Detalle de Servicio | Vet Family",
   description: "Detalles del servicio veterinario"
 };
 
@@ -20,12 +20,14 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
   // Verificar que el usuario tiene permisos para el POS
   const { isAuthenticated, getUser } = getKindeServerSession();
   
-  if (!(await isAuthenticated())) {
+  const user = await getUser();
+
+  // If user is null or not authenticated, redirect to login
+  if (!user || !(await isAuthenticated())) {
     return redirect("/api/auth/login");
   }
   
-  const user = await getUser();
-  
+  // Now that we know user is not null, we can safely access user.id
   const hasPermission = await userHasPOSPermission(user.id);
   
   if (!hasPermission) {
@@ -119,7 +121,8 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
           <CardContent>
             {service.products && service.products.length > 0 ? (
               <div className="space-y-4">
-                {service.products.map((product) => (
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {service.products.map((product: any) => (
                   <div key={product.id} className="flex justify-between border-b pb-2">
                     <div>
                       <p className="font-medium">{product.name}</p>
@@ -154,7 +157,8 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {service.sales.map((sale) => (
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {service.sales.map((sale: any) => (
                       <tr key={sale.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {new Date(sale.date).toLocaleDateString()}

@@ -44,16 +44,17 @@ export async function createService(data: {
   duration?: number;
 }) {
   try {
-    const { getUser, isAuthenticated } = getKindeServerSession();
+    const { isAuthenticated, getUser } = getKindeServerSession();
     
-    // Verificar autenticación
-    if (!(await isAuthenticated())) {
+    // Obtener usuario de Kinde PRIMERO
+    const kindeUser = await getUser();
+
+    // Verificar autenticación Y existencia del usuario
+    if (!kindeUser || !(await isAuthenticated())) {
       throw new ServerActionError("No autorizado", 401);
     }
     
-    // Obtener usuario de Kinde
-    const kindeUser = await getUser();
-    
+    // Ahora sabemos que kindeUser no es null
     // Buscar o crear el usuario en la base de datos local
     let dbUser = await prisma.user.findFirst({
       where: {

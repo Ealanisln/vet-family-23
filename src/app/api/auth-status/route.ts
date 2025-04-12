@@ -7,18 +7,26 @@ export const dynamic = "force-dynamic";
 
 const prisma = new PrismaClient();
 
-export async function GET(req: NextRequest) {
+// Define a type for Kinde roles based on usage
+interface KindeRole {
+  key: string;
+  name: string;
+  // Add other properties if needed based on Kinde's actual structure
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_req: NextRequest) {
   try {
     const { getUser, isAuthenticated, getAccessToken } = getKindeServerSession();
 
     let user = null;
     let authStatus = false;
     let dbUser = null;
-    let userRoles: any[] = [];
+    let userRoles: KindeRole[] = [];
 
     try {
       user = await getUser();
-      authStatus = await isAuthenticated();
+      authStatus = (await isAuthenticated()) ?? false;
 
       if (user && user.id) {
         dbUser = await prisma.user.findUnique({
@@ -57,7 +65,8 @@ export async function GET(req: NextRequest) {
         const accessToken = await getAccessToken();
 
         if (accessToken && typeof accessToken === "object" && "roles" in accessToken) {
-          userRoles = Array.isArray(accessToken.roles) ? accessToken.roles : [];
+          // Ensure accessToken.roles is an array before assigning
+          userRoles = Array.isArray(accessToken.roles) ? accessToken.roles as KindeRole[] : [];
         }
 
         // Update roles only if they've changed

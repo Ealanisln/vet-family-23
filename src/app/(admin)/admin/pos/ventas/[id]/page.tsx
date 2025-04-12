@@ -37,10 +37,15 @@ interface SaleDetailPageProps {
 export default async function SaleDetailPage({ params }: SaleDetailPageProps) {
   // Verify user permissions (Keep this server-side logic)
   const { isAuthenticated, getUser } = getKindeServerSession();
-  if (!(await isAuthenticated())) {
+  
+  const user = await getUser();
+
+  // If user is null or not authenticated, redirect to login
+  if (!user || !(await isAuthenticated())) {
     return redirect("/api/auth/login");
   }
-  const user = await getUser();
+  
+  // Now that we know user is not null, we can safely access user.id
   const hasPermission = await userHasPOSPermission(user.id);
   if (!hasPermission) {
     return redirect("/admin");
@@ -60,10 +65,8 @@ export default async function SaleDetailPage({ params }: SaleDetailPageProps) {
     return notFound();
   }
 
-  // Remove the getStatusBadgeVariant helper - it's now in SaleDetailClient
 
   // Render the Client Component and pass the fetched sale data
   return <SaleDetailClient sale={sale} />;
 }
 
-// Remove the redundant date-fns import at the end

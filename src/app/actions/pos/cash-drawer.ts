@@ -29,27 +29,27 @@ class ServerActionError extends Error {
 }
 
 export async function openCashDrawer(initialAmount: number) {
+  console.log("[openCashDrawer] Action started. Initial Amount:", initialAmount); // Log start
   try {
-    const { getUser } = getKindeServerSession(); // Get user session
-    const user = await getUser(); // Get user object
-
-    // Check if user is authenticated
-    if (!user || !user.id) {
-      console.error("openCashDrawer: User not authenticated.");
-      return { success: false, error: "No autorizado", statusCode: 401 };
-    }
-
-    // Find the user in your database using the Kinde ID
-    const dbUser = await prisma.user.findUnique({
-      where: { kindeId: user.id },
-      select: { id: true }, // Only select the ID we need
-    });
-
-    // Check if user exists in the database
-    if (!dbUser) {
-      console.error(`openCashDrawer: User with Kinde ID ${user.id} not found in the database.`);
-      return { success: false, error: "Usuario no encontrado", statusCode: 404 };
-    }
+    // REMOVED KINDE AUTHENTICATION
+    // const { getUser } = getKindeServerSession();
+    // console.log("[openCashDrawer] getKindeServerSession obtained.");
+    // const user = await getUser();
+    // console.log("[openCashDrawer] getUser result:", user);
+    // if (!user || !user.id) {
+    //   console.error("[openCashDrawer] Authentication check failed. User object:", user);
+    //   return { success: false, error: "No autorizado", statusCode: 401 };
+    // }
+    // console.log(`[openCashDrawer] User authenticated: ${user.id}`);
+    // const dbUser = await prisma.user.findUnique({
+    //   where: { kindeId: user.id },
+    //   select: { id: true },
+    // });
+    // if (!dbUser) {
+    //   console.error(`openCashDrawer: User with Kinde ID ${user.id} not found in the database.`);
+    //   return { success: false, error: "Usuario no encontrado", statusCode: 404 };
+    // }
+    // REMOVED KINDE AUTHENTICATION
 
     // Check if there is already an open cash drawer
     const openDrawer = await prisma.cashDrawer.findFirst({
@@ -68,7 +68,7 @@ export async function openCashDrawer(initialAmount: number) {
         id: randomUUID(),
         initialAmount,
         status: "OPEN",
-        openedBy: dbUser.id, // Assign the database user ID
+        openedBy: null, // Set openedBy to null as we removed user lookup
       },
     });
     

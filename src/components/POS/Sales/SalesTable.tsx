@@ -207,8 +207,8 @@ export default function SalesTable({
           <div className="flex justify-between">
             <Button variant="outline" size="sm" onClick={handleReset}>
               <RefreshCcw className="h-4 w-4 mr-1" />
-              Reiniciar
-            </Button>
+                Actualizar            
+              </Button>
             <Button size="sm" onClick={handleSearch}>
               <Filter className="h-4 w-4 mr-1" />
               Filtrar
@@ -239,12 +239,12 @@ export default function SalesTable({
                     </TableCell>
                     <TableCell>{formatDateTime(sale.date)}</TableCell>
                     <TableCell>
-                      {sale.user ? (
+                      {sale.User ? (
                         <Link
                           href={`/admin/clientes/${sale.userId}`}
                           className="hover:underline"
                         >
-                          {sale.user.firstName} {sale.user.lastName}
+                          {sale.User.firstName} {sale.User.lastName}
                         </Link>
                       ) : (
                         <span className="text-gray-500 text-sm">
@@ -254,7 +254,7 @@ export default function SalesTable({
                     </TableCell>
                     <TableCell>{formatCurrency(sale.total)}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="capitalize flex items-center justify-center">
                         {translatePaymentMethod(sale.paymentMethod)}
                       </Badge>
                     </TableCell>

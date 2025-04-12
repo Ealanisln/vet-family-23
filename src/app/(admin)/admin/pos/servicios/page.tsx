@@ -15,25 +15,18 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
   Plus, 
   Filter, 
-  MoreHorizontal, 
-  Edit2, 
-  Trash2,
   ArrowLeft
 } from "lucide-react";
 import { getServices } from "@/app/actions/pos/services";
 import { translateServiceCategory } from "@/utils/pos-helpers";
 import { ServiceCategory } from "@prisma/client";
+import { ServiceActions } from "@/components/POS/Services/ServiceActions";
+
 
 export const metadata: Metadata = {
   title: "Servicios | POS",
@@ -206,29 +199,7 @@ export default async function ServiciosPage({
                     }
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menú</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin/pos/servicios/${service.id}`}>
-                            <Edit2 className="h-4 w-4 mr-2" />
-                            Editar
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-red-600"
-                          // Aquí normalmente agregarías un onClick para confirmar eliminación
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <ServiceActions serviceId={service.id} />
                   </TableCell>
                 </TableRow>
               ))}

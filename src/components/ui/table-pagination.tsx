@@ -23,7 +23,7 @@ const TablePagination = ({
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+    <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
       <div className="flex items-center gap-2">
         <p className="text-sm text-gray-600">
           Mostrando <span className="font-medium">{startItem}</span> -{" "}

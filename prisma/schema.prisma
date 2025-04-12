@@ -102,11 +102,7 @@ model MedicalHistory {
   treatment      String
   prescriptions  String[]
   notes          String?
-  medicalOrderId String?       @unique
   pet            Pet          @relation(fields: [petId], references: [id], onDelete: Cascade)
-  medicalOrder   MedicalOrder? @relation(fields: [medicalOrderId], references: [id])
-
-  @@index([medicalOrderId])
 }
 
 model Vaccination {
@@ -249,7 +245,6 @@ model MedicalOrder {
   Sale          Sale?                 @relation(fields: [saleId], references: [id])
   user          User                  @relation(fields: [userId], references: [id])
   products      MedicalOrderProduct[]
-  medicalHistory MedicalHistory?
 
   @@index([petId])
   @@index([userId])

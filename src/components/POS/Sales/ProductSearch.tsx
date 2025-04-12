@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CategoryFilter } from "@/components/Inventory/CategoryFilter";
 import type { InventoryItem } from "@/types/inventory";
 import { InventoryCategory } from "@prisma/client";
+import { translateInventoryCategory } from "@/utils/pos-helpers";
 
 interface ProductSearchProps {
   onSelectProduct: (product: InventoryItem) => void;
@@ -92,14 +93,16 @@ export default function ProductSearch({ onSelectProduct }: ProductSearchProps) {
                   <CardContent className="p-3">
                     <div className="flex flex-col h-full">
                       <div>
-                        <h3 className="font-medium truncate" title={product.name}>
-                          {product.name}
+                        <h3 className="font-medium truncate" title={`${product.name}${product.measure ? ` - ${product.measure}` : ''}`}>
+                          {product.name}{product.measure ? ` - ${product.measure}` : ''}
                         </h3>
                         <div className="text-sm text-gray-500 truncate" title={product.description || ""}>
                           {product.description || ""}
                         </div>
                         <div className="mt-1 flex items-center justify-between">
-                          <Badge variant="outline">{product.category}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {translateInventoryCategory(product.category)}
+                          </Badge>
                           <span className="font-semibold">${product.price !== undefined && typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}</span>
                         </div>
                         <div className="text-sm text-gray-500 mt-1">

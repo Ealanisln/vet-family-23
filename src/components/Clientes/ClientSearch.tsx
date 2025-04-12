@@ -250,10 +250,12 @@ export function ClientSearch({
                     {displayedClients.map((client) => (
                       <CommandItem
                         key={client.id}
-                        // value debe ser único y descriptivo para Command
                         value={`${getDisplayName(client)}-${client.id}`}
-                        onSelect={() => handleSelectClient(client)}
-                        className="flex flex-col items-start cursor-pointer py-2 px-3" // Ajustar padding
+                        onSelect={() => {
+                          console.log(`ClientSearch: CommandItem clicked for ${getDisplayName(client)} (ID: ${client.id})`);
+                          handleSelectClient(client);
+                        }}
+                        className="flex flex-col items-start cursor-pointer py-2 px-3"
                       >
                         <div className="font-medium text-sm w-full truncate" title={getDisplayName(client)}>
                           {getDisplayName(client)}

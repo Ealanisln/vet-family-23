@@ -5,8 +5,6 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { getSales } from "@/app/actions/pos/sales";
 import SalesTable from "@/components/POS/Sales/SalesTable";
 import { userHasPOSPermission } from "@/utils/pos-helpers";
-import { Suspense } from "react";
-import PendingMedicalOrders from "@/components/POS/PendingMedicalOrders";
 
 export const metadata: Metadata = {
   title: "Ventas | POS",
@@ -19,7 +17,6 @@ interface SalesPageProps {
     limit?: string;
     search?: string;
     status?: string;
-    paymentMethod?: string;
     startDate?: string;
     endDate?: string;
   };
@@ -49,7 +46,6 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   interface SalesFilters {
     search?: string;
     status?: string;
-    paymentMethod?: string;
     startDate?: Date;
     endDate?: Date;
   }
@@ -63,10 +59,6 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   
   if (searchParams.status && searchParams.status !== "ALL") {
     filters.status = searchParams.status;
-  }
-  
-  if (searchParams.paymentMethod && searchParams.paymentMethod !== "ALL") {
-    filters.paymentMethod = searchParams.paymentMethod;
   }
   
   if (searchParams.startDate) {
@@ -87,24 +79,18 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
     ...filters
   });
   
+  if (!sales) {
+    return <div>Cargando historial de ventas...</div>;
+  }
+
   return (
-    <div className="container py-6">
+    <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Historial de Ventas</h1>
       
       <SalesTable 
         sales={sales}
         pagination={pagination}
       />
-      
-      <div className="space-y-8 p-8">
-        <h1 className="text-2xl font-bold">Punto de Venta</h1>
-        
-        <div className="grid gap-8">
-          <Suspense fallback={<div>Cargando órdenes médicas...</div>}>
-            <PendingMedicalOrders />
-          </Suspense>
-        </div>
-      </div>
     </div>
   );
 }

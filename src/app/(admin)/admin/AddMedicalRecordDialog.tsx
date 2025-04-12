@@ -43,7 +43,6 @@ import {
 } from "@/app/actions/add-medical-record";
 import { useToast } from "@/components/ui/use-toast";
 import { EditIcon, PlusCircle, Search, X } from "lucide-react";
-import { createMedicalOrder } from "@/app/actions/medical-orders";
 import { searchInventory } from "@/app/actions/pos/inventory";
 import { InventoryItemWithPrice } from "@/lib/type-adapters";
 
@@ -57,7 +56,6 @@ interface MedicalHistory {
   treatment: string;
   prescriptions: string[];
   notes?: string;
-  medicalOrderId?: string;
 }
 
 interface SelectedProduct {
@@ -105,7 +103,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
     treatment: existingRecord?.treatment || "",
     prescriptions: existingRecord?.prescriptions || [],
     notes: existingRecord?.notes || "",
-    medicalOrderId: existingRecord?.medicalOrderId || undefined,
   });
 
   const [productsSection, setProductsSection] = useState<ProductSection>({
@@ -259,7 +256,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let medicalOrderId = record.medicalOrderId;
 
     try {
       if (!record.petId || !record.userId) {
@@ -274,44 +270,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         throw new Error("Se requiere la razón de la visita");
       }
 
-      // Si hay productos seleccionados, crear la orden médica primero
-      if (productsSection.selectedProducts.length > 0) {
-        const orderData = {
-          petId: record.petId,
-          userId: record.userId,
-          visitDate: new Date(record.visitDate),
-          diagnosis: record.diagnosis,
-          treatment: record.treatment,
-          prescriptions: record.prescriptions,
-          notes: record.notes,
-          products: productsSection.selectedProducts.map(product => ({
-            productId: product.id,
-            quantity: product.quantity,
-            unitPrice: product.unitPrice
-          }))
-        };
-
-        const orderResult = await createMedicalOrder(orderData);
-        
-        if (!orderResult.success) {
-          toast({
-            title: "Error",
-            description: orderResult.error || "No se pudo crear la orden médica",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        medicalOrderId = orderResult.order?.id;
-        
-        // Mostrar toast con instrucciones claras
-        toast({
-          title: "Orden Médica Creada",
-          description: "La orden médica se ha creado correctamente.",
-          duration: 5000,
-        });
-      }
-
       // Luego crear o actualizar el historial médico
       const action = record.id ? updateMedicalHistory : addMedicalHistory;
       const result = await action(record.petId, {
@@ -322,7 +280,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         treatment: record.treatment,
         prescriptions: record.prescriptions,
         notes: record.notes,
-        medicalOrderId
       });
 
       if (result.success) {

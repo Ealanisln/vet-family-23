@@ -2,8 +2,9 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ import {
   CreditCard,
   BanknoteIcon,
   Wallet,
-  Smartphone,
+  PlusCircle,
 } from "lucide-react";
 import ProductSearch from "./ProductSearch";
 import ServiceSearch from "./ServiceSearch";
@@ -43,23 +44,39 @@ import type {
   InventoryItem as PosInventoryItem,
   Service,
   PaymentMethod,
-  SaleFormData
+  SaleFormData,
+  Sale
 } from "@/types/pos";
 import type { InventoryItem as InvInventoryItem } from "@/types/inventory"; // Alias para el tipo de Inventory
 import type { Client } from "@/components/Clientes/ClientSearch";
 import { Pet } from "@/types/pet";
 import { getPetDetails } from "@/app/(admin)/admin/mascotas/[petId]/getPetDetails";
 import { getUserById } from "@/app/actions/get-customers";
-import { addMedicalHistory } from "@/app/actions/add-medical-record";
-import { completeMedicalOrder } from "@/app/actions/medical-orders";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import Receipt from "./Receipt";
+import ReactDOMServer from 'react-dom/server';
 
 export default function SaleForm() {
+  // console.log("SaleForm component rendering..."); // REMOVE Log de prueba
+  // throw new Error("ESTO ES UN ERROR DE PRUEBA EN SALEFORM"); // REMOVE Error intencional
+
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("products");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [cashAmount, setCashAmount] = useState<number | "">("");
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [completedSaleData, setCompletedSaleData] = useState<Sale | null>(null);
 
   // Usar el contexto del carrito
   const {
@@ -140,17 +157,16 @@ export default function SaleForm() {
   }, [addItem, setNotes, setPet, setClient]);
 
   // Calcular el total final después del descuento
-
   const finalTotal =
     (typeof total === "number" ? total : 0) -
     (typeof discountAmount === "number" ? discountAmount : 0);
 
   // Calcular el cambio para pagos en efectivo
-
-  const change = typeof cashAmount === "number" ? cashAmount - finalTotal : 0;
+  // Asegurarse de que cashAmount sea tratado como número para el cálculo
+  const cashReceived = typeof cashAmount === 'number' ? cashAmount : 0;
+  const change = cashReceived - finalTotal;
 
   // Función original para añadir producto al carrito (espera PosInventoryItem)
-
   const handleAddProduct = (product: PosInventoryItem) => {
     const cartItem = createCartItemFromProduct(product);
 
@@ -164,7 +180,6 @@ export default function SaleForm() {
   };
 
   // Función adaptadora para convertir InvInventoryItem a PosInventoryItem
-
   const handleSelectProductFromSearch = (invProduct: InvInventoryItem) => {
     if (invProduct.price === null || invProduct.price === undefined) {
       console.error("Producto sin precio:", invProduct);
@@ -226,7 +241,6 @@ export default function SaleForm() {
   };
 
   // Añadir servicio al carrito
-
   const handleAddService = (service: Service) => {
     const cartItem = createCartItemFromService(service);
 
@@ -240,27 +254,21 @@ export default function SaleForm() {
   };
 
   // Manejar selección de cliente
-
-  const handleClientSelect = (client: Client | null) => {
+  const handleClientSelect = useCallback((client: Client | null) => {
     const cartClient = adaptClientToCartClient(client);
-
     setClient(cartClient);
-
     if (state.pet && (!cartClient || cartClient.id !== state.pet.userId)) {
       setPet(null);
     }
-  };
+  }, [setClient, setPet, state.pet]);
 
   // Manejar selección de mascota
-
-  const handlePetSelect = (pet: Pet | null) => {
+  const handlePetSelect = useCallback((pet: Pet | null) => {
     const cartPet = adaptPetToCartPet(pet);
-
     setPet(cartPet);
-  };
+  }, [setPet]);
 
   // Manejar selección de método de pago
-
   const handlePaymentMethodSelect = (method: PaymentMethod) => {
     setPaymentMethod(method);
 
@@ -273,32 +281,38 @@ export default function SaleForm() {
     }
   };
 
-  // Procesar la venta
+  // Función para limpiar y redirigir
+  const finishSaleFlow = () => {
+    console.log("finishSaleFlow: Iniciando limpieza y redirección."); // Log 15
+    clearCart();
+    router.push("/admin/pos");
+    setCompletedSaleData(null);
+    setIsSubmitting(false); // Poner isSubmitting false aquí
+  };
 
-  const handlePayment = async () => {
+  // Procesar la venta
+  const handlePayment = useCallback(async () => {
+    console.log("handlePayment: Iniciando..."); // Log 1: Inicio de la función
+
     if (state.items.length === 0) {
-      toast({
-        title: "Error",
-        description: "El carrito está vacío",
-        variant: "destructive",
-      });
+      console.log("handlePayment: Carrito vacío."); // Log 2: Validación carrito
+      toast({ title: "Error", description: "El carrito está vacío", variant: "destructive" });
       return;
     }
 
     if (!state.paymentMethod) {
-      toast({
-        title: "Error",
-        description: "Selecciona un método de pago",
-        variant: "destructive",
-      });
+      console.log("handlePayment: Método de pago no seleccionado."); // Log 3: Validación método pago
+      toast({ title: "Error", description: "Selecciona un método de pago", variant: "destructive" });
       return;
     }
 
+    // Usar cashReceived para la comparación numérica
     if (
       state.paymentMethod === "CASH" &&
       confirmDialogOpen &&
-      (typeof cashAmount !== "number" || cashAmount < finalTotal)
+      (typeof cashAmount !== 'number' || cashReceived < finalTotal)
     ) {
+      console.log("handlePayment: Monto en efectivo insuficiente.", { cashReceived, finalTotal }); // Log 4: Validación efectivo
       toast({
         title: "Error",
         description: "El monto recibido en efectivo es menor al total a pagar.",
@@ -307,10 +321,12 @@ export default function SaleForm() {
       return;
     }
 
+    console.log("handlePayment: Estableciendo isSubmitting a true."); // Log 5: Antes de setIsSubmitting
     setIsSubmitting(true);
+    setConfirmDialogOpen(false);
 
     try {
-      // Procesar la venta
+      console.log("handlePayment: Dentro del bloque try."); // Log 6: Inicio try
       const saleData: SaleFormData = {
         userId: state.client?.id,
         petId: state.pet?.id,
@@ -318,7 +334,7 @@ export default function SaleForm() {
         tax: tax,
         discount: discountAmount || 0,
         total: finalTotal,
-        paymentMethod: state.paymentMethod,
+        paymentMethod: state.paymentMethod, // Ya validamos que no sea null
         notes: state.notes,
         status: 'COMPLETED',
         items: state.items.map(item => ({
@@ -330,74 +346,134 @@ export default function SaleForm() {
           total: item.quantity * item.unitPrice
         }))
       };
+      console.log("handlePayment: Datos de venta preparados:", saleData); // Log 7: Datos a enviar
 
       const saleResult = await createSale(saleData);
+      console.log("handlePayment: Resultado de createSale:", saleResult); // Log 8: Resultado CRUDO
 
-      if (!saleResult.success) {
-        throw new Error(saleResult.error);
+      // Verificar el éxito correctamente
+      if (!saleResult || !saleResult.success) { // Más robusto, verifica si saleResult existe
+        console.error("handlePayment: createSale NO fue exitoso o resultado inválido.", saleResult); // Log 9a: Fallo
+        throw new Error(saleResult?.error || "Error desconocido al crear la venta.");
       }
 
-      // Si hay una orden médica pendiente, actualizarla
-      const searchParams = new URLSearchParams(window.location.search);
-      if (searchParams.has('orderId')) {
-        const orderId = searchParams.get('orderId');
-        if (orderId) {
-          const orderResult = await completeMedicalOrder(orderId, saleResult.id);
-          if (!orderResult.success) {
-            toast({
-              title: "Advertencia",
-              description: "La venta se completó pero hubo un error al actualizar la orden médica: " + orderResult.error,
-              variant: "destructive",
-            });
-          }
-        }
-      }
-
-      // Si hay información médica pendiente, actualizamos el historial
-      if (searchParams.has('diagnosis') && state.pet?.id) {
-        const medicalRecord = {
-          visitDate: new Date(searchParams.get('visitDate') || new Date()),
-          diagnosis: searchParams.get('diagnosis') || '',
-          treatment: searchParams.get('treatment') || '',
-          prescriptions: JSON.parse(searchParams.get('prescriptions') || '[]'),
-          notes: searchParams.get('notes') || '',
-          reasonForVisit: 'Consulta médica'
-        };
-
-        const recordResult = await addMedicalHistory(state.pet.id, medicalRecord);
-        
-        if (!recordResult.success) {
-          toast({
-            title: "Advertencia",
-            description: "La venta se completó pero hubo un error al actualizar el historial médico: " + recordResult.error,
-            variant: "destructive",
-          });
-        }
-      }
-
+      // Éxito
+      console.log("handlePayment: Éxito."); // Log 9b: Éxito
       toast({
         title: "Éxito",
         description: "Venta procesada correctamente",
       });
 
-      // Limpiar el carrito y redirigir
-      clearCart();
-      router.push("/admin/pos");
+      // Store the full Sale object
+      console.log("handlePayment: Guardando datos de venta completada:", saleResult.sale); // Log 10: Antes de guardar datos
+      setCompletedSaleData(saleResult.sale);
+
+      console.log("handlePayment: Estableciendo showPrintDialog a true."); // Log 11: Antes de mostrar diálogo
+      setShowPrintDialog(true);
+      console.log("handlePayment: showPrintDialog debería ser true ahora."); // Log 12: Después de mostrar diálogo
+
     } catch (error) {
-      console.error("Error processing sale:", error);
+      console.error("handlePayment: Error en el bloque catch:", error); // Log 13: Error capturado
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al procesar la venta",
         variant: "destructive",
       });
-    } finally {
+      // Asegurarse de que el estado de carga se detenga en caso de error
+      console.log("handlePayment: Estableciendo isSubmitting a false en catch."); // Log 14: Fin carga en error
       setIsSubmitting(false);
-      setConfirmDialogOpen(false);
     }
+  }, [state, subtotal, tax, discountAmount, finalTotal, cashAmount, confirmDialogOpen, clearCart, router, toast, setConfirmDialogOpen, setIsSubmitting, setCompletedSaleData, setShowPrintDialog]); // Añadir dependencias que faltaban
+
+  const handlePrintReceipt = () => {
+    console.log("handlePrintReceipt called!"); // <-- Add log here
+    // Verify we have the completed sale data
+    if (!completedSaleData) {
+      console.error("handlePrintReceipt: Error - completedSaleData is null.");
+      toast({
+        title: "Error de Impresión",
+        description: "No se encontraron los datos de la venta completada.",
+        variant: "destructive",
+      });
+      return;
+    }
+    console.log(`handlePrintReceipt: Iniciando impresión para ID: ${completedSaleData.id}, Recibo: ${completedSaleData.receiptNumber}`);
+
+    // Log the data being passed to Receipt component
+    console.log("handlePrintReceipt: Data for rendering:", JSON.stringify(completedSaleData, null, 2));
+
+    // 1. Render the Receipt component to an HTML string using the full Sale object
+    const receiptElement = (
+      <Receipt
+        sale={completedSaleData} // Pass the full Sale object directly
+        printMode={true}
+        showActions={false} // Usually false for printing
+      />
+    );
+    const receiptHtml = ReactDOMServer.renderToString(receiptElement);
+
+    // 2. Open print window and write the rendered HTML
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Recibo ${completedSaleData.receiptNumber}</title>
+            <!-- Add Tailwind CDN for print styling diagnosis -->
+            <script src="https://cdn.tailwindcss.com"></script> 
+            <style>
+              /* Basic styles for thermal printer */
+              @media print {
+                body { 
+                  margin: 0;
+                  font-family: 'Courier New', Courier, monospace; /* Common thermal printer font */
+                  font-size: 10pt; /* Adjust as needed */
+                  width: 80mm; /* Standard thermal paper width */
+                  /* Remove padding and use flex to center */
+                  /* padding: 2mm; */ 
+                  box-sizing: border-box; 
+                  display: flex; /* Use flexbox */
+                  justify-content: center; /* Center content horizontally */
+                  align-items: flex-start; /* Align content to the top */
+                  min-height: 100%; /* Ensure body takes height for alignment */
+                }
+                /* The receipt div itself doesn't need mx-auto if body centers it */
+                /* Example: Ensure divs take full width */
+                div { width: 100%; }
+                .no-print { display: none; }
+              }
+              /* You might need to manually copy essential styles from Receipt.tsx or global CSS */
+              /* For Tailwind, this approach won't automatically apply classes. */
+              /* Consider a dedicated print CSS or inline styles in Receipt component if needed. */
+            </style>
+          </head>
+          <body>
+            ${receiptHtml}
+            <script>
+              window.onload = function() {
+                setTimeout(function() { // Add a small delay for rendering
+                  window.print();
+                }, 100);
+                window.onafterprint = function() {
+                  window.close();
+                };
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+
+    setShowPrintDialog(false);
+    finishSaleFlow();
   };
 
-  // Renderizado del componente
+  // Memoize selected client and pet objects to prevent unnecessary re-renders
+  const memoizedSelectedClient = useMemo(() => adaptCartClientToClient(state.client), [state.client]);
+  const memoizedSelectedPet = useMemo(() => adaptCartPetToPet(state.pet), [state.pet]);
 
+  // Renderizado del componente
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* --- Panel izquierdo: Búsqueda --- */}
@@ -419,7 +495,7 @@ export default function SaleForm() {
                 <ClientSearch
                   inputId="client-search"
                   onSelect={handleClientSelect}
-                  selectedClient={adaptCartClientToClient(state.client)}
+                  selectedClient={memoizedSelectedClient}
                 />
               </div>
               <div>
@@ -429,7 +505,7 @@ export default function SaleForm() {
                 <PetSearch
                   inputId="pet-search"
                   onSelect={handlePetSelect}
-                  selectedPet={adaptCartPetToPet(state.pet)}
+                  selectedPet={memoizedSelectedPet}
                   userId={state.client?.id}
                   disabled={!state.client}
                 />
@@ -459,6 +535,14 @@ export default function SaleForm() {
             className="mt-0 border border-t-0 rounded-b-md p-4"
           >
             <ServiceSearch onSelectService={handleAddService} />
+            <div className="mt-4 text-center">
+              <Link href="/admin/pos/servicios/nuevo" passHref legacyBehavior>
+                <Button variant="outline" size="sm">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Agregar Nuevo Servicio
+                </Button>
+              </Link>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
@@ -578,11 +662,7 @@ export default function SaleForm() {
                     label = "Transferencia";
                     break;
 
-                  case "MOBILE_PAYMENT":
-                    IconComponent = Smartphone;
-                    label = "Pago Móvil";
-                    break;
-
+                
                   default:
                     return null; // O manejar caso por defecto
                 }
@@ -614,16 +694,16 @@ export default function SaleForm() {
             disabled={
               isSubmitting || state.items.length === 0 || !state.paymentMethod
             }
-            onClick={
+            onClick={ // Asegurarnos que onClick llama a handlePayment
               state.paymentMethod !== "CASH"
-                ? handlePayment // Llama directo si no es efectivo
+                ? handlePayment // Llama directamente si no es efectivo
                 : () => {
-                    // Si es efectivo, verifica si el diálogo debe abrirse/usarse
-
+                    // Si es efectivo, maneja el diálogo o llama a handlePayment
+                    console.log("Procesar Venta (CASH) button clicked"); // Log extra para el botón CASH
+                    // Usar cashReceived para la comparación
                     if (
                       !confirmDialogOpen ||
-                      (typeof cashAmount === "number" &&
-                        cashAmount >= finalTotal)
+                      (typeof cashAmount === 'number' && cashReceived >= finalTotal)
                     ) {
                       handlePayment(); // Llama si el diálogo no está abierto o el monto es válido
                     } else {
@@ -658,7 +738,6 @@ export default function SaleForm() {
       </div>
 
       {/* Diálogo de confirmación para pago en efectivo */}
-
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -727,7 +806,7 @@ export default function SaleForm() {
               disabled={
                 isSubmitting ||
                 typeof cashAmount !== "number" ||
-                cashAmount < finalTotal
+                cashReceived < finalTotal // Usar cashReceived aquí también
               }
               aria-live="polite"
             >
@@ -739,6 +818,40 @@ export default function SaleForm() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Diálogo para preguntar si imprimir ticket */}
+      <AlertDialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Venta Completada</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Deseas imprimir el ticket de la venta?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              console.log("AlertDialog: Cancelar clickeado.");
+              setShowPrintDialog(false);
+              finishSaleFlow();
+            }}>
+              No, gracias
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handlePrintReceipt}>
+              Imprimir Ticket
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Componente de recibo para impresión (Ahora only used for rendering to string) */}
+      {/* This div is no longer needed for direct printing */}
+      {/* 
+      {completedSaleData && (
+        <div className="hidden">
+          <Receipt sale={completedSaleData} printMode={true} /> // Example if needed elsewhere
+        </div>
+      )} 
+      */}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tag, Plus, TrendingUp, AlertCircle } from "lucide-react";
+import { Tag, Plus, TrendingUp, AlertCircle, Loader2, Check } from "lucide-react";
 import { translateInventoryCategory } from "@/utils/pos-helpers";
 import { formatCurrency } from "@/utils/pos-helpers";
 import { calculateMargin } from "@/app/actions/pos/inventory-price";
@@ -29,7 +29,9 @@ export function ProductCard({
   onAddToCart,
   className,
 }: ProductCardProps) {
-  // Obtener el precio y costo de forma segura
+  // Estados
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
   const price = product.price ?? 0;
   const cost = product.cost ?? null;
   const [margin, setMargin] = React.useState<number | null>(null);
@@ -47,11 +49,21 @@ export function ProductCard({
   const isOutOfStock = product.quantity <= 0;
 
   // Manejar clic en añadir al carrito
-  const handleAddToCart = () => {
-    if (onAddToCart && !isOutOfStock) {
-      onAddToCart(product);
+  const handleAddToCart = async () => {
+    if (onAddToCart && !isOutOfStock && !isLoading) {
+      setIsLoading(true);
+      try {
+        await onAddToCart(product);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 1500);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
+
+  // Determinar el estado del botón
+  const buttonState = isOutOfStock ? "out-of-stock" : isLoading ? "loading" : showSuccess ? "success" : "default";
 
   return (
     <Card
@@ -76,27 +88,27 @@ export function ProductCard({
 
         {/* Nombre y descripción */}
         <h3 className="font-medium text-base mb-1 line-clamp-1">
-          {product.name}
+          {product.name}{product.measure ? ` - ${product.measure}` : ''} 
         </h3>
+        
 
-        <p className="text-sm text-gray-500 line-clamp-2 mb-2 flex-grow">
-          {product.description || "Sin descripción"}
-        </p>
+        {/* Description - Make this section take up variable space but have a min-height */}
+        <div className="flex-grow mb-2 min-h-[40px]"> {/* Adjust min-h as needed */} 
+          <p className="text-sm text-gray-500 line-clamp-2">
+            {product.description || "Sin descripción"}
+          </p>
+        </div>
 
-        {/* Información adicional si existe */}
-        {product.activeCompound && (
-          <div className="text-xs text-gray-500 mb-1">
-            <span className="font-medium">Comp. activo:</span>{" "}
-            {product.activeCompound}
-          </div>
-        )}
+        {/* Información adicional - Ya no necesita min-h con la estructura flex h-full */}
+        <div className="mb-2"> 
+          {product.activeCompound && (
+            <div className="text-xs text-gray-500 mb-1">
+              <span className="font-medium">Comp. activo:</span>{" "}
+              {product.activeCompound}
+            </div>
+          )}
 
-        {product.presentation && (
-          <div className="text-xs text-gray-500 mb-1">
-            <span className="font-medium">Presentación:</span>{" "}
-            {product.presentation}
-          </div>
-        )}
+        </div>
 
         {/* Pie de tarjeta con precio y acciones */}
         <div className="flex items-center justify-between mt-auto pt-3 border-t">
@@ -143,20 +155,44 @@ export function ProductCard({
               </TooltipProvider>
             )}
 
-            <Button
-              size="sm"
-              variant={isOutOfStock ? "ghost" : "outline"}
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              className={cn(
-                "text-sm gap-1 transition-colors",
-                !isOutOfStock &&
-                  "hover:bg-green-50 hover:text-green-700 hover:border-green-200"
-              )}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Agregar
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant={buttonState === "out-of-stock" ? "ghost" : "default"}
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock || isLoading}
+                    className={cn(
+                      "h-auto px-2 py-1", // Reducir padding y altura
+                      "text-xs gap-1 min-w-[80px]", // Reducir tamaño de fuente, gap y ancho mínimo
+                      "transition-all duration-200",
+                      buttonState === "default" && "bg-green-600 hover:bg-green-700 text-white",
+                      buttonState === "success" && "bg-green-600 text-white",
+                      buttonState === "loading" && "bg-green-600 text-white cursor-wait",
+                      buttonState === "out-of-stock" && "bg-gray-100 text-gray-400"
+                    )}
+                    aria-label={`Agregar ${product.name} al carrito${isOutOfStock ? ' - Sin stock' : ''}`}
+                  >
+                    {buttonState === "loading" ? (
+                      <Loader2 className="h-3 w-3 animate-spin" /> // Icono más pequeño
+                    ) : buttonState === "success" ? (
+                      <Check className="h-3 w-3" /> // Icono más pequeño
+                    ) : (
+                      <Plus className="h-3 w-3" /> // Icono más pequeño
+                    )}
+                    {buttonState === "out-of-stock" ? "Sin stock" : "Agregar"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="center">
+                  {isOutOfStock ? (
+                    <p className="text-xs">Producto sin stock disponible</p>
+                  ) : (
+                    <p className="text-xs">Agregar producto al carrito</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>

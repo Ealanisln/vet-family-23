@@ -172,8 +172,8 @@ const PetForm: React.FC<PetFormProps> = ({
               <SelectValue placeholder="Seleccionar especie" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="perro">Perro</SelectItem>
-              <SelectItem value="gato">Gato</SelectItem>
+              <SelectItem value="canino">Canino</SelectItem>
+              <SelectItem value="felino">Felino</SelectItem>
               <SelectItem value="ave">Ave</SelectItem>
               <SelectItem value="huron">Hurón</SelectItem>
               <SelectItem value="conejo">Conejo</SelectItem>

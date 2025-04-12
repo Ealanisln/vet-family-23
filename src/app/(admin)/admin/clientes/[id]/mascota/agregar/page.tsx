@@ -122,8 +122,8 @@ export default function AddPetView() {
                     <SelectValue placeholder="Seleccionar especie" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="perro">Perro</SelectItem>
-                    <SelectItem value="gato">Gato</SelectItem>
+                    <SelectItem value="perro">Canino</SelectItem>
+                    <SelectItem value="gato">Felino</SelectItem>
                     <SelectItem value="ave">Ave</SelectItem>
                     <SelectItem value="huron">Hurón</SelectItem>
                     <SelectItem value="conejo">Conejo</SelectItem>

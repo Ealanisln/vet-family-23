@@ -6,7 +6,6 @@ export type PaymentMethod =
   | "CREDIT_CARD"
   | "DEBIT_CARD"
   | "TRANSFER"
-  | "MOBILE_PAYMENT"
   | "MULTIPLE";
 
 export type SaleStatus = 
@@ -159,18 +158,24 @@ export interface SaleListItem {
   notes?: string | null;
   createdAt: Date;
   updatedAt: Date;
-  user?: {
+  User?: {
     id: string;
     firstName?: string | null;
     lastName?: string | null;
     email?: string | null;
   } | null;
-  pet?: {
+  Pet?: {
     id: string;
     name: string;
     species: string;
     breed: string;
   } | null;
+}
+
+// Type for successful sale creation result
+export interface CreateSaleSuccessResult {
+  success: true;
+  sale: Sale;
 }
 
 // Full sale detail type (with items)

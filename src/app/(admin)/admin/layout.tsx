@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/Admin/Sidebar/app-sidebar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { DatabaseIndicator } from "@/components/Admin/DatabaseIndicator";
 
 export default function AdminLayout({
   children,
@@ -28,9 +29,11 @@ export default function AdminLayout({
           {/* Added w-full */}
           {!isHomePage && (
             <header className="sticky top-0 z-10 border-b bg-background px-4 py-4 sm:px-6 lg:px-8">
-              <SidebarTrigger />
-
               <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <SidebarTrigger />
+                  <DatabaseIndicator />
+                </div>
                 {/* Add any other header content here */}
               </div>
             </header>

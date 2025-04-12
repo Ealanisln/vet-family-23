@@ -131,7 +131,7 @@ export function PetSearch({
     } finally {
       setIsLoading(false);
     }
-  }, [userId, isLoading]);
+  }, [userId]); // REMOVE isLoading from dependencies
 
   // Efecto para cargar mascotas cuando cambia el cliente o se abre el popover
   useEffect(() => {

@@ -39,6 +39,7 @@ export default async function ProductosPage() {
       name: 'asc'
     }
   });
+  
 
   // Formatear los datos para la tabla
   const formattedProducts = products.map(product => ({

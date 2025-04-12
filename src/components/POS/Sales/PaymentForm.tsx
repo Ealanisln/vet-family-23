@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, CreditCard, DollarSign, Landmark, Smartphone, ChevronsRight } from "lucide-react";
+import { Loader2, CreditCard, DollarSign, Landmark, ChevronsRight } from "lucide-react";
 
 interface PaymentFormProps {
   onSubmit: (data: { method: string }) => void;
@@ -71,14 +71,6 @@ export default function PaymentForm({ onSubmit, total, disabled = false }: Payme
             <Label htmlFor="transfer" className="flex items-center cursor-pointer">
               <Landmark className="h-4 w-4 mr-2 text-indigo-600" />
               Transferencia bancaria
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-gray-50 cursor-pointer">
-            <RadioGroupItem value="MOBILE_PAYMENT" id="mobile" />
-            <Label htmlFor="mobile" className="flex items-center cursor-pointer">
-              <Smartphone className="h-4 w-4 mr-2 text-orange-600" />
-              Pago móvil
             </Label>
           </div>
         </RadioGroup>

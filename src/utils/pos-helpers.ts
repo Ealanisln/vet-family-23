@@ -1,6 +1,6 @@
 // src/utils/pos-helpers.ts
 import { PrismaClient, InventoryCategory } from "@prisma/client";
-import { format, isToday, isYesterday, isThisWeek, isThisMonth } from "date-fns";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
 // Asegúrate que estas importaciones sean correctas respecto a la ubicación real de tus tipos
 import { CashTransaction, CashDrawer, TransactionType, PaymentMethod } from "../types/pos"; // Añadido PaymentMethod si se usa aquí
@@ -42,12 +42,10 @@ export async function generateReceiptNumber(): Promise<string> {
  * Formatea una fecha para mostrarla de manera amigable
  */
 export function formatDateTime(date: Date | string | undefined | null, includeTime = true): string {
-  // Añadida validación más robusta para la fecha de entrada
   if (!date) return "";
   let dateObj: Date;
   try {
     dateObj = new Date(date);
-    // Verificar si la fecha es válida después de la conversión
     if (isNaN(dateObj.getTime())) {
         return "Fecha inválida";
     }
@@ -55,36 +53,12 @@ export function formatDateTime(date: Date | string | undefined | null, includeTi
     return "Fecha inválida";
   }
 
-
-  if (isToday(dateObj)) {
-    return includeTime
-      ? `Hoy, ${format(dateObj, "HH:mm")}`
-      : "Hoy";
-  }
-
-  if (isYesterday(dateObj)) {
-    return includeTime
-      ? `Ayer, ${format(dateObj, "HH:mm")}`
-      : "Ayer";
-  }
-
-  if (isThisWeek(dateObj)) {
-    return includeTime
-      ? format(dateObj, "EEEE, HH:mm", { locale: es })
-      : format(dateObj, "EEEE", { locale: es });
-  }
-
-  if (isThisMonth(dateObj)) {
-    return includeTime
-      ? format(dateObj, "d 'de' MMMM, HH:mm", { locale: es })
-      : format(dateObj, "d 'de' MMMM", { locale: es });
-  }
-
-  // Para fechas más lejanas
-  // CORREGIDO: 'adipisceletr' -> 'yyyy'
-  return includeTime
-    ? format(dateObj, "d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })
-    : format(dateObj, "d 'de' MMMM 'de' yyyy", { locale: es });
+  // Siempre mostrar la fecha y hora completas, eliminando la lógica relativa
+  const formatString = includeTime
+    ? "d 'de' MMMM 'de' yyyy, HH:mm"
+    : "d 'de' MMMM 'de' yyyy";
+  
+  return format(dateObj, formatString, { locale: es });
 }
 
 /**
@@ -130,7 +104,6 @@ export function translatePaymentMethod(method: PaymentMethod | string): string {
     CREDIT_CARD: "Tarjeta de crédito",
     DEBIT_CARD: "Tarjeta de débito",
     TRANSFER: "Transferencia",
-    MOBILE_PAYMENT: "Pago móvil", // Asegúrate que estos valores coincidan con tu enum/tipo PaymentMethod
     MULTIPLE: "Pago mixto",
   };
   const upperMethod = typeof method === 'string' ? method.toUpperCase() : method;
@@ -180,7 +153,7 @@ export function translateInventoryCategory(category: InventoryCategory | string)
     CONSUMABLE: "Consumibles",
     CORTICOSTEROIDS: "Corticosteroides",
     DERMATOLOGY: "Dermatología",
-    DEWORMERS: "Antiparasitarios",
+    DEWORMERS: "Desparasitantes",
     DRY_FOOD: "Alimento seco",
     ENDOCRINOLOGY_HORMONAL: "Endocrinología",
     EXPECTORANT: "Expectorantes",

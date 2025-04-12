@@ -2,8 +2,8 @@
 
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
 
+// The status field and related logic will be removed
 interface CreateMedicalOrderInput {
   petId: string;
   userId: string;
@@ -48,7 +48,6 @@ export async function createMedicalOrder(data: CreateMedicalOrderInput) {
         treatment: data.treatment,
         prescriptions: data.prescriptions,
         notes: data.notes,
-        status: "PENDING",
         products: {
           create: data.products.map(product => ({
             productId: product.productId,
@@ -65,87 +64,18 @@ export async function createMedicalOrder(data: CreateMedicalOrderInput) {
       }
     });
 
+    // Adjust revalidatePath if necessary (e.g., if status affected other views)
     revalidatePath(`/admin/mascotas/${data.petId}`);
+    // Adjusted return value - return the full order object
     return { success: true, order };
   } catch (error) {
-    console.error("Error creating medical order:", error);
-    
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Handle specific Prisma errors
-      switch (error.code) {
-        case 'P2002':
-          return { success: false, error: "Ya existe una orden médica con estos datos" };
-        case 'P2003':
-          return { success: false, error: "Referencia inválida a mascota o usuario" };
-        case 'P2025':
-          return { success: false, error: "No se encontró la mascota o el usuario" };
-        default:
-          return { success: false, error: `Error de base de datos: ${error.code}` };
-      }
-    }
-
+    console.error("Error al crear la orden médica:", error);
     return { success: false, error: "Error al crear la orden médica" };
   }
 }
 
-export async function getPendingMedicalOrders() {
-  try {
-    const orders = await prisma.medicalOrder.findMany({
-      where: {
-        status: "PENDING"
-      },
-      include: {
-        products: {
-          include: {
-            product: true
-          }
-        },
-        pet: true,
-        user: true
-      },
-      orderBy: {
-        createdAt: "desc"
-      }
-    });
+// REMOVE: export async function getPendingMedicalOrders() { ... }
 
-    return { success: true, orders };
-  } catch (error) {
-    console.error("Error fetching pending medical orders:", error);
-    return { success: false, error: "Error al obtener las órdenes médicas pendientes" };
-  }
-}
+// REMOVE: export async function completeMedicalOrder(orderId: string, saleId: string) { ... }
 
-export async function completeMedicalOrder(orderId: string, saleId: string) {
-  try {
-    const order = await prisma.medicalOrder.update({
-      where: { id: orderId },
-      data: {
-        status: "COMPLETED",
-        saleId: saleId
-      }
-    });
-
-    revalidatePath("/admin/pos/ventas");
-    return { success: true, order };
-  } catch (error) {
-    console.error("Error completing medical order:", error);
-    return { success: false, error: "Error al completar la orden médica" };
-  }
-}
-
-export async function cancelMedicalOrder(orderId: string) {
-  try {
-    const order = await prisma.medicalOrder.update({
-      where: { id: orderId },
-      data: {
-        status: "CANCELLED"
-      }
-    });
-
-    revalidatePath("/admin/pos/ventas");
-    return { success: true, order };
-  } catch (error) {
-    console.error("Error canceling medical order:", error);
-    return { success: false, error: "Error al cancelar la orden médica" };
-  }
-} 
+// REMOVE: export async function cancelMedicalOrder(orderId: string) { ... } 

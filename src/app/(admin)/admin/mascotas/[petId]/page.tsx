@@ -21,28 +21,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import PetForm from "@/components/Admin/ui/PetForm";
-import { Prisma } from "@prisma/client";
-
-type PetWithRelations = Prisma.PetGetPayload<{
-  include: {
-    user: true;
-    vaccinations: true;
-    Deworming: true;
-    medicalHistory: {
-      include: {
-        medicalOrder: {
-          include: {
-            products: {
-              include: {
-                product: true;
-              };
-            };
-          };
-        };
-      };
-    };
-  };
-}>;
 
 export default async function PetDetailsPage({
   params,
@@ -56,23 +34,12 @@ export default async function PetDetailsPage({
       vaccinations: true,
       Deworming: true,
       medicalHistory: {
-        include: {
-          medicalOrder: {
-            include: {
-              products: {
-                include: {
-                  product: true
-                }
-              }
-            }
-          }
-        },
         orderBy: {
           visitDate: 'desc'
         }
       },
     },
-  }) as PetWithRelations | null;
+  });
 
   if (!pet) {
     notFound();
@@ -247,18 +214,14 @@ export default async function PetDetailsPage({
                               <TableCell>{record.treatment}</TableCell>
                               <TableCell>
                                 {(() => {
-                                  const prescriptions = (record.prescriptions || []).map(prescription => 
-                                    prescription.replace(/Prueba\s*-\s*Testing,?\s*/g, '')
+                                  const prescriptions = (record.prescriptions || []).map(prescription =>
+                                    prescription.replace(/Prueba\\s*-\\s*Testing,?\\s*/g, '')
                                   ).filter(p => p.trim());
                                   
-                                  const products = record.medicalOrder?.products.map(
-                                    p => p && p.product ? `${p.product.name} (x${p.quantity})` : ''
-                                  ).filter(Boolean) || [];
+                                  const allMeds = [...prescriptions];
                                   
-                                  const allMeds = [...prescriptions, ...products];
-                                  
-                                  return allMeds.length > 0 
-                                    ? allMeds.join(", ") 
+                                  return allMeds.length > 0
+                                    ? allMeds.join(", ")
                                     : "N/A";
                                 })()}
                               </TableCell>

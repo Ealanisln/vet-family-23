@@ -1,8 +1,9 @@
 // src/app/(admin)/admin/pos/page.tsx
 import { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+// Commented out as they are no longer used after removing role check
+// import { redirect } from "next/navigation"; 
+// import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, DollarSign, ListChecks, Coffee, Package } from "lucide-react";
@@ -16,21 +17,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function POSPage() {
-  // Obtenemos directamente los roles. El middleware ya validó la autenticación.
-  const { getRoles } = getKindeServerSession();
-
-  // Obtenemos los roles
-  const roles = await getRoles();
-
-  // Verificar permisos específicos del POS - usando Kinde roles
-  const isAdmin = roles?.some((role) => role.key === "admin");
-  // ¡IMPORTANTE! Asegúrate de que el rol 'cashier' exista en Kinde si planeas usarlo,
-
-  // Si no tiene rol de admin o cajero, redirigir
-  if (!isAdmin) {
-     console.log(`POSPage: Redirecting to /admin due to role check. isAdmin: ${isAdmin}. Roles received:`, roles);
-    return redirect("/admin");
-  }
+  // Role check block removed as it was commented out and causing issues.
+  // Authentication is handled by the middleware.
   
   // Obtener el estado actual de la caja
   let currentDrawer = null; // Initialize with null

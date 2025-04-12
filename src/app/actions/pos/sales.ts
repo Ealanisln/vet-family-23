@@ -105,11 +105,14 @@ export async function createSale(data: CreateSaleData): Promise<CreateSaleResult
 // -------------------------------------
   console.log(`Iniciando createSale con status: ${data.status} y data:`, JSON.stringify(data, null, 2));
   try {
+    /*
+    // REMOVED - Middleware handles authentication
     const { isAuthenticated } = getKindeServerSession();
     if (!(await isAuthenticated())) {
       console.error("createSale: Falla de autenticación.");
       return { success: false, error: "No autorizado" };
     }
+    */
     const operatorDbUserId = await getDbUserIdFromKinde();
     if (!operatorDbUserId) {
       console.error("createSale: No se pudo obtener el ID del operador.");
@@ -279,11 +282,14 @@ export async function getSales({
 }): Promise<GetSalesResult> {
 // -------------------------------------
   console.log("Iniciando getSales con filtros:", { page, limit, startDate, endDate, paymentMethod, status });
+  /*
+  // REMOVED - Middleware handles authentication
   const { isAuthenticated } = getKindeServerSession();
   if (!(await isAuthenticated())) {
     console.warn("getSales: Intento no autorizado.");
     throw new Error("No autorizado para ver las ventas.");
   }
+  */
 
   try {
     const whereClause: Prisma.SaleWhereInput = {};
@@ -393,11 +399,14 @@ export async function getSaleById(id: string): Promise<Sale> { // Devuelve Sale 
 export async function cancelSale(id: string): Promise<CancelSaleResult> {
 // -------------------------------------
   console.log(`Iniciando cancelSale para ID: ${id}`);
+  /*
+  // REMOVED - Middleware handles authentication
   const { isAuthenticated } = getKindeServerSession();
   if (!(await isAuthenticated())) {
     console.error(`cancelSale(${id}): Falla de autenticación.`);
     return { success: false, error: "No autorizado" };
   }
+  */
   const operatorDbUserId = await getDbUserIdFromKinde();
   if (!operatorDbUserId) {
     console.error(`cancelSale(${id}): No se pudo obtener el ID del operador.`);

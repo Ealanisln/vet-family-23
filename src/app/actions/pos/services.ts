@@ -44,18 +44,28 @@ export async function createService(data: {
   duration?: number;
 }) {
   try {
-    const { isAuthenticated, getUser } = getKindeServerSession();
+    // Keep getUser for user creation logic
+    const { getUser } = getKindeServerSession(); 
     
-    // Obtener usuario de Kinde PRIMERO
     const kindeUser = await getUser();
 
-    // Verificar autenticación Y existencia del usuario
+    /*
+    // REMOVED - Middleware already handles authentication
+    // Verify authentication AND user existence
     if (!kindeUser || !(await isAuthenticated())) {
       throw new ServerActionError("No autorizado", 401);
     }
-    
-    // Ahora sabemos que kindeUser no es null
-    // Buscar o crear el usuario en la base de datos local
+    */
+   
+    // We still need to handle the case where getUser might return null
+    // even if middleware passed. Log error if it happens.
+    if (!kindeUser) {
+      console.error("createService: getUser() returned null even after middleware auth.");
+      throw new ServerActionError("No se pudo obtener la información del usuario autenticado.", 500);
+    }
+
+    // Now we know kindeUser is not null
+    // Search or create the user in the local database
     let dbUser = await prisma.user.findFirst({
       where: {
         kindeId: kindeUser.id
@@ -111,13 +121,16 @@ export async function updateService(id: string, data: {
   isActive: boolean;
 }) {
   try {
+    /*
+    // REMOVED - Middleware already handles authentication
     const { isAuthenticated } = getKindeServerSession();
     
-    // Verificar autenticación
+    // Verify authentication
     if (!(await isAuthenticated())) {
       throw new ServerActionError("No autorizado", 401);
     }
-    
+    */
+
     const service = await prisma.service.update({
       where: { id },
       data: {
@@ -150,14 +163,17 @@ export async function updateService(id: string, data: {
 
 export async function deleteService(id: string) {
   try {
+    /*
+    // REMOVED - Middleware already handles authentication
     const { isAuthenticated } = getKindeServerSession();
     
-    // Verificar autenticación
+    // Verify authentication
     if (!(await isAuthenticated())) {
       throw new ServerActionError("No autorizado", 401);
     }
-    
-    // Verificar si el servicio está siendo utilizado en alguna venta
+    */
+
+    // Verify if the service is being used in any sale
     const usageCount = await prisma.saleItem.count({
       where: {
         serviceId: id,

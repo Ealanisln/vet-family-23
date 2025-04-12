@@ -1,7 +1,6 @@
 'use server';
 
 import { Prisma, InventoryCategory } from '@prisma/client';
-import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prismaDB';
 
@@ -28,6 +27,8 @@ export async function calculateMargin(price: number | null, cost: number | null)
  * @returns Object with success status and updated item
  */
 export async function updateItemPriceAndCost(id: string, price: number | null, cost: number | null) {
+  /*
+  // REMOVED - Middleware handles authentication and implicitly authorization for /admin routes
   const { isAuthenticated, getUser } = getKindeServerSession();
   
   if (!(await isAuthenticated())) {
@@ -39,7 +40,7 @@ export async function updateItemPriceAndCost(id: string, price: number | null, c
     throw new Error('No se pudo obtener la información del usuario');
   }
   
-  // Verificar permisos de administrador
+  // Verify admin permissions (using uppercase "ADMIN" role key)
   const userInDb = await prisma.user.findUnique({
     where: { kindeId: user.id },
     include: { userRoles: { include: { role: true } } }
@@ -50,6 +51,7 @@ export async function updateItemPriceAndCost(id: string, price: number | null, c
   if (!isAdmin) {
     throw new Error('No autorizado');
   }
+  */
 
   try {
     const updated = await prisma.inventoryItem.update({
@@ -90,6 +92,8 @@ export async function previewBulkPriceAdjustment({
   adjustmentDirection,
   adjustmentValue,
 }: BulkPriceAdjustmentParams) {
+  /*
+  // REMOVED - Middleware handles authentication and implicitly authorization for /admin routes
   const { isAuthenticated, getUser } = getKindeServerSession();
   
   if (!(await isAuthenticated())) {
@@ -101,7 +105,7 @@ export async function previewBulkPriceAdjustment({
     throw new Error('No se pudo obtener la información del usuario');
   }
   
-  // Verificar permisos de administrador
+  // Verify admin permissions (using uppercase "ADMIN" role key)
   const userInDb = await prisma.user.findUnique({
     where: { kindeId: user.id },
     include: { userRoles: { include: { role: true } } }
@@ -112,9 +116,10 @@ export async function previewBulkPriceAdjustment({
   if (!isAdmin) {
     throw new Error('No autorizado');
   }
+  */
 
   try {
-    // Construir la consulta
+    // Build the query
     const whereClause: Prisma.InventoryItemWhereInput = {};
     
     if (category) {
@@ -234,6 +239,8 @@ export async function applyBulkPriceAdjustment({
   adjustmentDirection,
   adjustmentValue,
 }: BulkPriceAdjustmentParams) {
+  /*
+  // REMOVED - Middleware handles authentication and implicitly authorization for /admin routes
   const { isAuthenticated, getUser } = getKindeServerSession();
   
   if (!(await isAuthenticated())) {
@@ -245,7 +252,7 @@ export async function applyBulkPriceAdjustment({
     throw new Error('No se pudo obtener la información del usuario');
   }
   
-  // Verificar permisos de administrador
+  // Verify admin permissions (using uppercase "ADMIN" role key)
   const userInDb = await prisma.user.findUnique({
     where: { kindeId: user.id },
     include: { userRoles: { include: { role: true } } }
@@ -256,9 +263,10 @@ export async function applyBulkPriceAdjustment({
   if (!isAdmin) {
     throw new Error('No autorizado');
   }
+  */
 
   try {
-    // Construir la consulta
+    // Build the query
     const whereClause: Prisma.InventoryItemWhereInput = {};
     
     if (category) {

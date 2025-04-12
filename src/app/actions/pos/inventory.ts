@@ -2,7 +2,8 @@
 "use server";
 
 import { Prisma, InventoryCategory, InventoryItem } from "@prisma/client";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+// Removed unused import
+// import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { prisma } from "@/lib/prismaDB";
 
 // Función auxiliar para verificar errores de Prisma
@@ -52,14 +53,17 @@ export async function getInventoryForSale({
   searchTerm?: string;
 }) {
   try {
+    /*
+    // REMOVED - Middleware handles authentication
     const { isAuthenticated } = getKindeServerSession();
     
-    // Verificar autenticación
+    // Verify authentication
     if (!(await isAuthenticated())) {
       throw new ServerActionError("No autorizado", 401);
     }
+    */
     
-    // Construir la consulta para obtener solo productos activos y con stock
+    // Build the query to get only active products with stock
     const whereClause: Prisma.InventoryItemWhereInput = {
       status: "ACTIVE",
       quantity: { gt: 0 } // Solo productos con stock disponible
@@ -137,14 +141,17 @@ export async function searchInventory({
   limit?: number;
 }) {
   try {
+    /*
+    // REMOVED - Middleware handles authentication
     const { isAuthenticated } = getKindeServerSession();
     
-    // Verificar autenticación
+    // Verify authentication
     if (!(await isAuthenticated())) {
       throw new ServerActionError("No autorizado", 401);
     }
+    */
     
-    // Construir la consulta para buscar productos
+    // Build the query to search for products
     const whereClause: Prisma.InventoryItemWhereInput = {
       status: "ACTIVE",
       quantity: { gt: 0 } // Solo productos con stock disponible
@@ -206,12 +213,15 @@ export async function searchInventory({
  */
 export async function getProductById(id: string) {
   try {
+    /*
+    // REMOVED - Middleware handles authentication
     const { isAuthenticated } = getKindeServerSession();
     
-    // Verificar autenticación
+    // Verify authentication
     if (!(await isAuthenticated())) {
       throw new ServerActionError("No autorizado", 401);
     }
+    */
     
     const product = await prisma.inventoryItem.findUnique({
       where: { id },

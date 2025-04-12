@@ -33,10 +33,13 @@ export default function CloseDrawerForm() {
     const fetchDrawer = async () => {
       if (isLoading) return;
 
+      /*
+      // REMOVED - Middleware handles authentication
       if (!isAuthenticated) {
         router.push('/api/auth/login');
         return;
       }
+      */
 
       try {
         const currentDrawer = await getCurrentDrawer();
@@ -148,6 +151,8 @@ export default function CloseDrawerForm() {
   }
 
   if (!isAuthenticated) {
+    // This might become unreachable if middleware is strict, but keep for safety
+    console.warn("CloseDrawerForm: Rendered while !isAuthenticated despite middleware.");
     return null;
   }
 

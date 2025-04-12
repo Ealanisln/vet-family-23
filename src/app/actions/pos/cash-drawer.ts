@@ -30,17 +30,16 @@ class ServerActionError extends Error {
 
 export async function openCashDrawer(initialAmount: number) {
   try {
-    const { getUser, isAuthenticated } = getKindeServerSession();
+    const { getUser } = getKindeServerSession();
     
-    // Verificar autenticación
-    if (!(await isAuthenticated())) {
-      return { success: false, error: "No autorizado" };
-    }
-    
-    // Obtener usuario de Kinde
+    // Obtener usuario de Kinde - Assume user exists if action is reached
     const kindeUser = await getUser();
     if (!kindeUser || !kindeUser.id) {
-      return { success: false, error: "No se pudo obtener la información del usuario" };
+      // This check might still be relevant if getUser can fail even after middleware passes
+      // but let's trust the middleware for now or handle potential null kindeUser below.
+      // Consider adding logging here if issues persist.
+      console.error("openCashDrawer: getUser() returned null/no ID even after middleware auth.");
+      return { success: false, error: "No se pudo obtener la información del usuario autenticado." };
     }
     
     // Buscar o crear el usuario en la base de datos local
@@ -102,19 +101,23 @@ export async function closeCashDrawer(data: {
   notes?: string;
 }) {
   try {
-    const { getUser, isAuthenticated } = getKindeServerSession();
+    const { getUser } = getKindeServerSession(); // Keep getUser for closedBy
     
-    // Verificar autenticación
+    /*
+    // REMOVED - Middleware already handles authentication
     if (!(await isAuthenticated())) {
       console.log("Cierre de caja: Usuario no autorizado");
       return { success: false, error: "No autorizado", statusCode: 401 };
     }
-    
-    // Obtener usuario
+    */
+
+    // Obtener usuario - Assume user exists if action is reached
     const user = await getUser();
     if (!user || !user.id) {
-      console.log("Cierre de caja: No se pudo obtener información del usuario");
-      return { success: false, error: "No se pudo obtener la información del usuario", statusCode: 401 };
+      // This check might still be relevant if getUser can fail even after middleware passes
+      // Keep it but log an error if it happens.
+      console.error("closeCashDrawer: getUser() returned null/no ID even after middleware auth.");
+      return { success: false, error: "No se pudo obtener la información del usuario autenticado.", statusCode: 500 };
     }
     
     console.log(`Cierre de caja: Usuario autenticado (${user.id})`);

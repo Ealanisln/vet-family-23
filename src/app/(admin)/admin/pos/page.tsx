@@ -36,7 +36,18 @@ export default async function POSPage() {
   }
   
   // Obtener el estado actual de la caja
-  const currentDrawer = await getCurrentDrawer();
+  let currentDrawer = null; // Initialize with null
+  let drawerError = null; // Variable to store potential error
+  try {
+    currentDrawer = await getCurrentDrawer();
+  } catch (error) {
+    console.error("Error fetching current drawer state:", error);
+    drawerError = error instanceof Error ? error.message : "Unknown error fetching drawer";
+    // Decide how to handle the error - maybe show a message, or allow page load with drawer info missing
+    // For now, we'll let the page load but indicate an error occurred.
+  }
+  
+  // Use the potentially null currentDrawer safely
   const isDrawerOpen = currentDrawer && currentDrawer.status === "OPEN";
   
   return (
@@ -58,7 +69,16 @@ export default async function POSPage() {
               <CardDescription className="text-sm">Gestiona la apertura y cierre de caja</CardDescription>
             </CardHeader>
             <CardContent className="pt-4 flex-grow flex flex-col justify-end">
-              {isDrawerOpen ? (
+              {drawerError ? ( // Display error if fetching failed
+                <div className="space-y-4">
+                  <div className="bg-red-100 p-3 rounded-lg text-red-800 text-sm font-medium border border-red-200">
+                    Error al obtener estado de caja: {drawerError}
+                  </div>
+                  {/* Optionally disable buttons or show different state */}
+                   <Button disabled className="w-full shadow-sm h-10">Abrir Caja</Button>
+                   <Button disabled className="w-full shadow-sm h-10">Cerrar Caja</Button>
+                </div>
+              ) : isDrawerOpen ? (
                 <div className="space-y-4">
                   <div className="bg-green-100 p-3 rounded-lg text-green-800 text-sm font-medium border border-green-200">
                     Caja actualmente abierta
@@ -92,8 +112,8 @@ export default async function POSPage() {
             <CardContent className="pt-4 flex-grow flex flex-col justify-end">
               <Button 
                 asChild 
-                className={`w-full shadow-sm h-10 ${!isDrawerOpen ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-green-600 hover:bg-green-700'}`}
-                disabled={!isDrawerOpen}
+                className={`w-full shadow-sm h-10 ${!isDrawerOpen || drawerError ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-green-600 hover:bg-green-700'}`}
+                disabled={!isDrawerOpen || !!drawerError} // Disable if drawer isn't open OR if there was an error
               >
                 <Link href="/admin/pos/ventas/nueva">
                   Iniciar Nueva Venta
@@ -103,6 +123,11 @@ export default async function POSPage() {
                 <p className="text-red-500 text-sm mt-3 text-center">
                   Debes abrir la caja antes de iniciar una venta
                 </p>
+              )}
+              {drawerError && ( // Show drawer error message here too
+                 <p className="text-red-500 text-sm mt-3 text-center">
+                   No se pudo verificar el estado de la caja.
+                 </p>
               )}
             </CardContent>
           </Card>

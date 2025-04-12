@@ -16,22 +16,19 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function POSPage() {
-  // Verificar que el usuario actual tiene permisos para usar el POS
-  const { getRoles, isAuthenticated } = getKindeServerSession();
-  
-  if (!(await isAuthenticated())) {
-    return redirect("/api/auth/login");
-  }
-  
-  // Obtenemos los roles pero no necesitamos el usuario por ahora
+  // Obtenemos directamente los roles. El middleware ya validó la autenticación.
+  const { getRoles } = getKindeServerSession();
+
+  // Obtenemos los roles
   const roles = await getRoles();
-  
+
   // Verificar permisos específicos del POS - usando Kinde roles
   const isAdmin = roles?.some((role) => role.key === "admin");
-  const isCashier = roles?.some((role) => role.key === "cashier");
-  
+  // ¡IMPORTANTE! Asegúrate de que el rol 'cashier' exista en Kinde si planeas usarlo,
+
   // Si no tiene rol de admin o cajero, redirigir
-  if (!isAdmin && !isCashier) {
+  if (!isAdmin) {
+     console.log(`POSPage: Redirecting to /admin due to role check. isAdmin: ${isAdmin}. Roles received:`, roles);
     return redirect("/admin");
   }
   

@@ -214,7 +214,7 @@ export async function closeCashDrawer(data: {
 }
 
 export async function getCurrentDrawer() {
-  console.log("[getCurrentDrawer] Action started."); // Log start
+  // console.log("[getCurrentDrawer] Action started."); // Log removido
   try {
     const drawer = await prisma.cashDrawer.findFirst({
       where: {
@@ -226,11 +226,11 @@ export async function getCurrentDrawer() {
     });
 
     if (!drawer) {
-      console.log("[getCurrentDrawer] No open drawer found. Returning null."); // Log null return
+      // console.log("[getCurrentDrawer] No open drawer found. Returning null."); // Log removido
       return null;
     }
 
-    console.log(`[getCurrentDrawer] Found open drawer: ${drawer.id}, opened by: ${drawer.openedBy}`); // Log found drawer
+    // console.log(`[getCurrentDrawer] Found open drawer: ${drawer.id}, opened by: ${drawer.openedBy}`); // Log removido
 
     // Siempre buscar el usuario que abrió la caja
     const openUser = await prisma.user.findUnique({
@@ -245,11 +245,11 @@ export async function getCurrentDrawer() {
 
     // Si no se encuentra el usuario, retornar null
     if (!openUser) {
-      console.log(`[getCurrentDrawer] User not found for openedBy ID: ${drawer.openedBy}. Returning null.`); // Log null return
+      // console.log(`[getCurrentDrawer] User not found for openedBy ID: ${drawer.openedBy}. Returning null.`); // Log removido
       return null;
     }
 
-    console.log(`[getCurrentDrawer] Found user: ${openUser.id}. Returning drawer data.`); // Log success return
+    // console.log(`[getCurrentDrawer] Found user: ${openUser.id}. Returning drawer data.`); // Log removido
     return {
       ...drawer,
       openUser,

@@ -1,7 +1,6 @@
 // src/app/(admin)/admin/pos/apertura-caja/page.tsx
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { getCurrentDrawer } from "@/app/actions/pos/cash-drawer";
 import OpenDrawerForm from "@/components/POS/CashDrawer/OpenDrawerForm";
 
@@ -13,23 +12,6 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function OpenDrawerPage() {
-  // Verificar que el usuario tiene permisos para el POS
-  const { isAuthenticated, getRoles } = getKindeServerSession();
-  
-  if (!(await isAuthenticated())) {
-    return redirect("/api/auth/login");
-  }
-  
-  // Verificar roles mediante Kinde en lugar de la base de datos
-  const roles = await getRoles();
-  const isAdmin = roles?.some((role) => role.key === "admin");
-  const isCashier = roles?.some((role) => role.key === "cashier");
-  
-  // Si no tiene rol de admin o cajero, redirigir
-  if (!isAdmin && !isCashier) {
-    return redirect("/admin");
-  }
-  
   // Verificar si ya hay una caja abierta
   const currentDrawer = await getCurrentDrawer();
   

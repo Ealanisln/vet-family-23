@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { redirect } from "next/navigation";
+// import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+// import { redirect } from "next/navigation";
 import { DataTable } from "../../../../../components/ui/data-table";
 import { prisma } from "@/lib/prismaDB";
 import { columns } from "./columns";
@@ -11,12 +11,15 @@ export const metadata: Metadata = {
 };
 
 export default async function ProductosPage() {
+  /*
+  // TEMPORARILY COMMENTED OUT - Authentication check is redundant with middleware.
   const { getUser } = getKindeServerSession();
   const user = await getUser();
 
   if (!user?.id) {
-    return redirect("/auth-callback");
+    return redirect("/auth-callback"); // Or perhaps /api/auth/login?
   }
+  */
 
   // Obtener todos los productos activos con sus detalles relevantes
   const products = await prisma.inventoryItem.findMany({

@@ -1,0 +1,552 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String              @id
+  kindeId                String              @unique
+  email                  String?
+  firstName              String?
+  lastName               String?
+  name                   String?
+  phone                  String?
+  address                String?
+  preferredContactMethod String?
+  pet                    String?
+  visits                 Int                 @default(0)
+  nextVisitFree          Boolean             @default(false)
+  lastVisit              DateTime?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  appointments           Appointment[]
+  billings               Billing[]
+  closedDrawers          CashDrawer[]        @relation("ClosedDrawers")
+  openedDrawers          CashDrawer[]        @relation("OpenedDrawers")
+  inventoryMovements     InventoryMovement[]
+  pets                   Pet[]
+  reminders              Reminder[]
+  sales                  Sale[]
+  userRoles              UserRole[]
+  visitHistory           VisitHistory[]
+  medicalOrders          MedicalOrder[]
+
+  @@index([firstName, lastName, phone])
+  @@index([email])
+  @@index([firstName, lastName, phone], map: "User_name_phone_idx")
+}
+
+model Role {
+  id        String     @id @default(uuid())
+  key       String     @unique
+  name      String
+  userRoles UserRole[]
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+}
+
+model VisitHistory {
+  id     String   @id @default(uuid())
+  userId String
+  date   DateTime @default(now())
+  cost   Float
+  isFree Boolean  @default(false)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Pet {
+  id                  String                @id
+  internalId          String?
+  userId              String
+  name                String
+  species             String
+  breed               String
+  dateOfBirth         DateTime
+  gender              String
+  weight              Float
+  microchipNumber     String?
+  isNeutered          Boolean               @default(false)
+  isDeceased          Boolean               @default(false)
+  appointments        Appointment[]
+  billings            Billing[]
+  medicalHistory      MedicalHistory[]
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminders           Reminder[]
+  vaccinations        Vaccination[]
+  VaccinationSchedule VaccinationSchedule[]
+  deworming           Deworming[]
+  DewormingSchedule   DewormingSchedule[]
+  sales               Sale[]
+  medicalOrders       MedicalOrder[]
+
+  @@index([userId])
+}
+
+model MedicalHistory {
+  id             String   @id @default(uuid())
+  petId          String
+  visitDate      DateTime
+  reasonForVisit String
+  diagnosis      String
+  treatment      String
+  prescriptions  String[]
+  notes          String?
+  pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+}
+
+model Vaccination {
+  id                 String   @id @default(uuid())
+  petId              String
+  vaccineType        String
+  stage              String
+  status             String
+  administrationDate DateTime
+  nextDoseDate       DateTime
+  batchNumber        String?
+  manufacturer       String?
+  veterinarianName   String?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  pet                Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, vaccineType])
+  @@index([nextDoseDate, status])
+  @@index([nextDoseDate, status], map: "Vaccination_next_dose_idx")
+  @@index([petId, vaccineType], map: "Vaccination_pet_type_idx")
+}
+
+model VaccinationSchedule {
+  id            String            @id @default(uuid())
+  petId         String
+  vaccineType   VaccineType
+  stage         VaccinationStage
+  scheduledDate DateTime
+  status        VaccinationStatus @default(PENDING)
+  reminderSent  Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  pet           Pet               @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, scheduledDate, status])
+  @@index([petId, scheduledDate, status], map: "VaccinationSchedule_pet_date_idx")
+}
+
+model Appointment {
+  id       String   @id @default(uuid())
+  userId   String
+  petId    String
+  dateTime DateTime
+  reason   String
+  status   String
+  pet      Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Billing {
+  id            String   @id @default(uuid())
+  userId        String
+  petId         String?
+  date          DateTime
+  services      String[]
+  cost          Float
+  paymentStatus String
+  pet           Pet?     @relation(fields: [petId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Reminder {
+  id           String   @id @default(uuid())
+  userId       String
+  petId        String
+  reminderType String
+  dueDate      DateTime
+  status       String
+  pet          Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Staff {
+  id                 String @id @default(uuid())
+  name               String
+  position           String
+  contactInformation String
+}
+
+model InventoryItem {
+  id             String              @id @default(uuid())
+  name           String
+  category       InventoryCategory
+  description    String?
+  activeCompound String?
+  presentation   String?
+  measure        String?
+  brand          String?
+  quantity       Int                 @default(0)
+  minStock       Int?
+  price          Float?
+  cost           Float?
+  location       String?
+  expirationDate DateTime?
+  status         InventoryStatus     @default(ACTIVE)
+  batchNumber    String?
+  specialNotes   String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  movements      InventoryMovement[]
+  saleItems      SaleItem[]
+  medicalOrderProducts MedicalOrderProduct[]
+
+  @@index([category])
+  @@index([name])
+  @@index([status])
+  @@index([expirationDate])
+}
+
+model InventoryMovement {
+  id              String        @id @default(uuid())
+  itemId          String
+  type            MovementType
+  quantity        Int
+  date            DateTime      @default(now())
+  reason          String?
+  userId          String?
+  relatedRecordId String?
+  notes           String?
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user            User?         @relation(fields: [userId], references: [id])
+
+  @@index([itemId, date])
+  @@index([userId])
+  @@index([itemId, date], map: "InventoryMovement_item_date_idx")
+  @@index([userId], map: "InventoryMovement_user_idx")
+}
+
+model Sale {
+  id            String            @id @default(uuid())
+  receiptNumber String            @unique
+  date          DateTime          @default(now())
+  userId        String?
+  petId         String?
+  subtotal      Float
+  tax           Float
+  discount      Float             @default(0)
+  total         Float
+  paymentMethod PaymentMethod
+  status        SaleStatus        @default(COMPLETED)
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  medicalOrder  MedicalOrder?
+  transactions  CashTransaction[]
+  pet           Pet?              @relation(fields: [petId], references: [id])
+  user          User?             @relation(fields: [userId], references: [id])
+  items         SaleItem[]
+
+  @@index([date])
+  @@index([userId])
+  @@index([paymentMethod])
+  @@index([status])
+}
+
+model SaleItem {
+  id            String         @id @default(uuid())
+  saleId        String
+  itemId        String?
+  serviceId     String?
+  description   String
+  quantity      Int
+  unitPrice     Float
+  discount      Float          @default(0)
+  total         Float
+  inventoryItem InventoryItem? @relation(fields: [itemId], references: [id])
+  sale          Sale           @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  service       Service?       @relation(fields: [serviceId], references: [id])
+
+  @@index([saleId])
+  @@index([itemId])
+  @@index([serviceId])
+}
+
+model Service {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  category    ServiceCategory
+  price       Float
+  duration    Int?
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  saleItems   SaleItem[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model CashDrawer {
+  id             String            @id @default(uuid())
+  openedAt       DateTime          @default(now())
+  closedAt       DateTime?
+  openedBy       String
+  closedBy       String?
+  initialAmount  Float
+  finalAmount    Float?
+  expectedAmount Float?
+  difference     Float?
+  status         DrawerStatus      @default(OPEN)
+  notes          String?
+  closeUser      User?             @relation("ClosedDrawers", fields: [closedBy], references: [id])
+  openUser       User              @relation("OpenedDrawers", fields: [openedBy], references: [id])
+  transactions   CashTransaction[]
+
+  @@index([openedAt])
+  @@index([status])
+}
+
+model CashTransaction {
+  id          String          @id @default(uuid())
+  drawerId    String
+  amount      Float
+  type        TransactionType
+  description String?
+  createdAt   DateTime        @default(now())
+  saleId      String?
+  drawer      CashDrawer      @relation(fields: [drawerId], references: [id], onDelete: Cascade)
+  sale        Sale?           @relation(fields: [saleId], references: [id])
+
+  @@index([drawerId])
+  @@index([type])
+  @@index([saleId])
+}
+
+model Deworming {
+  id                 String          @id @default(uuid())
+  petId              String
+  dewormingType      DewormingType
+  stage              DewormingStage
+  status             DewormingStatus @default(PENDING)
+  administrationDate DateTime
+  nextDoseDate       DateTime
+  batchNumber        String?
+  manufacturer       String?
+  veterinarianName   String?
+  notes              String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  pet                Pet             @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, dewormingType])
+  @@index([nextDoseDate, status])
+}
+
+model DewormingSchedule {
+  id            String          @id @default(uuid())
+  petId         String
+  dewormingType DewormingType
+  stage         DewormingStage
+  scheduledDate DateTime
+  status        DewormingStatus @default(PENDING)
+  reminderSent  Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  pet           Pet             @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, scheduledDate, status])
+}
+
+enum VaccineType {
+  DP_PUPPY
+  DHPPI
+  DHPPI_L
+  DHPPI_RL
+  BORDETELLA
+  SEXTUPLE
+  SEXTUPLE_R
+  RABIES
+  TRIPLE_FELINA
+  LEUCEMIA_FELINA
+  RABIA_FELINA
+}
+
+enum VaccinationStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  SCHEDULED
+}
+
+enum VaccinationStage {
+  PUPPY
+  ADULT
+}
+
+enum InventoryCategory {
+  MEDICINE
+  SURGICAL_MATERIAL
+  VACCINE
+  FOOD
+  ACCESSORY
+  CONSUMABLE
+  ANTI_INFLAMMATORY_ANALGESICS
+  ANTIBIOTIC
+  ANTIFUNGAL
+  DEWORMERS
+  GASTROPROTECTORS_GASTROENTEROLOGY
+  CARDIOLOGY
+  DERMATOLOGY
+  ENDOCRINOLOGY_HORMONAL
+  ANESTHETICS_SEDATIVES
+  OTIC
+  OINTMENTS
+  RESPIRATORY
+  OPHTHALMIC
+  DRY_FOOD
+  WET_FOOD
+  CHIPS
+  ANTI_EMETIC
+  ANTISEPTICS_HEALING
+  NEPHROLOGY
+  ANTAGONISTS
+  IMMUNOSTIMULANT
+  APPETITE_STIMULANTS_HEMATOPOIESIS
+  SUPPLEMENTS_OTHERS
+  LAXATIVES
+  ANTIDIARRHEAL
+  ANTIHISTAMINE
+  MEDICATED_SHAMPOO
+  CORTICOSTEROIDS
+  EXPECTORANT
+  BRONCHODILATOR
+}
+
+enum InventoryStatus {
+  ACTIVE
+  INACTIVE
+  LOW_STOCK
+  OUT_OF_STOCK
+  EXPIRED
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  RETURN
+  EXPIRED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  TRANSFER
+  MOBILE_PAYMENT
+  MULTIPLE
+}
+
+enum SaleStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum ServiceCategory {
+  CONSULTATION
+  SURGERY
+  VACCINATION
+  GROOMING
+  DENTAL
+  LABORATORY
+  IMAGING
+  HOSPITALIZATION
+  OTHER
+}
+
+enum DrawerStatus {
+  OPEN
+  CLOSED
+  RECONCILED
+}
+
+enum TransactionType {
+  SALE
+  REFUND
+  DEPOSIT
+  WITHDRAWAL
+  ADJUSTMENT
+}
+
+enum DewormingType {
+  INTERNAL
+  EXTERNAL
+  BOTH
+}
+
+enum DewormingStage {
+  PUPPY
+  ADULT
+}
+
+enum DewormingStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  SCHEDULED
+}
+
+enum MedicalOrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model MedicalOrder {
+  id            String         @id @default(uuid())
+  petId         String        
+  pet           Pet           @relation(fields: [petId], references: [id])
+  userId        String        
+  user          User          @relation(fields: [userId], references: [id])
+  visitDate     DateTime
+  diagnosis     String?
+  treatment     String?
+  prescriptions String[]
+  notes         String?
+  status        MedicalOrderStatus @default(PENDING)
+  saleId        String?       @unique
+  sale          Sale?         @relation(fields: [saleId], references: [id])
+  products      MedicalOrderProduct[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([petId])
+  @@index([userId])
+  @@index([status])
+}
+
+model MedicalOrderProduct {
+  id            String       @id @default(uuid())
+  orderId       String       
+  order         MedicalOrder @relation(fields: [orderId], references: [id])
+  productId     String       
+  product       InventoryItem @relation(fields: [productId], references: [id])
+  quantity      Int
+  unitPrice     Float
+  notes         String?
+
+  @@index([orderId])
+  @@index([productId])
+}

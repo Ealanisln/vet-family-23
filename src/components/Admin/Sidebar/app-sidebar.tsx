@@ -10,13 +10,13 @@ import {
   Dog,
   History,
   Package,
-  Calendar,
   Pill,
   Syringe,
   CircleDollarSign,
-  ClipboardList,
   Settings,
-  LogOut
+  LogOut,
+  LayoutDashboard,
+  ShieldCheck
 } from "lucide-react";
 
 import { NavMain } from "@/components/Admin/Sidebar/nav-main";
@@ -50,6 +50,18 @@ const data = {
   ],
   navMain: [
     {
+      title: "Dashboard",
+      url: "/admin",
+      icon: LayoutDashboard,
+      items: [
+        {
+          title: "Panel Principal",
+          url: "/admin",
+          icon: LayoutDashboard,
+        },
+      ],
+    },
+    {
       title: "Clientes",
       url: "/admin/clientes",
       icon: Users,
@@ -60,26 +72,31 @@ const data = {
           icon: Users,
         },
         {
-          title: "Agregar nuevo",
-          url: "/admin/clientes/nuevo-cliente",
-          icon: PlusCircle,
+          title: "Mascotas",
+          url: "/admin/mascotas",
+          icon: PawPrint,
         },
       ],
     },
     {
-      title: "Mascotas",
-      url: "/admin/mascotas",
-      icon: PawPrint,
+      title: "Punto de Venta",
+      url: "/admin/pos",
+      icon: CircleDollarSign,
       items: [
         {
-          title: "Ver todas",
-          url: "/admin/mascotas",
-          icon: PawPrint,
+          title: "Panel POS",
+          url: "/admin/pos",
+          icon: LayoutDashboard,
         },
         {
-          title: "Agregar mascota",
-          url: "/admin/mascotas/nueva",
-          icon: ClipboardList,
+          title: "Nueva Venta",
+          url: "/admin/pos/ventas/nueva",
+          icon: CircleDollarSign,
+        },
+        {
+          title: "Historial de Ventas",
+          url: "/admin/pos/ventas",
+          icon: History,
         },
       ],
     },
@@ -105,23 +122,18 @@ const data = {
         },
       ],
     },
-    // {
-    //   title: "Agenda",
-    //   url: "/admin/agenda",
-    //   icon: Calendar,
-    //   items: [
-    //     {
-    //       title: "Citas",
-    //       url: "/admin/agenda/citas",
-    //       icon: Calendar,
-    //     },
-    //     {
-    //       title: "Pagos",
-    //       url: "/admin/agenda/pagos",
-    //       icon: CircleDollarSign,
-    //     },
-    //   ],
-    // },
+    {
+      title: "Usuarios",
+      url: "/admin/usuarios",
+      icon: ShieldCheck,
+      items: [
+        {
+          title: "Gestión de Usuarios",
+          url: "/admin/usuarios",
+          icon: Users,
+        },
+      ],
+    },
   ],
 };
 

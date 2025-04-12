@@ -27,7 +27,7 @@ import { LoadingTableRow } from "./LoadingTableRow";
 import { EmptyTableRow } from "./EmptyTableRow";
 import { Search } from "lucide-react";
 import { Card } from "../ui";
-import TablePagination from '@/components/ui/pagination';
+import TablePagination from '@/components/ui/table-pagination';
 
 export default function ClientsTable() {
   const {

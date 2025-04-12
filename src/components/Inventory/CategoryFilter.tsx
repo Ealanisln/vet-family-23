@@ -1,6 +1,6 @@
-// Create a new component at src/components/Inventory/CategoryFilter.tsx
+// src/components/Inventory/CategoryFilter.tsx
 import { CATEGORY_TRANSLATIONS } from "@/utils/category-translations";
-import { InventoryCategory } from "@/types/inventory";
+import type { InventoryCategory } from "@/types/inventory";
 import {
   Select,
   SelectContent,
@@ -9,16 +9,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const CategoryFilter = ({
-  value,
-  onChange,
-}: {
+interface CategoryFilterProps {
   value: InventoryCategory | "all_categories";
   onChange: (value: InventoryCategory | "all_categories") => void;
-}) => (
+}
+
+export const CategoryFilter = ({ value, onChange }: CategoryFilterProps) => (
   <Select value={value} onValueChange={onChange}>
-<SelectTrigger className="min-w-[200px] w-full max-w-[220px] h-10">
-<SelectValue placeholder="Categoría" />
+    <SelectTrigger className="min-w-[200px] w-full max-w-[220px] h-10">
+      <SelectValue placeholder="Categoría" />
     </SelectTrigger>
     <SelectContent>
       <SelectItem value="all_categories">Todas las categorías</SelectItem>

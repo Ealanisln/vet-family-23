@@ -13,6 +13,10 @@ import {
   Pill,
   SyringeIcon,
   Users,
+  ShieldCheck,
+  CircleDollarSign,
+  LayoutDashboard,
+  History,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -167,6 +171,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     },
   ];
 
+  const posOptions: MenuOptionProps[] = [
+    {
+      title: "Panel POS",
+      icon: LayoutDashboard,
+      href: "/admin/pos",
+      description: "Vista general del punto de venta",
+    },
+    {
+      title: "Nueva Venta",
+      icon: CircleDollarSign,
+      href: "/admin/pos/ventas/nueva",
+      description: "Registrar una nueva venta",
+    },
+    {
+      title: "Historial",
+      icon: History,
+      href: "/admin/pos/ventas",
+      description: "Ver historial de ventas",
+    },
+  ];
+
+  const userManagementOptions: MenuOptionProps[] = [
+    {
+      title: "Gestión de Usuarios",
+      icon: Users,
+      href: "/admin/usuarios",
+      description: "Administrar usuarios del sistema",
+    },
+  ];
+
   const quickActions: MenuOptionProps[] = [
     {
       title: "Nueva Consulta",
@@ -238,8 +272,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ))}
           </Section>
 
+          <Section title="Punto de Venta" icon={CircleDollarSign}>
+            {posOptions.map((option, index) => (
+              <MenuOption key={index} {...option} />
+            ))}
+          </Section>
+
           <Section title="Inventario" icon={Package}>
             {inventoryOptions.map((option, index) => (
+              <MenuOption key={index} {...option} />
+            ))}
+          </Section>
+
+          <Section title="Administración de Usuarios" icon={ShieldCheck}>
+            {userManagementOptions.map((option, index) => (
               <MenuOption key={index} {...option} />
             ))}
           </Section>

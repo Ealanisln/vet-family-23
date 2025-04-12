@@ -12,8 +12,8 @@ const Custom404: React.FC = () => {
             <Image
               src="/assets/notfound/not-found.png"
               alt="Error 404 - Animales"
-              layout="fill"
-              objectFit="contain"
+              fill
+              className="object-contain"
               priority
             />
           </div>
@@ -22,8 +22,8 @@ const Custom404: React.FC = () => {
             <Image
               src="/assets/logo/logo.svg"
               alt="Vet Family"
-              layout="fill"
-              objectFit="contain"
+              fill
+              className="object-contain"
             />
           </div>
 

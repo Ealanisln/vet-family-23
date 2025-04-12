@@ -10,8 +10,8 @@ const Microchip = () => {
           <Image
             src="/assets/microchip/header.png"
             alt="Microchip de identificación animal"
-            layout="fill"
-            objectFit="cover"
+            fill
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <h1 className="text-4xl font-bold text-white text-center">
@@ -99,7 +99,7 @@ const Microchip = () => {
                     alt="Tamaño del microchip"
                     width={128}
                     height={128}
-                    objectFit="cover"
+                    className="object-cover"
                   />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">Tamaño Diminuto</h3>
@@ -114,7 +114,7 @@ const Microchip = () => {
                     alt="Durabilidad del microchip"
                     width={128}
                     height={128}
-                    objectFit="cover"
+                    className="object-cover"
                   />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">Duradero</h3>
@@ -129,7 +129,7 @@ const Microchip = () => {
                     alt="Seguridad del microchip"
                     width={128}
                     height={128}
-                    objectFit="cover"
+                    className="object-cover"
                   />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">Seguro</h3>

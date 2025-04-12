@@ -33,9 +33,8 @@ const PromocionCard: React.FC<PromocionCardProps> = ({
         <Image
           src={imagen}
           alt={titulo}
-          layout="fill"
-          objectFit="contain"
-          className="rounded-lg"
+          fill
+          className="rounded-lg object-contain"
         />
       </div>
       <p className="text-sm">{descripcion}</p>

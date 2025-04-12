@@ -72,7 +72,7 @@ import InventoryItemForm from "./ui/InventoryItemForm";
 import ItemDetails from "./ui/ItemDetails";
 import { CategoryFilter } from "./CategoryFilter";
 import { CATEGORY_TRANSLATIONS } from "@/utils/category-translations";
-import TablePagination from "../ui/pagination";
+import TablePagination from "../ui/table-pagination";
 
 // Funciones auxiliares
 const isNearExpiration = (expirationDate: string | null): boolean => {

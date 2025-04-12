@@ -1,15 +1,84 @@
+// src/app/actions/inventory.ts
+
 "use server";
 
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
-import { InventoryStatus, MovementType } from "@prisma/client";
+import { InventoryCategory, InventoryStatus, MovementType } from "@prisma/client";
 import {
   GetInventoryResponse,
   UpdateInventoryData,
   UpdateInventoryResponse,
   InventoryItemFormData,
+  InventoryItem,
   CreateInventoryResponse,
 } from "@/types/inventory";
+
+interface SearchInventoryParams {
+  searchTerm?: string;
+  category?: string | null;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function searchInventoryItems({
+  searchTerm = "",
+  category = null,
+  status = "ACTIVE",
+  limit = 50,
+  offset = 0,
+}: SearchInventoryParams): Promise<InventoryItem[]> {
+  try {
+    const items = await prisma.inventoryItem.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { name: { contains: searchTerm, mode: "insensitive" } },
+              { description: { contains: searchTerm, mode: "insensitive" } },
+              { brand: { contains: searchTerm, mode: "insensitive" } },
+            ],
+          },
+          category ? { category: category as InventoryCategory } : {},
+          status ? { status: status as InventoryStatus } : {},
+        ],
+      },
+      orderBy: [{ name: "asc" }],
+      take: limit,
+      skip: offset,
+      include: {
+        movements: {
+          orderBy: {
+            date: "desc",
+          },
+          take: 1,
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return items.map((item) => ({
+      ...item,
+      expirationDate: item.expirationDate?.toISOString() || null,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+      movements: item.movements.map((movement) => ({
+        ...movement,
+        date: movement.date.toISOString(),
+      })),
+    }));
+  } catch (error) {
+    console.error("Error searching inventory items:", error);
+    return [];
+  }
+}
 
 export async function getInventory(): Promise<GetInventoryResponse> {
   try {

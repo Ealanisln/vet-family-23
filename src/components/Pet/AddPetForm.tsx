@@ -34,12 +34,13 @@ interface PetDataForSubmit {
   microchipNumber?: string;
   medicalHistory?: string;
   isNeutered: boolean;
+  internalId?: string;
+  isDeceased: boolean;
 }
 
 const AddPetForm: React.FC<AddPetFormProps> = ({
   onSubmit,
   onCancel,
-  userId,
   isSubmitting
 }) => {
   const [petData, setPetData] = useState<PetDataForSubmit>({
@@ -51,7 +52,9 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
     weight: 0,
     microchipNumber: "",
     medicalHistory: "",
-    isNeutered: false
+    isNeutered: false,
+    internalId: "",
+    isDeceased: false
   });
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -106,8 +109,8 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                   <SelectValue placeholder="Seleccionar especie" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="perro">Perro</SelectItem>
-                    <SelectItem value="gato">Gato</SelectItem>
+                    <SelectItem value="perro">Canino</SelectItem>
+                    <SelectItem value="gato">Felino</SelectItem>
                     <SelectItem value="ave">Ave</SelectItem>
                     <SelectItem value="huron">Hurón</SelectItem>
                     <SelectItem value="conejo">Conejo</SelectItem>
@@ -209,6 +212,29 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                 />
                 <span>Esterilizado/a</span>
               </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={petData.isDeceased}
+                  onChange={(e) => setPetData({ ...petData, isDeceased: e.target.checked })}
+                  disabled={isSubmitting}
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <span>Fallecido/a</span>
+              </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="internalId">ID Interno</Label>
+              <Input
+                id="internalId"
+                value={petData.internalId}
+                onChange={(e) => setPetData({ ...petData, internalId: e.target.value })}
+                disabled={isSubmitting}
+              />
             </div>
           </div>
         </CardContent>

@@ -1,3 +1,5 @@
+// src/types/inventory.ts
+
 import { InventoryStatus, MovementType } from "@prisma/client";
 
 // Enums y Types Base
@@ -70,6 +72,8 @@ export interface InventoryItemBase {
   brand: string | null;
   quantity: number;
   minStock: number | null;
+  price: number | null;  // Added price field
+  cost: number | null;   // Added cost field
   location: string | null;
   expirationDate: string | null;
   batchNumber: string | null;
@@ -102,6 +106,8 @@ export type InventoryItemFormData = {
   brand: string | null;
   quantity: number;
   minStock: number | null;
+  price?: number | null;  // Added price field
+  cost?: number | null;   // Added cost field
   location: string | null;
   expirationDate: string | null;
   batchNumber: string | null;
@@ -129,6 +135,8 @@ export interface UpdateInventoryData {
   brand?: string | null;
   quantity?: number;
   minStock?: number | null;
+  price?: number | null;  // Added price field
+  cost?: number | null;   // Added cost field
   location?: string | null;
   expirationDate?: string | null;
   batchNumber?: string | null;
@@ -192,6 +200,15 @@ export interface CreateMovementData {
 export interface ValidationResponse {
   isValid: boolean;
   errors: FormErrors;
+}
+
+// Search inventory params
+export interface SearchInventoryParams {
+  searchTerm?: string;
+  category?: string | null;
+  status?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export { InventoryStatus };

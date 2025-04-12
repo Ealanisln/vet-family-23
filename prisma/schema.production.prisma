@@ -1,0 +1,296 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String              @id
+  kindeId                String              @unique
+  email                  String?
+  firstName              String?
+  lastName               String?
+  name                   String?
+  phone                  String?
+  address                String?
+  preferredContactMethod String?
+  pet                    String?
+  visits                 Int                 @default(0)
+  nextVisitFree          Boolean             @default(false)
+  lastVisit              DateTime?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  appointments           Appointment[]
+  billings               Billing[]
+  inventoryMovements     InventoryMovement[]
+  pets                   Pet[]
+  reminders              Reminder[]
+  userRoles              UserRole[]
+  visitHistory           VisitHistory[]
+
+  @@index([firstName, lastName, phone])
+  @@index([email])
+}
+
+model Role {
+  id        String     @id @default(uuid())
+  key       String     @unique
+  name      String
+  userRoles UserRole[]
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+}
+
+model VisitHistory {
+  id     String   @id @default(uuid())
+  userId String
+  date   DateTime @default(now())
+  cost   Float
+  isFree Boolean  @default(false)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Pet {
+  id                  String                @id
+  internalId          String?
+  userId              String
+  name                String
+  species             String
+  breed               String
+  dateOfBirth         DateTime
+  gender              String
+  weight              Float
+  microchipNumber     String?
+  isNeutered          Boolean               @default(false)
+  isDeceased          Boolean               @default(false)
+  appointments        Appointment[]
+  billings            Billing[]
+  medicalHistory      MedicalHistory[]
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminders           Reminder[]
+  vaccinations        Vaccination[]
+  VaccinationSchedule VaccinationSchedule[]
+}
+
+model MedicalHistory {
+  id             String   @id @default(uuid())
+  petId          String
+  visitDate      DateTime
+  reasonForVisit String
+  diagnosis      String
+  treatment      String
+  prescriptions  String[]
+  notes          String?
+  pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+}
+
+model Vaccination {
+  id                 String   @id @default(uuid())
+  petId              String
+  vaccineType        String
+  stage              String
+  status             String
+  administrationDate DateTime
+  nextDoseDate       DateTime
+  batchNumber        String?
+  manufacturer       String?
+  veterinarianName   String?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  pet                Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, vaccineType])
+  @@index([nextDoseDate, status])
+}
+
+model VaccinationSchedule {
+  id            String            @id @default(uuid())
+  petId         String
+  vaccineType   VaccineType
+  stage         VaccinationStage
+  scheduledDate DateTime
+  status        VaccinationStatus @default(PENDING)
+  reminderSent  Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  pet           Pet               @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, scheduledDate, status])
+}
+
+model Appointment {
+  id       String   @id @default(uuid())
+  userId   String
+  petId    String
+  dateTime DateTime
+  reason   String
+  status   String
+  pet      Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Billing {
+  id            String   @id @default(uuid())
+  userId        String
+  petId         String?
+  date          DateTime
+  services      String[]
+  cost          Float
+  paymentStatus String
+  pet           Pet?     @relation(fields: [petId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Reminder {
+  id           String   @id @default(uuid())
+  userId       String
+  petId        String
+  reminderType String
+  dueDate      DateTime
+  status       String
+  pet          Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Staff {
+  id                 String @id @default(uuid())
+  name               String
+  position           String
+  contactInformation String
+}
+
+model InventoryItem {
+  id             String              @id @default(uuid())
+  name           String
+  category       InventoryCategory
+  description    String?
+  activeCompound String?
+  presentation   String?
+  measure        String?
+  brand          String?
+  quantity       Int                 @default(0)
+  minStock       Int?
+  location       String?
+  expirationDate DateTime?
+  status         InventoryStatus     @default(ACTIVE)
+  batchNumber    String?
+  specialNotes   String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  movements      InventoryMovement[]
+
+  @@index([category])
+  @@index([name])
+  @@index([status])
+  @@index([expirationDate])
+}
+
+model InventoryMovement {
+  id              String        @id @default(uuid())
+  itemId          String
+  type            MovementType
+  quantity        Int
+  date            DateTime      @default(now())
+  reason          String?
+  userId          String?
+  relatedRecordId String?
+  notes           String?
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user            User?         @relation(fields: [userId], references: [id])
+
+  @@index([itemId, date])
+  @@index([userId])
+}
+
+enum VaccineType {
+  DP_PUPPY
+  DHPPI
+  DHPPI_L
+  DHPPI_RL
+  BORDETELLA
+  SEXTUPLE
+  SEXTUPLE_R
+  RABIES
+  TRIPLE_FELINA
+  LEUCEMIA_FELINA
+  RABIA_FELINA
+}
+
+enum VaccinationStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  SCHEDULED
+}
+
+enum VaccinationStage {
+  PUPPY
+  ADULT
+}
+
+enum InventoryCategory {
+  ACCESSORY
+  ANESTHETICS_SEDATIVES
+  ANTAGONISTS
+  ANTI_EMETIC
+  ANTI_INFLAMMATORY_ANALGESICS
+  ANTIBIOTIC
+  ANTIDIARRHEAL
+  ANTIFUNGAL
+  ANTIHISTAMINE
+  ANTISEPTICS_HEALING
+  APPETITE_STIMULANTS_HEMATOPOIESIS
+  BRONCHODILATOR
+  CARDIOLOGY
+  CHIPS
+  CONSUMABLE
+  CORTICOSTEROIDS
+  DERMATOLOGY
+  DEWORMERS
+  DRY_FOOD
+  ENDOCRINOLOGY_HORMONAL
+  EXPECTORANT
+  FOOD
+  GASTROPROTECTORS_GASTROENTEROLOGY
+  IMMUNOSTIMULANT
+  LAXATIVES
+  MEDICATED_SHAMPOO
+  MEDICINE
+  NEPHROLOGY
+  OINTMENTS
+  OPHTHALMIC
+  OTIC
+  RESPIRATORY
+  SUPPLEMENTS_OTHERS
+  SURGICAL_MATERIAL
+  VACCINE
+  WET_FOOD
+}
+
+enum InventoryStatus {
+  ACTIVE
+  INACTIVE
+  LOW_STOCK
+  OUT_OF_STOCK
+  EXPIRED
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  RETURN
+  EXPIRED
+}

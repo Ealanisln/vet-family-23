@@ -68,7 +68,7 @@ export async function openCashDrawer(initialAmount: number) {
         id: randomUUID(),
         initialAmount,
         status: "OPEN",
-        openedBy: null, // Set openedBy to null as we removed user lookup
+        openedBy: undefined, // Set openedBy to undefined (Prisma optional relation)
       },
     });
     

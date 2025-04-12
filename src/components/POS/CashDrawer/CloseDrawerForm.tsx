@@ -33,13 +33,7 @@ export default function CloseDrawerForm() {
     const fetchDrawer = async () => {
       if (isLoading) return;
 
-      /*
-      // REMOVED - Middleware handles authentication
-      if (!isAuthenticated) {
-        router.push('/api/auth/login');
-        return;
-      }
-      */
+
 
       try {
         const currentDrawer = await getCurrentDrawer();

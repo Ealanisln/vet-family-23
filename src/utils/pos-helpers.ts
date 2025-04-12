@@ -3,7 +3,7 @@ import { PrismaClient, InventoryCategory } from "@prisma/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 // Asegúrate que estas importaciones sean correctas respecto a la ubicación real de tus tipos
-import { CashTransaction, CashDrawer, TransactionType, PaymentMethod } from "../types/pos"; // Añadido PaymentMethod si se usa aquí
+import { Transaction, CashDrawer, TransactionType, PaymentMethod } from "../types/pos"; // Changed CashTransaction to Transaction
 
 // Implement a singleton pattern for PrismaClient
 const prismaClientSingleton = () => {
@@ -209,7 +209,7 @@ export function translateSaleStatus(status: string): string {
 /**
  * Calcula el total de ventas para una caja registradora
  */
-export function calculateDrawerSalesTotal(transactions: CashTransaction[]): number {
+export function calculateDrawerSalesTotal(transactions: Transaction[]): number {
   if (!transactions) return 0;
   return transactions
     .filter(tx => tx.type === "SALE")
@@ -219,7 +219,7 @@ export function calculateDrawerSalesTotal(transactions: CashTransaction[]): numb
 /**
  * Calcula el total de devoluciones para una caja registradora
  */
-export function calculateDrawerRefundsTotal(transactions: CashTransaction[]): number {
+export function calculateDrawerRefundsTotal(transactions: Transaction[]): number {
   if (!transactions) return 0;
   return transactions
     .filter(tx => tx.type === "REFUND")
@@ -230,7 +230,7 @@ export function calculateDrawerRefundsTotal(transactions: CashTransaction[]): nu
 /**
  * Calcula el total de entradas (Depósitos) y salidas (Retiros) netas para una caja registradora
  */
-export function calculateDrawerFlowTotal(transactions: CashTransaction[]): number {
+export function calculateDrawerFlowTotal(transactions: Transaction[]): number {
     if (!transactions) return 0;
     return transactions
         // Filtra solo depósitos y retiros
@@ -297,7 +297,7 @@ export function calculateDrawerBalance(drawer: CashDrawer | null | undefined): n
   if (!drawer) return 0;
 
   // Suma todos los montos de las transacciones
-  const transactionsTotal = drawer.transactions?.reduce((sum: number, tx: CashTransaction) => sum + (tx.amount || 0), 0) ?? 0;
+  const transactionsTotal = drawer.transactions?.reduce((sum: number, tx: Transaction) => sum + (tx.amount || 0), 0) ?? 0;
   // Suma el monto inicial al total de transacciones
   return (drawer.initialAmount || 0) + transactionsTotal;
 }

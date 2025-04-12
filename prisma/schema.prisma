@@ -269,23 +269,20 @@ model MedicalOrderProduct {
 }
 
 model CashDrawer {
-  id                             String            @id
-  openedAt                       DateTime          @default(now())
-  closedAt                       DateTime?
-  openedBy                       String
-  closedBy                       String?
-  initialAmount                  Float
-  finalAmount                    Float?
-  expectedAmount                 Float?
-  difference                     Float?
-  status                         DrawerStatus      @default(OPEN)
-  notes                          String?
-  User_CashDrawer_closedByToUser User?             @relation("CashDrawer_closedByToUser", fields: [closedBy], references: [id])
-  User_CashDrawer_openedByToUser User              @relation("CashDrawer_openedByToUser", fields: [openedBy], references: [id])
-  CashTransaction                CashTransaction[]
-
-  @@index([openedAt])
-  @@index([status])
+  id                                   String            @id @default(uuid())
+  openedAt                             DateTime          @default(now())
+  closedAt                             DateTime?
+  openedBy                             String?
+  closedBy                             String?
+  initialAmount                        Float
+  finalAmount                          Float?
+  expectedAmount                       Float?
+  difference                           Float?
+  status                               DrawerStatus
+  notes                                String?
+  CashTransaction                      CashTransaction[]
+  User_CashDrawer_closedByToUser       User?             @relation("CashDrawer_closedByToUser", fields: [closedBy], references: [id])
+  User_CashDrawer_openedByToUser       User?             @relation("CashDrawer_openedByToUser", fields: [openedBy], references: [id])
 }
 
 model CashTransaction {

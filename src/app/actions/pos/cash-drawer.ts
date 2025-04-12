@@ -30,26 +30,25 @@ class ServerActionError extends Error {
 
 export async function openCashDrawer(initialAmount: number) {
   try {
-    const { getUser } = getKindeServerSession();
+    // REMOVED: Dependency on getUser() as it fails in production for this action.
+    // Consequently, openedBy will not be recorded.
+    // const { getUser } = getKindeServerSession(); 
     
-    // Obtener usuario de Kinde - Assume user exists if action is reached
+    /* 
+    // REMOVED: Authentication check handled by middleware
     const kindeUser = await getUser();
     if (!kindeUser || !kindeUser.id) {
-      // This check might still be relevant if getUser can fail even after middleware passes
-      // but let's trust the middleware for now or handle potential null kindeUser below.
-      // Consider adding logging here if issues persist.
       console.error("openCashDrawer: getUser() returned null/no ID even after middleware auth.");
       return { success: false, error: "No se pudo obtener la información del usuario autenticado." };
     }
     
-    // Buscar o crear el usuario en la base de datos local
+    // REMOVED: Logic to find/create dbUser based on kindeUser
     let dbUser = await prisma.user.findFirst({
       where: {
         kindeId: kindeUser.id
       }
     });
     
-    // Si el usuario no existe en la base de datos, crearlo
     if (!dbUser) {
       dbUser = await prisma.user.create({
         data: {
@@ -62,8 +61,9 @@ export async function openCashDrawer(initialAmount: number) {
         }
       });
     }
+    */
     
-    // Verificar si ya hay una caja abierta
+    // Verify if a drawer is already open
     const openDrawer = await prisma.cashDrawer.findFirst({
       where: {
         status: "OPEN",
@@ -74,12 +74,11 @@ export async function openCashDrawer(initialAmount: number) {
       return { success: false, error: "Ya hay una caja abierta. Cierre la caja actual antes de abrir una nueva." };
     }
     
-    // Crear un nuevo cajón de caja usando el ID del usuario en la base de datos local
+    // Create a new cash drawer, omitting the optional openedBy field
     const drawer = await prisma.cashDrawer.create({
       data: {
         id: randomUUID(),
         initialAmount,
-        openedBy: dbUser.id, // Usar el ID de la base de datos local
         status: "OPEN",
       },
     });
@@ -235,9 +234,21 @@ export async function getCurrentDrawer() {
 
     // console.log(`[getCurrentDrawer] Found open drawer: ${drawer.id}, opened by: ${drawer.openedBy}`); // Log removido
 
-    // Siempre buscar el usuario que abrió la caja
+    // If openedBy is null, we cannot fetch the user. Handle this case.
+    if (!drawer.openedBy) {
+      console.warn(`[getCurrentDrawer] Drawer ${drawer.id} has null openedBy. Returning drawer data without user.`);
+      // Return the drawer but let openUser be undefined to match the CashDrawer type.
+      const { CashTransaction, ...restOfDrawer } = drawer;
+      return {
+        ...restOfDrawer, 
+        // openUser property is omitted, making it undefined
+        transactions: CashTransaction, // Map Prisma transactions if needed, or ensure type compatibility
+      };
+    }
+
+    // If openedBy has an ID, proceed to fetch the user
     const openUser = await prisma.user.findUnique({
-      where: { id: drawer.openedBy },
+      where: { id: drawer.openedBy }, // Now we know drawer.openedBy is a string
       select: {
         id: true,
         firstName: true,
@@ -246,18 +257,26 @@ export async function getCurrentDrawer() {
       },
     });
 
-    // Si no se encuentra el usuario, retornar null
+    // If the user is not found, return the drawer without the user info, or handle as an error.
+    // Current type requires openUser to be potentially undefined.
     if (!openUser) {
-      // console.log(`[getCurrentDrawer] User not found for openedBy ID: ${drawer.openedBy}. Returning null.`); // Log removido
-      return null;
+      console.warn(`[getCurrentDrawer] User not found for openedBy ID: ${drawer.openedBy}. Returning drawer data without user.`);
+      const { CashTransaction, ...restOfDrawer } = drawer;
+       return {
+        ...restOfDrawer,
+        // openUser property is omitted, making it undefined
+        transactions: CashTransaction, 
+      };
     }
-
-    // console.log(`[getCurrentDrawer] Found user: ${openUser.id}. Returning drawer data.`); // Log removido
+    
+    // User found, map transactions and return the complete object
+    const { CashTransaction, ...restOfDrawerData } = drawer;
     return {
-      ...drawer,
+      ...restOfDrawerData,
       openUser,
-      transactions: drawer.CashTransaction,
+      transactions: CashTransaction, // Ensure this matches the expected Transaction[] type in CashDrawer
     };
+
   } catch (error: unknown) {
     console.error("Error fetching current drawer:", error);
     return null;

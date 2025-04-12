@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowUp, ArrowDown, ReceiptText, RotateCcw, LayoutGrid } from "lucide-react";
 import { formatCurrency, translateTransactionType } from "@/utils/pos-helpers";
-import type { CashTransaction } from "@/types/pos";
+import type { Transaction as CashTransaction } from "@/types/pos";
 
 interface TransactionHistoryProps {
   transactions: CashTransaction[];

@@ -1,5 +1,7 @@
 // src/types/pos.ts
 
+import { CashDrawer as PrismaCashDrawer, CashTransaction as PrismaCashTransaction, User as PrismaUser } from '@prisma/client';
+
 // Enums as string literal types
 export type PaymentMethod = 
   | "CASH"
@@ -197,40 +199,35 @@ export interface SaleItem {
   service?: Service | null;
 }
 
+// Define the shape returned by getCurrentDrawer action
+export type CurrentDrawerData = (PrismaCashDrawer & {
+  openUser: Pick<PrismaUser, 'id' | 'firstName' | 'lastName' | 'email'>;
+  transactions: PrismaCashTransaction[];
+}) | null;
+
+// Simplified Transaction Type for UI
+export interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  description: string | null;
+  createdAt: Date;
+  saleId?: string | null; // Optional sale relation
+}
+
+// Custom CashDrawer type for client-side usage
 export interface CashDrawer {
   id: string;
+  initialAmount: number;
   openedAt: Date;
   closedAt?: Date | null;
-  openedBy: string;
+  openedBy?: string | null; // Made optional
   closedBy?: string | null;
-  initialAmount: number;
   finalAmount?: number | null;
   expectedAmount?: number | null;
   difference?: number | null;
-  status: DrawerStatus;
+  status: string;
   notes?: string | null;
-  openUser: {
-    id: string;
-    firstName?: string | null;
-    lastName?: string | null;
-    email?: string | null;
-  };
-  closeUser?: {
-    id: string;
-    firstName?: string | null;
-    lastName?: string | null;
-    email?: string | null;
-  } | null;
-  transactions: CashTransaction[];
-}
-
-export interface CashTransaction {
-  id: string;
-  drawerId: string;
-  amount: number;
-  type: TransactionType;
-  description?: string | null;
-  createdAt: Date;
-  saleId?: string | null;
-  sale?: Sale | null;
+  transactions: Transaction[]; // Use simplified transaction type
+  openUser?: Pick<PrismaUser, 'id' | 'firstName' | 'lastName' | 'email'>; // Add optional openUser based on CurrentDrawerData
 }

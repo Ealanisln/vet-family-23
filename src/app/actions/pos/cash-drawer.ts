@@ -30,40 +30,28 @@ class ServerActionError extends Error {
 
 export async function openCashDrawer(initialAmount: number) {
   try {
-    // REMOVED: Dependency on getUser() as it fails in production for this action.
-    // Consequently, openedBy will not be recorded.
-    // const { getUser } = getKindeServerSession(); 
-    
-    /* 
-    // REMOVED: Authentication check handled by middleware
-    const kindeUser = await getUser();
-    if (!kindeUser || !kindeUser.id) {
-      console.error("openCashDrawer: getUser() returned null/no ID even after middleware auth.");
-      return { success: false, error: "No se pudo obtener la información del usuario autenticado." };
+    const { getUser } = getKindeServerSession(); // Get user session
+    const user = await getUser(); // Get user object
+
+    // Check if user is authenticated
+    if (!user || !user.id) {
+      console.error("openCashDrawer: User not authenticated.");
+      return { success: false, error: "No autorizado", statusCode: 401 };
     }
-    
-    // REMOVED: Logic to find/create dbUser based on kindeUser
-    let dbUser = await prisma.user.findFirst({
-      where: {
-        kindeId: kindeUser.id
-      }
+
+    // Find the user in your database using the Kinde ID
+    const dbUser = await prisma.user.findUnique({
+      where: { kindeId: user.id },
+      select: { id: true }, // Only select the ID we need
     });
-    
+
+    // Check if user exists in the database
     if (!dbUser) {
-      dbUser = await prisma.user.create({
-        data: {
-          id: randomUUID(),
-          kindeId: kindeUser.id,
-          firstName: kindeUser.given_name || "",
-          lastName: kindeUser.family_name || "",
-          email: kindeUser.email || "",
-          name: (kindeUser.given_name || "") + " " + (kindeUser.family_name || "")
-        }
-      });
+      console.error(`openCashDrawer: User with Kinde ID ${user.id} not found in the database.`);
+      return { success: false, error: "Usuario no encontrado", statusCode: 404 };
     }
-    */
-    
-    // Verify if a drawer is already open
+
+    // Check if there is already an open cash drawer
     const openDrawer = await prisma.cashDrawer.findFirst({
       where: {
         status: "OPEN",
@@ -74,12 +62,13 @@ export async function openCashDrawer(initialAmount: number) {
       return { success: false, error: "Ya hay una caja abierta. Cierre la caja actual antes de abrir una nueva." };
     }
     
-    // Create a new cash drawer, omitting the optional openedBy field
+    // Create a new cash drawer, now including the openedBy field
     const drawer = await prisma.cashDrawer.create({
       data: {
         id: randomUUID(),
         initialAmount,
         status: "OPEN",
+        openedBy: dbUser.id, // Assign the database user ID
       },
     });
     
@@ -89,6 +78,12 @@ export async function openCashDrawer(initialAmount: number) {
     return { success: true, drawer };
   } catch (error) {
     console.error("Error opening cash drawer:", error);
+    // Consider more specific error handling if needed
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+       // Handle known Prisma errors
+       console.error("Prisma Error Code:", error.code);
+       return { success: false, error: `Error de base de datos: ${error.code}` };
+    }
     return { success: false, error: "Error al abrir la caja" };
   }
 }

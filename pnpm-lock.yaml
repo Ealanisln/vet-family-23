@@ -27,8 +27,8 @@ importers:
         specifier: ^3.9.1
         version: 3.9.1(react-hook-form@7.54.1(react@18.3.1))
       '@kinde-oss/kinde-auth-nextjs':
-        specifier: ^2.4.6
-        version: 2.4.6(@babel/core@7.26.0)(next@14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^2.6.1
+        version: 2.6.1(next@14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@next/third-parties':
         specifier: ^14.2.20
         version: 14.2.20(next@14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
@@ -943,8 +943,14 @@ packages:
   '@codemirror/autocomplete@6.18.4':
     resolution: {integrity: sha512-sFAphGQIqyQZfP2ZBsSHV7xQvo9Py0rV0dW7W3IMRdS+zDuNb2l3no78CvUaWKGfzFjI4FTrLdUSj86IGb2hRA==}
 
+  '@codemirror/autocomplete@6.18.6':
+    resolution: {integrity: sha512-PHHBXFomUs5DF+9tCOM/UoW6XQ4R44lLNNhRaW9PKPTU0D7lIjRg3ElxaJnTwsl/oHiR93WSXDBrekhoUGCPtg==}
+
   '@codemirror/commands@6.7.1':
     resolution: {integrity: sha512-llTrboQYw5H4THfhN4U3qCnSZ1SOJ60ohhz+SzU0ADGtwlc533DtklQP0vSFaQuCPDn3BPpOd1GbbnUtwNjsrw==}
+
+  '@codemirror/commands@6.8.1':
+    resolution: {integrity: sha512-KlGVYufHMQzxbdQONiLyGQDUW0itrLZwq3CcY7xpv9ZLRHqzkBSoteocBHtMCoY7/Ci4xhzSrToIeLg7FxHuaw==}
 
   '@codemirror/lang-javascript@6.2.2':
     resolution: {integrity: sha512-VGQfY+FCc285AhWuwjYxQyUQcYurWlxdKYT4bqwr3Twnd5wP5WSeu52t4tvvuWmljT4EmgEgZCqSieokhtY8hg==}
@@ -952,8 +958,14 @@ packages:
   '@codemirror/language@6.10.7':
     resolution: {integrity: sha512-aOswhVOLYhMNeqykt4P7+ukQSpGL0ynZYaEyFDVHE7fl2xgluU3yuE9MdgYNfw6EmaNidoFMIQ2iTh1ADrnT6A==}
 
+  '@codemirror/language@6.11.0':
+    resolution: {integrity: sha512-A7+f++LodNNc1wGgoRDTt78cOwWm9KVezApgjOMp1W4hM0898nsqBXwF+sbePE7ZRcjN7Sa1Z5m2oN27XkmEjQ==}
+
   '@codemirror/lint@6.8.4':
     resolution: {integrity: sha512-u4q7PnZlJUojeRe8FJa/njJcMctISGgPQ4PnWsd9268R4ZTtU+tfFYmwkBvgcrK2+QQ8tYFVALVb5fVJykKc5A==}
+
+  '@codemirror/search@6.5.10':
+    resolution: {integrity: sha512-RMdPdmsrUf53pb2VwflKGHEe1XVM07hI7vV2ntgw1dmqhimpatSJKva4VA9h4TLUDOD4EIF02201oZurpnEFsg==}
 
   '@codemirror/search@6.5.8':
     resolution: {integrity: sha512-PoWtZvo7c1XFeZWmmyaOp2G0XVbOnm+fJzvghqGAktBW3cufwJUWvSCcNG0ppXiBEM05mZu6RhMtXPv2hpllig==}
@@ -961,11 +973,17 @@ packages:
   '@codemirror/state@6.5.0':
     resolution: {integrity: sha512-MwBHVK60IiIHDcoMet78lxt6iw5gJOGSbNbOIVBHWVXIH4/Nq1+GQgLLGgI1KlnN86WDXsPudVaqYHKBIx7Eyw==}
 
+  '@codemirror/state@6.5.2':
+    resolution: {integrity: sha512-FVqsPqtPWKVVL3dPSxy8wEF/ymIEuVzF1PK3VbUgrxXpJUSHQWWZz4JMToquRxnkw+36LTamCZG2iua2Ptq0fA==}
+
   '@codemirror/theme-one-dark@6.1.2':
     resolution: {integrity: sha512-F+sH0X16j/qFLMAfbciKTxVOwkdAS336b7AXTKOZhy8BR3eH/RelsnLgLFINrpST63mmN2OuwUt0W2ndUgYwUA==}
 
   '@codemirror/view@6.36.0':
     resolution: {integrity: sha512-aMePDnkNNKE8dSOo1w689xYa3dijREbRajiRcgjSGc2TWN7MTdE+9pm5fxwdz0C4D9Di1VZomrn2M+xDe7tTVg==}
+
+  '@codemirror/view@6.36.5':
+    resolution: {integrity: sha512-cd+FZEUlu3GQCYnguYm3EkhJ8KJVisqqUsCOKedBoAt/d9c76JUUap6U0UrpElln5k6VyrEOYliMuDAKIeDQLg==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -1670,18 +1688,21 @@ packages:
   '@juggle/resize-observer@3.4.0':
     resolution: {integrity: sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==}
 
-  '@kinde-oss/kinde-auth-nextjs@2.4.6':
-    resolution: {integrity: sha512-LttQcxrPgzQgYbViYqDX6ySGUXBtsp6hSUTW+ln3BdRB6BXuhBbJYY8SgWibBpdmYGiu+tjssfhclfuJcC5O/g==}
+  '@kinde-oss/kinde-auth-nextjs@2.6.1':
+    resolution: {integrity: sha512-AZONDlNe8bcc5SaXzpylM2ar3FsvPBai7wMPSWC+Np9r2dlBLRw58F9nqZiDhTKam/KmRldZ44FtyWiwFfdAzg==}
     peerDependencies:
-      next: ^12.2.5 || ^13 || ^14 || ^15
+      next: ^12.3.5 || ^13.5.9 || ^14.2.25 || ^15.2.3
       react: ^18 || ^19
       react-dom: ^18 || ^19
 
-  '@kinde-oss/kinde-typescript-sdk@2.9.1':
-    resolution: {integrity: sha512-3BBFQ3/WgAgoWigfpK9ItUkpyleuHN14in+V44NLWi+zHwE1B8II/HR5CHhw+s6qR1wyJwQh4ddz2tUJwEXysg==}
+  '@kinde-oss/kinde-typescript-sdk@2.10.1':
+    resolution: {integrity: sha512-Al0ATkJ99e1CF7ZMbj8P5vTi60maUduWctKg5r+68qZdmuzL143KYKNQOkL9IdjOsURsMX5xI0sJPzMP45hVog==}
 
   '@kinde/jwt-decoder@0.2.0':
     resolution: {integrity: sha512-dqtwCmAvywOVLkkUfp4UbqdvVLsK0cvHsJhU3gDY9rgjAdZhGw0vCreBW6j3MFLxbi6cZm7pMU7/O5SJgvN5Rw==}
+
+  '@kinde/jwt-validator@0.4.0':
+    resolution: {integrity: sha512-aseXLTD/rh/rZ2v85Xy493CEtuC49MA4Hbt6ObccqSJfIGLAeMrAtBh2m9DleigVkMuZ/99/U4PqLnaVDLt5OQ==}
 
   '@lezer/common@1.2.3':
     resolution: {integrity: sha512-w7ojc8ejBqr2REPsWxJjrMFsA/ysDCFICn8zEOR9mrqzOu2amhITYuLD8ag6XZf0CFXDrhKqw7+tW8cX66NaDA==}
@@ -5455,8 +5476,8 @@ packages:
   jose@4.15.9:
     resolution: {integrity: sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==}
 
-  jose@5.9.6:
-    resolution: {integrity: sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ==}
+  jose@5.10.0:
+    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -5550,6 +5571,9 @@ packages:
   jsonwebtoken@9.0.2:
     resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
     engines: {node: '>=12', npm: '>=6'}
+
+  jsrsasign@11.1.0:
+    resolution: {integrity: sha512-Ov74K9GihaK9/9WncTe1mPmvrO7Py665TUfUKvraXBpu+xcTWitrtuOwcjf4KMU9maPaYn0OuaWy0HOzy/GBXg==}
 
   jsx-ast-utils@3.3.5:
     resolution: {integrity: sha512-ZZow9HBI5O6EPgSJLUb8n2NKgmVWTwCvHGwFuJlMjvLFqlGG6pjirPhtdsseaLZjSibD8eegzmYpUZwoIlj2cQ==}
@@ -8802,11 +8826,25 @@ snapshots:
       '@codemirror/view': 6.36.0
       '@lezer/common': 1.2.3
 
+  '@codemirror/autocomplete@6.18.6':
+    dependencies:
+      '@codemirror/language': 6.11.0
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.5
+      '@lezer/common': 1.2.3
+
   '@codemirror/commands@6.7.1':
     dependencies:
       '@codemirror/language': 6.10.7
       '@codemirror/state': 6.5.0
       '@codemirror/view': 6.36.0
+      '@lezer/common': 1.2.3
+
+  '@codemirror/commands@6.8.1':
+    dependencies:
+      '@codemirror/language': 6.11.0
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.5
       '@lezer/common': 1.2.3
 
   '@codemirror/lang-javascript@6.2.2':
@@ -8828,10 +8866,25 @@ snapshots:
       '@lezer/lr': 1.4.2
       style-mod: 4.1.2
 
+  '@codemirror/language@6.11.0':
+    dependencies:
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.5
+      '@lezer/common': 1.2.3
+      '@lezer/highlight': 1.2.1
+      '@lezer/lr': 1.4.2
+      style-mod: 4.1.2
+
   '@codemirror/lint@6.8.4':
     dependencies:
       '@codemirror/state': 6.5.0
       '@codemirror/view': 6.36.0
+      crelt: 1.0.6
+
+  '@codemirror/search@6.5.10':
+    dependencies:
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.5
       crelt: 1.0.6
 
   '@codemirror/search@6.5.8':
@@ -8844,16 +8897,26 @@ snapshots:
     dependencies:
       '@marijn/find-cluster-break': 1.0.2
 
+  '@codemirror/state@6.5.2':
+    dependencies:
+      '@marijn/find-cluster-break': 1.0.2
+
   '@codemirror/theme-one-dark@6.1.2':
     dependencies:
-      '@codemirror/language': 6.10.7
-      '@codemirror/state': 6.5.0
-      '@codemirror/view': 6.36.0
+      '@codemirror/language': 6.11.0
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.5
       '@lezer/highlight': 1.2.1
 
   '@codemirror/view@6.36.0':
     dependencies:
       '@codemirror/state': 6.5.0
+      style-mod: 4.1.2
+      w3c-keyname: 2.2.8
+
+  '@codemirror/view@6.36.5':
+    dependencies:
+      '@codemirror/state': 6.5.2
       style-mod: 4.1.2
       w3c-keyname: 2.2.8
 
@@ -9324,27 +9387,29 @@ snapshots:
 
   '@juggle/resize-observer@3.4.0': {}
 
-  '@kinde-oss/kinde-auth-nextjs@2.4.6(@babel/core@7.26.0)(next@14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@kinde-oss/kinde-auth-nextjs@2.6.1(next@14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/preset-env': 7.26.0(@babel/core@7.26.0)
-      '@kinde-oss/kinde-typescript-sdk': 2.9.1
+      '@kinde-oss/kinde-typescript-sdk': 2.10.1
       '@kinde/jwt-decoder': 0.2.0
+      '@kinde/jwt-validator': 0.4.0
       cookie: 1.0.2
       crypto-js: 4.2.0
       next: 14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       uncrypto: 0.1.3
-    transitivePeerDependencies:
-      - '@babel/core'
-      - supports-color
 
-  '@kinde-oss/kinde-typescript-sdk@2.9.1':
+  '@kinde-oss/kinde-typescript-sdk@2.10.1':
     dependencies:
-      jose: 5.9.6
+      jose: 5.10.0
       uncrypto: 0.1.3
 
   '@kinde/jwt-decoder@0.2.0': {}
+
+  '@kinde/jwt-validator@0.4.0':
+    dependencies:
+      '@kinde/jwt-decoder': 0.2.0
+      jsrsasign: 11.1.0
 
   '@lezer/common@1.2.3': {}
 
@@ -12066,13 +12131,13 @@ snapshots:
 
   codemirror@6.0.1:
     dependencies:
-      '@codemirror/autocomplete': 6.18.4
-      '@codemirror/commands': 6.7.1
-      '@codemirror/language': 6.10.7
+      '@codemirror/autocomplete': 6.18.6
+      '@codemirror/commands': 6.8.1
+      '@codemirror/language': 6.11.0
       '@codemirror/lint': 6.8.4
-      '@codemirror/search': 6.5.8
-      '@codemirror/state': 6.5.0
-      '@codemirror/view': 6.36.0
+      '@codemirror/search': 6.5.10
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.5
 
   color-convert@1.9.3:
     dependencies:
@@ -13818,7 +13883,7 @@ snapshots:
 
   jose@4.15.9: {}
 
-  jose@5.9.6: {}
+  jose@5.10.0: {}
 
   js-tokens@4.0.0: {}
 
@@ -13950,6 +14015,8 @@ snapshots:
       lodash.once: 4.1.1
       ms: 2.1.3
       semver: 7.6.3
+
+  jsrsasign@11.1.0: {}
 
   jsx-ast-utils@3.3.5:
     dependencies:

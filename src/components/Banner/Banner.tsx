@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Image from "next/image";
 import {
   Carousel,
@@ -8,7 +11,6 @@ import {
 } from "@/components/ui/carousel";
 import { CalendarDays, Stethoscope, Heart } from "lucide-react";
 import AppointmentDialog, { CustomButton } from "../Clientes/AppointmentDialog";
-import BannerSemanaSanta from "../Promociones/BannerSemanaSanta";
 
 interface BannerImage {
   src: string;
@@ -23,22 +25,19 @@ const images: BannerImage[] = [
   {
     src: "/assets/banner/marca-gto.png",
     alt: "Marca Guanajuato",
-  },
+  }
 ];
 
 export default function VetHero() {
   return (
     <section
-      className="w-full py-8 md:py-12 overflow-hidden"
+      className="w-full min-h-screen flex items-center py-8 md:py-12 overflow-hidden"
       style={{
         background:
           "linear-gradient(120.3deg, #91D8D9 31.56%, rgba(255, 255, 255, 0) 94.83%)",
       }}
     >
       <div className="container px-4 md:px-6 mx-auto pb-6 md:pb-8">
-        {/* Banner promocional de Semana Santa */}
-
-        <BannerSemanaSanta />
         <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px] h-full pt-4 md:pt-8">
           <div className="flex flex-col justify-between h-full space-y-6 md:space-y-8">
             <div className="space-y-4 md:space-y-6">

@@ -29,27 +29,37 @@ class ServerActionError extends Error {
 }
 
 export async function openCashDrawer(initialAmount: number) {
-  console.log("[openCashDrawer] Action started. Initial Amount:", initialAmount); // Log start
+  console.log("[openCashDrawer] Action started. Initial Amount:", initialAmount);
   try {
-    // REMOVED KINDE AUTHENTICATION
-    // const { getUser } = getKindeServerSession();
-    // console.log("[openCashDrawer] getKindeServerSession obtained.");
-    // const user = await getUser();
-    // console.log("[openCashDrawer] getUser result:", user);
-    // if (!user || !user.id) {
-    //   console.error("[openCashDrawer] Authentication check failed. User object:", user);
-    //   return { success: false, error: "No autorizado", statusCode: 401 };
-    // }
-    // console.log(`[openCashDrawer] User authenticated: ${user.id}`);
-    // const dbUser = await prisma.user.findUnique({
-    //   where: { kindeId: user.id },
-    //   select: { id: true },
-    // });
-    // if (!dbUser) {
-    //   console.error(`openCashDrawer: User with Kinde ID ${user.id} not found in the database.`);
-    //   return { success: false, error: "Usuario no encontrado", statusCode: 404 };
-    // }
-    // REMOVED KINDE AUTHENTICATION
+    console.log("[openCashDrawer] Getting Kinde session...");
+    const { getUser } = getKindeServerSession();
+    
+    console.log("[openCashDrawer] Getting user from session...");
+    const user = await getUser();
+    console.log("[openCashDrawer] User from session:", {
+      id: user?.id,
+      email: user?.email,
+      given_name: user?.given_name,
+      family_name: user?.family_name
+    });
+    
+    if (!user || !user.id) {
+      console.error("[openCashDrawer] Authentication check failed. User object is null or missing ID");
+      return { success: false, error: "User not authenticated", statusCode: 401 };
+    }
+    
+    console.log(`[openCashDrawer] Looking for user in database with Kinde ID: ${user.id}`);
+    const dbUser = await prisma.user.findUnique({
+      where: { kindeId: user.id },
+      select: { id: true },
+    });
+    
+    if (!dbUser) {
+      console.error(`[openCashDrawer] User with Kinde ID ${user.id} not found in the database.`);
+      return { success: false, error: "Usuario no encontrado", statusCode: 404 };
+    }
+    
+    console.log(`[openCashDrawer] User found in database:`, dbUser);
 
     // Check if there is already an open cash drawer
     const openDrawer = await prisma.cashDrawer.findFirst({

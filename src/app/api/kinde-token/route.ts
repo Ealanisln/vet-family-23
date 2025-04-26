@@ -6,15 +6,16 @@ import nodeFetch from "node-fetch";
 const fetch = global.fetch || nodeFetch;
 
 async function getKindeToken(grantType: string, refreshToken?: string) {
-  console.log(`Node version: ${process.version}`);
-  console.log(`global.fetch available: ${typeof global.fetch !== 'undefined'}`);
 
-  const kindeDomain = process.env.KINDE_DOMAIN;
+
+  const kindeDomain = process.env.KINDE_ISSUER_URL
+
+
   const clientId = process.env.KINDE_M2M_CLIENT_ID;
   const clientSecret = process.env.KINDE_M2M_CLIENT_SECRET;
 
   if (!kindeDomain || !clientId || !clientSecret) {
-    console.error("Missing Kinde environment variables");
+
     throw new Error("Server configuration error");
   }
 
@@ -78,7 +79,7 @@ export async function GET() {
     const data = await getKindeToken("client_credentials");
     return NextResponse.json(data);
   } catch (error: unknown) {
-    console.error("Error in Kinde token GET route:", error);
+
     return NextResponse.json(
       {
         error: "Internal Server Error",
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
     const data = await getKindeToken(grant_type, refresh_token);
     return NextResponse.json(data);
   } catch (error: unknown) {
-    console.error("Error in Kinde token POST route:", error);
+
     return NextResponse.json(
       {
         error: "Internal Server Error",

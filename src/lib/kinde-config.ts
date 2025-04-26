@@ -25,4 +25,22 @@ export const kindeConfig = {
   stateOptions: {
     expiresIn: 300, // 5 minutos
   },
+  
+  // Configuración de autenticación
+  auth: {
+    // Incluir scope offline para obtener refresh tokens
+    scope: "openid profile email offline",
+    
+    // Configuración de tokens
+    tokens: {
+      // Habilitar rotación de refresh tokens
+      enableRefreshTokenRotation: true,
+      
+      // Tiempo de vida del refresh token (30 días en segundos)
+      refreshTokenLifetime: 30 * 24 * 60 * 60,
+      
+      // Tiempo de vida del access token (1 hora en segundos)
+      accessTokenLifetime: 60 * 60,
+    }
+  }
 };

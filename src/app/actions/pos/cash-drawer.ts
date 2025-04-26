@@ -108,9 +108,11 @@ export async function openCashDrawer(
     const authenticated = await isAuthenticated();
     console.log(`[openCashDrawer] isAuthenticated check: ${authenticated}`);
     
-    if (!authenticated) {
-      console.error("[openCashDrawer] Authentication check failed. User is not authenticated");
-      return { success: false, error: "User not authenticated", statusCode: 401, drawer: null };
+    // Si authenticated es null o false, continuamos con el flujo alternativo
+    // en lugar de retornar un error inmediatamente
+    if (authenticated === false) {
+      console.warn("[openCashDrawer] Authentication check returned false, will try to get user anyway");
+      // Continuamos con el flujo para intentar obtener el usuario
     }
     
     console.log("[openCashDrawer] Getting user from session...");
@@ -245,9 +247,11 @@ export async function closeCashDrawer(
     const authenticated = await isAuthenticated();
     console.log(`[closeCashDrawer] isAuthenticated check: ${authenticated}`);
     
-    if (!authenticated) {
-      console.error("[closeCashDrawer] Authentication check failed. User is not authenticated");
-      return { success: false, error: "Usuario no autenticado", statusCode: 401, drawer: null };
+    // Si authenticated es null o false, continuamos con el flujo alternativo
+    // en lugar de retornar un error inmediatamente
+    if (authenticated === false) {
+      console.warn("[closeCashDrawer] Authentication check returned false, will try to get user anyway");
+      // Continuamos con el flujo para intentar obtener el usuario
     }
     
     const user = await getUser();

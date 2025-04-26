@@ -9,11 +9,11 @@ const authConfig = {
     returnToPath: kindeConfig.redirectUrl || "/admin/inventario",
     stateOptions: kindeConfig.stateOptions,
     // Incluir scope offline para obtener refresh tokens
-    scope: kindeConfig.auth.scope,
+    scope: kindeConfig.scope,
   },
   cookies: kindeConfig.cookies,
   // Configuraciu00f3n de tokens
-  tokens: kindeConfig.auth.tokens,
+  tokens: kindeConfig.tokenLifetime,
 };
 
 console.log('[Kinde Auth Config]', JSON.stringify(authConfig, null, 2));

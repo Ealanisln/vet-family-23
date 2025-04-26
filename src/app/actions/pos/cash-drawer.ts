@@ -8,6 +8,7 @@ import type { CashDrawer, Transaction } from '@/types/pos';
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prismaDB";
 import { z } from "zod";
+import { getAuthenticatedUser } from "@/lib/auth-utils";
 
 // Define state types using the custom CashDrawer
 export type OpenDrawerState = {
@@ -104,55 +105,12 @@ export async function openCashDrawer(
     console.log("[openCashDrawer] Getting Kinde session...");
     const { getUser, isAuthenticated } = getKindeServerSession();
     
-    // Verificar autenticación primero
-    const authenticated = await isAuthenticated();
-    console.log(`[openCashDrawer] isAuthenticated check: ${authenticated}`);
-    
-    // Si authenticated es null o false, continuamos con el flujo alternativo
-    // en lugar de retornar un error inmediatamente
-    if (authenticated === false) {
-      console.warn("[openCashDrawer] Authentication check returned false, will try to get user anyway");
-      // Continuamos con el flujo para intentar obtener el usuario
-    }
-    
-    console.log("[openCashDrawer] Getting user from session...");
-    const user = await getUser();
-    console.log("[openCashDrawer] User from session:", {
-      id: user?.id,
-      email: user?.email,
-      given_name: user?.given_name,
-      family_name: user?.family_name
-    });
-    
-    // Si el usuario está autenticado pero no tenemos la información del usuario,
-    // intentamos buscar al usuario por email o algún otro identificador
-    let dbUser;
-    
-    if (!user || !user.id) {
-      console.log("[openCashDrawer] User object is null or missing ID, trying alternative authentication");
-      
-      // Buscar al primer usuario como fallback
-      dbUser = await prisma.user.findFirst({
-        select: { id: true },
-      });
-      
-      if (!dbUser) {
-        console.error("[openCashDrawer] No admin user found as fallback");
-        return { success: false, error: "No se pudo identificar al usuario", statusCode: 401, drawer: null };
-      }
-      
-      console.log(`[openCashDrawer] Using admin user as fallback: ${dbUser.id}`);
-    } else {
-      console.log(`[openCashDrawer] Looking for user in database with Kinde ID: ${user?.id || 'unknown'}`);
-      dbUser = await prisma.user.findUnique({
-        where: { kindeId: user?.id || '' },
-        select: { id: true },
-      });
-    }
+    // Utilizar la nueva utilidad de autenticación
+    const dbUser = await getAuthenticatedUser(getUser, isAuthenticated);
     
     if (!dbUser) {
-      console.error(`[openCashDrawer] User with Kinde ID ${user?.id || 'unknown'} not found in the database.`);
-      return { success: false, error: "Usuario no encontrado", statusCode: 404, drawer: null };
+      console.error("[openCashDrawer] No se pudo obtener un usuario autenticado");
+      return { success: false, error: "No se pudo identificar al usuario", statusCode: 401, drawer: null };
     }
     
     console.log(`[openCashDrawer] User found in database:`, dbUser);
@@ -243,54 +201,12 @@ export async function closeCashDrawer(
     // Verificar autenticación
     const { getUser, isAuthenticated } = getKindeServerSession();
     
-    // Verificar autenticación primero
-    const authenticated = await isAuthenticated();
-    console.log(`[closeCashDrawer] isAuthenticated check: ${authenticated}`);
+    // Utilizar la nueva utilidad de autenticación
+    const dbUser = await getAuthenticatedUser(getUser, isAuthenticated);
     
-    // Si authenticated es null o false, continuamos con el flujo alternativo
-    // en lugar de retornar un error inmediatamente
-    if (authenticated === false) {
-      console.warn("[closeCashDrawer] Authentication check returned false, will try to get user anyway");
-      // Continuamos con el flujo para intentar obtener el usuario
-    }
-    
-    const user = await getUser();
-    console.log("[closeCashDrawer] User from session:", {
-      id: user?.id,
-      email: user?.email,
-      given_name: user?.given_name,
-      family_name: user?.family_name
-    });
-    
-    // Si el usuario está autenticado pero no tenemos la información del usuario,
-    // intentamos buscar al usuario por email o algún otro identificador
-    let dbUser;
-    
-    if (!user || !user.id) {
-      console.log("[closeCashDrawer] User object is null or missing ID, trying alternative authentication");
-      
-      // Buscar al primer usuario como fallback
-      dbUser = await prisma.user.findFirst({
-        select: { id: true },
-      });
-      
-      if (!dbUser) {
-        console.error("[closeCashDrawer] No admin user found as fallback");
-        return { success: false, error: "No se pudo identificar al usuario", statusCode: 401, drawer: null };
-      }
-      
-      console.log(`[closeCashDrawer] Using admin user as fallback: ${dbUser.id}`);
-    } else {
-      // Buscar al usuario en la base de datos
-      dbUser = await prisma.user.findUnique({
-        where: { kindeId: user?.id || '' },
-        select: { id: true },
-      });
-      
-      if (!dbUser) {
-        console.error(`[closeCashDrawer] User with Kinde ID ${user?.id || 'unknown'} not found in database`);
-        return { success: false, error: "Usuario autenticado no encontrado en la base de datos", statusCode: 404, drawer: null };
-      }
+    if (!dbUser) {
+      console.error("[closeCashDrawer] No se pudo obtener un usuario autenticado");
+      return { success: false, error: "No se pudo identificar al usuario", statusCode: 401, drawer: null };
     }
     
     console.log(`[closeCashDrawer] Database user ID found: ${dbUser.id}`);

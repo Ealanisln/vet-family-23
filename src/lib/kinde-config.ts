@@ -8,39 +8,42 @@ export const kindeConfig = {
   
   // Configuración de cookies
   cookies: {
-    // Duración de la sesión (2 horas en segundos)
-    sessionDurationInSeconds: 7200,
-    
-    // Opciones de seguridad para cookies
-    sameSite: "lax", // Opciones: strict, lax, none
-    secure: true,    // true para HTTPS
-    httpOnly: true,  // Previene acceso desde JavaScript
-    
-    // Dominio y path
-    domain: undefined, // undefined usará el dominio actual
-    path: "/",
+    // Duración de las cookies en segundos
+    // 30 días para las cookies de sesión
+    sessionCookieLifetime: 30 * 24 * 60 * 60,
+    // Configuración de seguridad para las cookies
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' en producción para permitir cookies cross-site
+    secure: process.env.NODE_ENV === 'production', // true en producción
+    httpOnly: true,
+    domain: process.env.KINDE_COOKIE_DOMAIN || undefined,
   },
   
-  // Opciones de estado para OAuth
+  // Scopes para la autenticación
+  scope: 'openid profile email offline',
+  
+  // Configuración de tokens
+  tokenLifetime: {
+    // Duración del token de acceso en segundos (2 horas)
+    accessToken: 2 * 60 * 60,
+    // Duración del token de refresco en segundos (30 días)
+    refreshToken: 30 * 24 * 60 * 60,
+    // Rotación de tokens de refresco (más seguro)
+    enableRefreshTokenRotation: true,
+  },
+  
+  // Configuración de estado
   stateOptions: {
-    expiresIn: 300, // 5 minutos
+    expiresIn: 10 * 60, // 10 minutos para el estado de autenticación
   },
   
-  // Configuración de autenticación
-  auth: {
-    // Incluir scope offline para obtener refresh tokens
-    scope: "openid profile email offline",
-    
-    // Configuración de tokens
-    tokens: {
-      // Habilitar rotación de refresh tokens
-      enableRefreshTokenRotation: true,
-      
-      // Tiempo de vida del refresh token (30 días en segundos)
-      refreshTokenLifetime: 30 * 24 * 60 * 60,
-      
-      // Tiempo de vida del access token (1 hora en segundos)
-      accessTokenLifetime: 60 * 60,
+  // Configuración de redirección
+  redirects: {
+    // Asegurar que las redirecciones funcionen correctamente en producción
+    login: {
+      defaultRedirectUrl: '/admin',
+    },
+    logout: {
+      defaultRedirectUrl: '/',
     }
   }
 };

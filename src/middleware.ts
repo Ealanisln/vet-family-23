@@ -70,8 +70,8 @@ export const config = {
   matcher: [
     // Rutas que requieren protección
     '/admin/:path*',
-    
+    '/api/pos/:path*', // Protege server actions del POS
     // Excluir archivos estáticos y assets
-    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.).*)',
   ],
 };

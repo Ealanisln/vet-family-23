@@ -1,60 +1,33 @@
 // src/components/POS/CashDrawer/OpenDrawerForm.tsx
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/components/ui/use-toast";
-import { Loader2, DollarSign, ArrowRight } from "lucide-react";
+import { DollarSign, ArrowRight } from "lucide-react";
 import { openCashDrawer } from "@/app/actions/pos/cash-drawer";
 
 export default function OpenDrawerForm() {
-  const router = useRouter();
-  const [initialAmount, setInitialAmount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (initialAmount <= 0) {
-      toast({
-        title: "Error",
-        description: "El monto inicial debe ser mayor a cero.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  const router = useRouter();
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
     setIsSubmitting(true);
-    
-    try {
-      const result = await openCashDrawer(initialAmount);
-      
-      if (result.success) {
-        toast({
-          title: "Caja abierta",
-          description: "La caja ha sido abierta correctamente.",
-        });
-        
-        router.push("/admin/pos");
-      } else {
-        throw new Error(result.error || "Error al abrir la caja");
-      }
-    } catch (error) {
-      console.error("Error al abrir la caja:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Ocurrió un error al abrir la caja",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    const formData = new FormData(event.currentTarget);
+    const result = await openCashDrawer(formData);
+    setIsSubmitting(false);
+    if (result.success) {
+      router.push('/admin/pos');
+    } else {
+      setError(result.error || "Ocurrió un error al abrir la caja");
     }
-  };
-  
+  }
+
   return (
     <Card className="max-w-md mx-auto">
       <CardHeader>
@@ -64,6 +37,11 @@ export default function OpenDrawerForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {error && (
+          <div className="bg-red-100 border border-red-300 text-red-800 rounded-md px-4 py-2 mb-4 text-sm">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="initialAmount">Monto inicial</Label>
@@ -71,19 +49,17 @@ export default function OpenDrawerForm() {
               <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               <Input
                 id="initialAmount"
+                name="initialAmount"
                 type="number"
                 min="0"
                 step="0.01"
                 className="pl-10"
-                value={initialAmount}
-                onChange={(e) => setInitialAmount(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
-                disabled={isSubmitting}
                 required
+                disabled={isSubmitting}
               />
             </div>
           </div>
-          
           <div className="flex justify-end space-x-2">
             <Button
               type="button"
@@ -95,11 +71,11 @@ export default function OpenDrawerForm() {
             </Button>
             <Button
               type="submit"
+              className="flex items-center"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Procesando...
                 </>
               ) : (

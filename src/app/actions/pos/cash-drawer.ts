@@ -28,7 +28,24 @@ class ServerActionError extends Error {
   }
 }
 
-export async function openCashDrawer(initialAmount: number) {
+import { z } from "zod";
+
+/**
+ * Abre una nueva caja registrando el monto inicial.
+ * @param formData FormData con el campo initialAmount
+ * @returns Resultado de la operación
+ */
+export async function openCashDrawer(formData: FormData) {
+  const initialAmountRaw = formData.get("initialAmount");
+  const initialAmount = typeof initialAmountRaw === "string" ? Number(initialAmountRaw) : 0;
+
+  // Validación con Zod
+  const schema = z.object({ initialAmount: z.number().positive() });
+  const parse = schema.safeParse({ initialAmount });
+  if (!parse.success) {
+    return { success: false, error: "El monto inicial debe ser mayor a cero." };
+  }
+
   console.log("[openCashDrawer] Action started. Initial Amount:", initialAmount);
   try {
     console.log("[openCashDrawer] Getting Kinde session...");

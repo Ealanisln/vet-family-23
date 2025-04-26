@@ -1,15 +1,15 @@
 import { handleAuth } from "@kinde-oss/kinde-auth-nextjs/server";
+import { kindeConfig } from "@/lib/kinde-config";
 
 const authConfig = {
   logout: {
-    returnToPath: "/",
+    returnToPath: kindeConfig.redirectUrl || "/",
   },
   login: {
-    returnToPath: "/admin/inventario",
-    stateOptions: {
-      expiresIn: 5 * 60, // 5 minutos
-    },
+    returnToPath: kindeConfig.redirectUrl || "/admin/inventario",
+    stateOptions: kindeConfig.stateOptions,
   },
+  cookies: kindeConfig.cookies,
 };
 
 export const GET = handleAuth(authConfig);

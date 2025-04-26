@@ -29,12 +29,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // Para rutas protegidas (/admin/*)
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/pos')) {
     try {
+      console.log(`[middleware] Verificando autenticación para ruta: ${pathname}`);
       const { getUser } = getKindeServerSession();
       const user = await getUser();
 
+      console.log(`[middleware] Estado de autenticación: ${user ? 'Autenticado' : 'No autenticado'}`);
+      
       if (!user) {
+        console.log('[middleware] Usuario no autenticado, redirigiendo a login');
         // Crear URL de login con returnTo
         const returnTo = encodeURIComponent(request.url);
         const loginUrl = new URL('/api/auth/login', request.url);
@@ -50,13 +54,14 @@ export async function middleware(request: NextRequest) {
       }
 
       // Usuario autenticado, configurar headers
+      console.log(`[middleware] Usuario autenticado: ${user.id}, configurando respuesta`);
       const response = NextResponse.next();
       response.headers.set('Cache-Control', 'no-store, must-revalidate, max-age=0');
       response.headers.set('Pragma', 'no-cache');
       response.headers.set('Expires', '0');
       return response;
     } catch (error) {
-      console.error('Auth error:', error);
+      console.error('[middleware] Error de autenticación:', error);
       // En caso de error, redirigir al login sin parámetros adicionales
       return NextResponse.redirect(new URL('/api/auth/login', request.url));
     }

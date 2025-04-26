@@ -1,32 +1,24 @@
-// src/components/POS/CashDrawer/OpenDrawerForm.tsx
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+// src/components/POS/CashDrawer/OpenDrawerForm.tsx
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DollarSign, ArrowRight } from "lucide-react";
-import { openCashDrawer } from "@/app/actions/pos/cash-drawer";
+import { openCashDrawer, type OpenDrawerState } from "@/app/actions/pos/cash-drawer";
+import { useFormState } from "react-dom";
+
+// Define initial state conforming to OpenDrawerState
+const initialState: OpenDrawerState = {
+  success: undefined,
+  error: null,
+  drawer: null,
+  statusCode: null,
+};
 
 export default function OpenDrawerForm() {
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-    const formData = new FormData(event.currentTarget);
-    const result = await openCashDrawer(formData);
-    setIsSubmitting(false);
-    if (result.success) {
-      router.push('/admin/pos');
-    } else {
-      setError(result.error || "Ocurrió un error al abrir la caja");
-    }
-  }
+  // useFormState para manejar errores y mensajes
+  const [state, formAction] = useFormState(openCashDrawer, initialState);
 
   return (
     <Card className="max-w-md mx-auto">
@@ -37,12 +29,12 @@ export default function OpenDrawerForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {error && (
+        {state.error && (
           <div className="bg-red-100 border border-red-300 text-red-800 rounded-md px-4 py-2 mb-4 text-sm">
-            {error}
+            {state.error}
           </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form action={formAction} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="initialAmount">Monto inicial</Label>
             <div className="relative">
@@ -56,34 +48,16 @@ export default function OpenDrawerForm() {
                 className="pl-10"
                 placeholder="0.00"
                 required
-                disabled={isSubmitting}
               />
             </div>
           </div>
           <div className="flex justify-end space-x-2">
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/admin/pos")}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button
               type="submit"
               className="flex items-center"
-              disabled={isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  Abrir Caja
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
+              Abrir Caja
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </form>

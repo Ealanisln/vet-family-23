@@ -4,49 +4,102 @@
 import { revalidatePath } from "next/cache";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { Prisma } from '@prisma/client';
+import type { CashDrawer, Transaction } from '@/types/pos';
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prismaDB";
-
-// Definición de tipos para las transacciones
-type TransactionType = "SALE" | "REFUND" | "DEPOSIT" | "WITHDRAWAL" | "ADJUSTMENT";
-
-// Función auxiliar para verificar errores de Prisma
-function isPrismaError(
-  error: unknown
-): error is Prisma.PrismaClientKnownRequestError {
-  return error instanceof Prisma.PrismaClientKnownRequestError;
-}
-
-// Custom error class
-class ServerActionError extends Error {
-  constructor(
-    message: string,
-    public statusCode: number = 500
-  ) {
-    super(message);
-    this.name = "ServerActionError";
-  }
-}
-
 import { z } from "zod";
+
+// Define state types using the custom CashDrawer
+export type OpenDrawerState = {
+  success?: boolean;
+  error?: string | null;
+  drawer?: CashDrawer | null; // Use custom type
+  statusCode?: number | null;
+};
+
+export type CloseDrawerState = {
+  success?: boolean;
+  error?: string | null;
+  drawer?: CashDrawer | null; // Use custom type
+  statusCode?: number | null;
+};
+
+// Helper function to format Prisma drawer data to custom type
+
+// Correctly define the type based on Prisma Client's generated types for includes
+type PrismaDrawerWithRelations = Prisma.CashDrawerGetPayload<{
+    include: {
+        CashTransaction: true,
+        User_CashDrawer_openedByToUser: { select: { id: true, firstName: true, lastName: true, email: true } },
+        User_CashDrawer_closedByToUser: { select: { id: true, firstName: true, lastName: true, email: true } }
+    }
+}>;
+
+function formatDrawerForClient(
+  // Type the input correctly using the payload type
+  prismaDrawer: PrismaDrawerWithRelations | null 
+): CashDrawer | null { 
+  if (!prismaDrawer) return null;
+
+  // Access included relations directly as they are now part of the type
+  return {
+    id: prismaDrawer.id,
+    initialAmount: prismaDrawer.initialAmount,
+    openedAt: prismaDrawer.openedAt,
+    closedAt: prismaDrawer.closedAt,
+    openedBy: prismaDrawer.openedBy,
+    closedBy: prismaDrawer.closedBy,
+    finalAmount: prismaDrawer.finalAmount,
+    expectedAmount: prismaDrawer.expectedAmount,
+    difference: prismaDrawer.difference,
+    status: prismaDrawer.status,
+    notes: prismaDrawer.notes,
+    // Access prismaDrawer.CashTransaction directly
+    transactions: prismaDrawer.CashTransaction.map((tx): Transaction => ({
+      id: tx.id,
+      type: tx.type,
+      amount: tx.amount,
+      description: tx.description,
+      createdAt: tx.createdAt,
+      saleId: tx.saleId,
+    })),
+     // Access prismaDrawer.User_CashDrawer_openedByToUser directly
+    openUser: prismaDrawer.User_CashDrawer_openedByToUser
+      ? { 
+          id: prismaDrawer.User_CashDrawer_openedByToUser.id,
+          firstName: prismaDrawer.User_CashDrawer_openedByToUser.firstName,
+          lastName: prismaDrawer.User_CashDrawer_openedByToUser.lastName,
+          email: prismaDrawer.User_CashDrawer_openedByToUser.email,
+        }
+      : undefined,
+    // closeUser mapping remains commented out unless needed
+  };
+}
 
 /**
  * Abre una nueva caja registrando el monto inicial.
  * @param formData FormData con el campo initialAmount
  * @returns Resultado de la operación
  */
-export async function openCashDrawer(formData: FormData) {
+export async function openCashDrawer(
+  prevState: OpenDrawerState,
+  formData: FormData
+): Promise<OpenDrawerState> {
   const initialAmountRaw = formData.get("initialAmount");
-  const initialAmount = typeof initialAmountRaw === "string" ? Number(initialAmountRaw) : 0;
+  const initialAmount = typeof initialAmountRaw === "string" && initialAmountRaw.trim() !== '' ? parseFloat(initialAmountRaw) : NaN;
 
   // Validación con Zod
-  const schema = z.object({ initialAmount: z.number().positive() });
+  const schema = z.object({ initialAmount: z.number().positive("El monto inicial debe ser un número positivo.") });
   const parse = schema.safeParse({ initialAmount });
+
   if (!parse.success) {
-    return { success: false, error: "El monto inicial debe ser mayor a cero." };
+    const errorMessage = parse.error.errors.map(e => e.message).join(', ');
+    return { success: false, error: errorMessage, drawer: null, statusCode: 400 };
   }
 
-  console.log("[openCashDrawer] Action started. Initial Amount:", initialAmount);
+  const validatedInitialAmount = parse.data.initialAmount;
+
+  console.log("[openCashDrawer] Action started. Initial Amount:", validatedInitialAmount);
   try {
     console.log("[openCashDrawer] Getting Kinde session...");
     const { getUser } = getKindeServerSession();
@@ -62,7 +115,7 @@ export async function openCashDrawer(formData: FormData) {
     
     if (!user || !user.id) {
       console.error("[openCashDrawer] Authentication check failed. User object is null or missing ID");
-      return { success: false, error: "User not authenticated", statusCode: 401 };
+      return { success: false, error: "User not authenticated", statusCode: 401, drawer: null };
     }
     
     console.log(`[openCashDrawer] Looking for user in database with Kinde ID: ${user.id}`);
@@ -73,7 +126,7 @@ export async function openCashDrawer(formData: FormData) {
     
     if (!dbUser) {
       console.error(`[openCashDrawer] User with Kinde ID ${user.id} not found in the database.`);
-      return { success: false, error: "Usuario no encontrado", statusCode: 404 };
+      return { success: false, error: "Usuario no encontrado", statusCode: 404, drawer: null };
     }
     
     console.log(`[openCashDrawer] User found in database:`, dbUser);
@@ -86,76 +139,105 @@ export async function openCashDrawer(formData: FormData) {
     });
     
     if (openDrawer) {
-      return { success: false, error: "Ya hay una caja abierta. Cierre la caja actual antes de abrir una nueva." };
+      return { success: false, error: "Ya hay una caja abierta. Cierre la caja actual antes de abrir una nueva.", drawer: null, statusCode: 409 };
     }
     
     // Create a new cash drawer, now including the openedBy field
     const drawer = await prisma.cashDrawer.create({
       data: {
         id: randomUUID(),
-        initialAmount,
+        initialAmount: validatedInitialAmount,
         status: "OPEN",
         openedBy: dbUser.id,
       },
     });
     
+    // Refetch with relations to format
+    const fullDrawerData = await prisma.cashDrawer.findUniqueOrThrow({
+        where: { id: drawer.id },
+        include: {
+            CashTransaction: true,
+            User_CashDrawer_openedByToUser: { select: { id: true, firstName: true, lastName: true, email: true }},
+            User_CashDrawer_closedByToUser: { select: { id: true, firstName: true, lastName: true, email: true }} // Include if needed for formatting
+        }
+    });
+
     revalidatePath("/admin/pos");
     revalidatePath("/admin/pos/apertura-caja");
     
-    return { success: true, drawer };
+    // Return formatted drawer
+    return { success: true, drawer: formatDrawerForClient(fullDrawerData), error: null, statusCode: 201 };
   } catch (error) {
     console.error("Error opening cash drawer:", error);
-    // Consider more specific error handling if needed
+    let errorMessage = "Error interno del servidor al abrir la caja";
+    let statusCode = 500;
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-       // Handle known Prisma errors
        console.error("Prisma Error Code:", error.code);
-       return { success: false, error: `Error de base de datos: ${error.code}` };
+       errorMessage = `Error de base de datos: ${error.code}`;
+    } else if (error instanceof Error) {
+        errorMessage = error.message;
     }
-    return { success: false, error: "Error al abrir la caja" };
+    return { success: false, error: errorMessage, drawer: null, statusCode: statusCode };
   }
 }
 
-// Reemplaza la función closeCashDrawer en src/app/actions/pos/cash-drawer.ts
-
-export async function closeCashDrawer(data: { 
+// Define the input type for the simplified closeCashDrawer action
+interface CloseDrawerInput {
   finalAmount: number;
   notes?: string;
-}) {
-  try {
-    const { getUser } = getKindeServerSession(); // Keep getUser for closedBy
-    
-    /*
-    // REMOVED - Middleware already handles authentication
-    if (!(await isAuthenticated())) {
-      console.log("Cierre de caja: Usuario no autorizado");
-      return { success: false, error: "No autorizado", statusCode: 401 };
-    }
-    */
+}
 
-    // Obtener usuario - Assume user exists if action is reached
+// Adjust closeCashDrawer to accept a single argument object
+export async function closeCashDrawer(
+  input: CloseDrawerInput // Single argument
+): Promise<CloseDrawerState> { // Still returns the state object
+  
+  // Validation can use the input object directly
+  const schema = z.object({
+    finalAmount: z.number().nonnegative("El monto final no puede ser negativo."),
+    notes: z.string().optional(),
+  });
+
+  // Validate the input object
+  const parse = schema.safeParse(input);
+  if (!parse.success) {
+    const errorMessage = parse.error.errors.map(e => e.message).join(', ');
+    // Return the CloseDrawerState structure on validation error
+    return { success: false, error: errorMessage, drawer: null, statusCode: 400 }; 
+  }
+
+  // Use validated data
+  const { finalAmount, notes } = parse.data; 
+
+  console.log(`[closeCashDrawer] Action started. Final Amount: ${finalAmount}, Notes: ${notes || 'N/A'}`);
+
+  try {
+    console.log("[closeCashDrawer] Getting Kinde session...");
+    const { getUser } = getKindeServerSession();
+    
+    console.log("[closeCashDrawer] Getting user from session...");
     const user = await getUser();
+
     if (!user || !user.id) {
-      // This check might still be relevant if getUser can fail even after middleware passes
-      // Keep it but log an error if it happens.
-      console.error("closeCashDrawer: getUser() returned null/no ID even after middleware auth.");
-      return { success: false, error: "No se pudo obtener la información del usuario autenticado.", statusCode: 500 };
+      console.error("[closeCashDrawer] Authentication check failed. User object is null or missing ID");
+      return { success: false, error: "User not authenticated", statusCode: 401, drawer: null };
     }
     
-    console.log(`Cierre de caja: Usuario autenticado (${user.id})`);
+    console.log(`[closeCashDrawer] Authenticated user Kinde ID: ${user.id}`);
     
     // Buscar al usuario en la base de datos
-    const dbUser = await prisma.user.findFirst({
+    const dbUser = await prisma.user.findUnique({
       where: {
         kindeId: user.id
       }
     });
     
     if (!dbUser) {
-      console.log("Cierre de caja: Usuario no encontrado en la base de datos");
-      return { success: false, error: "Usuario no encontrado en la base de datos", statusCode: 404 };
+      console.error(`[closeCashDrawer] User with Kinde ID ${user.id} not found in the database.`);
+      return { success: false, error: "Usuario autenticado no encontrado en la base de datos", statusCode: 404, drawer: null };
     }
     
-    console.log(`Cierre de caja: Usuario encontrado en la base de datos (${dbUser.id})`);
+    console.log(`[closeCashDrawer] Database user ID found: ${dbUser.id}`);
     
     // Buscar la caja abierta
     const openDrawer = await prisma.cashDrawer.findFirst({
@@ -163,304 +245,98 @@ export async function closeCashDrawer(data: {
         status: "OPEN",
       },
       include: {
-        User_CashDrawer_openedByToUser: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-        User_CashDrawer_closedByToUser: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-        CashTransaction: true,
+        CashTransaction: true, // Need transactions for calculation
       },
     });
     
     if (!openDrawer) {
-      console.log("Cierre de caja: No hay caja abierta para cerrar");
-      return { success: false, error: "No hay caja abierta para cerrar", statusCode: 404 };
+      console.log("[closeCashDrawer] No open drawer found to close.");
+       // Return the CloseDrawerState structure
+      return { success: false, error: "No hay caja abierta para cerrar", statusCode: 404, drawer: null };
     }
     
-    console.log(`Cierre de caja: Caja encontrada (${openDrawer.id})`);
+    console.log(`[closeCashDrawer] Found open drawer ID: ${openDrawer.id}`);
     
     // Calcular el monto esperado basado en las transacciones
     const totalTransactions = openDrawer.CashTransaction.reduce((sum, tx) => sum + tx.amount, 0);
     const expectedAmount = openDrawer.initialAmount + totalTransactions;
     
     // Calcular la diferencia
-    const difference = data.finalAmount - expectedAmount;
+    const difference = finalAmount - expectedAmount;
     
-    console.log(`Cierre de caja: Montos calculados - Inicial: ${openDrawer.initialAmount}, Transacciones: ${totalTransactions}, Esperado: ${expectedAmount}, Final: ${data.finalAmount}, Diferencia: ${difference}`);
+    console.log(`[closeCashDrawer] Calculation - Initial: ${openDrawer.initialAmount}, Transactions Total: ${totalTransactions}, Expected: ${expectedAmount}, Final Reported: ${finalAmount}, Difference: ${difference}`);
     
-    // Cerrar la caja
-    const closedDrawer = await prisma.cashDrawer.update({
+    // Update and include relations in the result
+    const closedDrawerData = await prisma.cashDrawer.update({
       where: { id: openDrawer.id },
       data: {
         closedAt: new Date(),
         closedBy: dbUser.id,
-        finalAmount: data.finalAmount,
+        finalAmount: finalAmount,
         expectedAmount,
         difference,
         status: "CLOSED",
-        notes: data.notes,
+        notes: notes,
       },
-    });
-    
-    console.log(`Cierre de caja: Caja cerrada correctamente (${closedDrawer.id}, ${closedDrawer.status})`);
-    
-    revalidatePath("/admin/pos");
-    revalidatePath("/admin/pos/cierre-caja");
-    
-    return { success: true, drawer: closedDrawer };
-  } catch (error: unknown) {
-    console.error("Error al cerrar la caja (detallado):", error);
-    
-    if (error instanceof ServerActionError) {
-      return { success: false, error: error.message, statusCode: error.statusCode };
-    }
-    
-    if (isPrismaError(error)) {
-      console.error("Prisma error code:", error.code);
-      if (error.code === "P2025") {
-        return { success: false, error: "Caja no encontrada", statusCode: 404 };
-      }
-    }
-    
-    return { success: false, error: "Error al cerrar la caja", statusCode: 500 };
-  }
-}
-
-export async function getCurrentDrawer() {
-  // console.log("[getCurrentDrawer] Action started."); // Log removido
-  try {
-    const drawer = await prisma.cashDrawer.findFirst({
-      where: {
-        status: "OPEN",
-      },
-      include: {
-        CashTransaction: true,
-      },
-    });
-
-    if (!drawer) {
-      // console.log("[getCurrentDrawer] No open drawer found. Returning null."); // Log removido
-      return null;
-    }
-
-    // console.log(`[getCurrentDrawer] Found open drawer: ${drawer.id}, opened by: ${drawer.openedBy}`); // Log removido
-
-    // If openedBy is null, we cannot fetch the user. Handle this case.
-    if (!drawer.openedBy) {
-      console.warn(`[getCurrentDrawer] Drawer ${drawer.id} has null openedBy. Returning drawer data without user.`);
-      // Return the drawer but let openUser be undefined to match the CashDrawer type.
-      const { CashTransaction, ...restOfDrawer } = drawer;
-      return {
-        ...restOfDrawer, 
-        // openUser property is omitted, making it undefined
-        transactions: CashTransaction, // Map Prisma transactions if needed, or ensure type compatibility
-      };
-    }
-
-    // If openedBy has an ID, proceed to fetch the user
-    const openUser = await prisma.user.findUnique({
-      where: { id: drawer.openedBy }, // Now we know drawer.openedBy is a string
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-      },
-    });
-
-    // If the user is not found, return the drawer without the user info, or handle as an error.
-    // Current type requires openUser to be potentially undefined.
-    if (!openUser) {
-      console.warn(`[getCurrentDrawer] User not found for openedBy ID: ${drawer.openedBy}. Returning drawer data without user.`);
-      const { CashTransaction, ...restOfDrawer } = drawer;
-       return {
-        ...restOfDrawer,
-        // openUser property is omitted, making it undefined
-        transactions: CashTransaction, 
-      };
-    }
-    
-    // User found, map transactions and return the complete object
-    const { CashTransaction, ...restOfDrawerData } = drawer;
-    return {
-      ...restOfDrawerData,
-      openUser,
-      transactions: CashTransaction, // Ensure this matches the expected Transaction[] type in CashDrawer
-    };
-
-  } catch (error: unknown) {
-    console.error("Error fetching current drawer:", error);
-    return null;
-  }
-}
-
-export async function getDrawerTransactions(drawerId: string) {
-  try {
-    return await prisma.cashTransaction.findMany({
-      where: {
-        drawerId,
-      },
-      include: {
-        Sale: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-  } catch (error: unknown) {
-    console.error("Error fetching drawer transactions:", error);
-    throw new ServerActionError("Failed to fetch drawer transactions");
-  }
-}
-
-export async function getDrawerHistory({ 
-  page = 1, 
-  limit = 10, 
-  startDate, 
-  endDate 
-}: { 
-  page?: number;
-  limit?: number;
-  startDate?: Date;
-  endDate?: Date;
-}) {
-  try {
-    const whereClause: {
-      openedAt?: {
-        gte?: Date;
-        lte?: Date;
-      }
-    } = {};
-    
-    if (startDate && endDate) {
-      whereClause.openedAt = {
-        gte: startDate,
-        lte: endDate,
-      };
-    } else if (startDate) {
-      whereClause.openedAt = {
-        gte: startDate,
-      };
-    } else if (endDate) {
-      whereClause.openedAt = {
-        lte: endDate,
-      };
-    }
-    
-    const [drawers, total] = await Promise.all([
-      prisma.cashDrawer.findMany({
-        where: whereClause,
-        include: {
-          User_CashDrawer_openedByToUser: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-          User_CashDrawer_closedByToUser: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
+      include: { // Include relations in the update return
           CashTransaction: true,
-        },
-        orderBy: {
-          openedAt: "desc",
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.cashDrawer.count({
-        where: whereClause,
-      }),
-    ]);
-    
-    return {
-      drawers,
-      pagination: {
-        total,
-        pages: Math.ceil(total / limit),
-        page,
-        limit,
-      },
-    };
-  } catch (error: unknown) {
-    console.error("Error fetching drawer history:", error);
-    throw new ServerActionError("Failed to fetch drawer history");
+          User_CashDrawer_openedByToUser: { select: { id: true, firstName: true, lastName: true, email: true }},
+          User_CashDrawer_closedByToUser: { select: { id: true, firstName: true, lastName: true, email: true }}
+      }
+    });
+
+    revalidatePath("/admin/pos");
+    revalidatePath("/admin/pos/cierre-caja");
+
+    // Return formatted drawer using the helper
+    return { success: true, drawer: formatDrawerForClient(closedDrawerData), error: null, statusCode: 200 };
+
+  } catch (error) {
+    console.error("Error closing cash drawer:", error);
+    let errorMessage = "Error interno del servidor al cerrar la caja";
+    let statusCode = 500;
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+       console.error("Prisma Error Code:", error.code);
+       errorMessage = `Error de base de datos al cerrar la caja: ${error.code}`;
+       if (error.code === 'P2025') {
+           errorMessage = "La caja que intenta cerrar no fue encontrada.";
+           statusCode = 404;
+       }
+    } else if (error instanceof Error) {
+        errorMessage = error.message;
+    }
+    return { success: false, error: errorMessage, drawer: null, statusCode: statusCode };
   }
 }
 
-export async function addCashTransaction(data: {
-  amount: number;
-  type: TransactionType;
-  description: string;
-}) {
+/**
+ * Fetches the currently open cash drawer, formatted for client-side use.
+ * @returns The open CashDrawer object conforming to the custom type, or null if no drawer is open.
+ */
+export async function getCurrentDrawer(): Promise<CashDrawer | null> {
+  console.log("[getCurrentDrawer] Fetching the currently open cash drawer...");
   try {
-    const { getUser, isAuthenticated } = getKindeServerSession();
-    
-    // Verificar autenticación
-    if (!(await isAuthenticated())) {
-      throw new ServerActionError("No autorizado", 401);
-    }
-    
-    // Obtener usuario
-    const user = await getUser();
-    if (!user || !user.id) {
-      throw new ServerActionError("No se pudo obtener la información del usuario", 401);
-    }
-    
-    // Buscar la caja abierta
-    const openDrawer = await prisma.cashDrawer.findFirst({
+    const openDrawerData = await prisma.cashDrawer.findFirst({
       where: {
         status: "OPEN",
       },
-    });
-    
-    if (!openDrawer) {
-      throw new ServerActionError("No hay caja abierta", 404);
-    }
-    
-    // Crear la transacción
-    const transaction = await prisma.cashTransaction.create({
-      data: {
-        id: randomUUID(),
-        drawerId: openDrawer.id,
-        amount: data.amount,
-        type: data.type,
-        description: data.description,
-      },
-    });
-    
-    revalidatePath("/admin/pos");
-    revalidatePath("/admin/pos/cierre-caja");
-    
-    return { success: true, transaction };
-  } catch (error: unknown) {
-    if (error instanceof ServerActionError) {
-      return { success: false, error: error.message, statusCode: error.statusCode };
-    }
-    if (isPrismaError(error)) {
-      if (error.code === "P2025") {
-        return { success: false, error: "Caja o referencia no encontrada", statusCode: 404 };
+      include: {
+        User_CashDrawer_openedByToUser: { 
+          select: { id: true, firstName: true, lastName: true, email: true }
+        },
+        CashTransaction: true,
+        // Include closedBy user relation temporarily for consistent type with helper
+        User_CashDrawer_closedByToUser: { 
+           select: { id: true, firstName: true, lastName: true, email: true }
+        }
       }
-    }
-    console.error("Error adding cash transaction:", error);
-    return { success: false, error: "Error al agregar la transacción", statusCode: 500 };
+    });
+
+    // Pass the fetched data (or null) to the formatter
+    return formatDrawerForClient(openDrawerData);
+
+  } catch (error) {
+    console.error("Error fetching current cash drawer:", error);
+    return null;
   }
 }

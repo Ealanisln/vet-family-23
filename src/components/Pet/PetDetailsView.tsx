@@ -136,6 +136,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       microchipNumber: pet.microchipNumber || undefined,
       internalId: pet.internalId || undefined,
       isNeutered: pet.isNeutered,
+      isDeceased: pet.isDeceased,
       medicalHistory:
         pet.medicalHistory.length > 0 ? pet.medicalHistory[0].notes || "" : "",
     };

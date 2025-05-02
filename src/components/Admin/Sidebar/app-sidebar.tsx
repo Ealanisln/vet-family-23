@@ -8,15 +8,17 @@ import {
   AlertCircle,
   PlusCircle,
   Dog,
-  History,
   Package,
   Pill,
   Syringe,
+  /* Temporarily removed for POS functionality
   CircleDollarSign,
+  */
   Settings,
   LogOut,
   LayoutDashboard,
-  ShieldCheck
+  ShieldCheck,
+  UserPlus,
 } from "lucide-react";
 
 import { NavMain } from "@/components/Admin/Sidebar/nav-main";
@@ -78,6 +80,7 @@ const data = {
         },
       ],
     },
+    /* Temporarily removed POS functionality
     {
       title: "Punto de Venta",
       url: "/admin/pos",
@@ -100,6 +103,7 @@ const data = {
         },
       ],
     },
+    */
     {
       title: "Inventario",
       url: "/admin/inventario",
@@ -155,25 +159,45 @@ const AddMedicalRecordButton = React.forwardRef<
 ));
 AddMedicalRecordButton.displayName = "AddMedicalRecordButton";
 
-const HistoricalArchiveButton = React.forwardRef<
+const NewClientButton = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button">
 >((props, ref) => (
   <SidebarMenuButton
     ref={ref}
     asChild
-    tooltip="Archivo Histórico"
-    className="group-data-[collapsible=icon]:justify-center hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200"
+    tooltip="Nuevo Cliente"
+    className="group-data-[collapsible=icon]:justify-center bg-[#47b3b6]/10 hover:bg-[#47b3b6]/20 text-[#47b3b6] hover:text-[#3a9296] font-medium transition-colors duration-200"
   >
-    <Link href="/admin/archivo-historico">
-      <History className="h-4 w-4" />
+    <Link href="/admin/clientes/nuevo-cliente">
+      <UserPlus className="h-4 w-4" />
       <span className="group-data-[collapsible=icon]:hidden">
-        Archivo Histórico
+        Nuevo Cliente
       </span>
     </Link>
   </SidebarMenuButton>
 ));
-HistoricalArchiveButton.displayName = "HistoricalArchiveButton";
+NewClientButton.displayName = "NewClientButton";
+
+const NewPetButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<"button">
+>((props, ref) => (
+  <SidebarMenuButton
+    ref={ref}
+    asChild
+    tooltip="Nueva Mascota"
+    className="group-data-[collapsible=icon]:justify-center bg-[#47b3b6]/10 hover:bg-[#47b3b6]/20 text-[#47b3b6] hover:text-[#3a9296] font-medium transition-colors duration-200"
+  >
+    <Link href="/admin/mascotas/nueva">
+      <PawPrint className="h-4 w-4" />
+      <span className="group-data-[collapsible=icon]:hidden">
+        Nueva Mascota
+      </span>
+    </Link>
+  </SidebarMenuButton>
+));
+NewPetButton.displayName = "NewPetButton";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -202,14 +226,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         `}</style>
         <SidebarMenu className="mt-6 px-2">
           <SidebarMenuItem>
+            <NewClientButton />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <NewPetButton />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
             <MedicalRecordDialog
               triggerButton={
                 <AddMedicalRecordButton className="hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200" />
               }
             />
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <HistoricalArchiveButton />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>

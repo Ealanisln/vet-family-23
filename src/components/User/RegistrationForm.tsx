@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z
@@ -42,6 +42,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function UserRegistrationForm() {
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -57,6 +58,7 @@ export default function UserRegistrationForm() {
 
   const onSubmit = async (data: FormValues) => {
     setError(null);
+    setIsSubmitting(true);
 
     try {
       const response = await fetch("/api/user/register", {
@@ -100,6 +102,8 @@ export default function UserRegistrationForm() {
           : "An error occurred while registering the user. Please try again."
       );
       console.error("Registration error:", err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -189,11 +193,18 @@ export default function UserRegistrationForm() {
                 </AlertDescription>
               </Alert>
             )}
-            <Button 
-              type="submit" 
-              className="w-full bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white rounded-xl h-11"
+            <Button
+              type="submit"
+              className="w-full bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white rounded-xl h-11 disabled:opacity-50"
+              disabled={isSubmitting}
             >
-              Registrar usuario
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Registrando...
+                </>
+              ) : (
+                "Registrar usuario"
+              )}
             </Button>
           </form>
         </Form>

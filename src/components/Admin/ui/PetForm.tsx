@@ -45,6 +45,7 @@ interface Pet {
   isNeutered: boolean;
   microchipNumber?: string;
   medicalHistory?: string;
+  isDeceased: boolean;
 }
 
 const PetForm: React.FC<PetFormProps> = ({
@@ -67,6 +68,7 @@ const PetForm: React.FC<PetFormProps> = ({
     isNeutered: false,
     microchipNumber: "",
     medicalHistory: "",
+    isDeceased: false,
   });
 
   useEffect(() => {
@@ -106,6 +108,7 @@ const PetForm: React.FC<PetFormProps> = ({
       dateOfBirth: new Date(pet.dateOfBirth),
       weight: parseFloat(pet.weight),
       isNeutered: pet.isNeutered,
+      isDeceased: pet.isDeceased,
     };
 
     let result;
@@ -279,6 +282,23 @@ const PetForm: React.FC<PetFormProps> = ({
             className="text-sm font-medium text-gray-700 cursor-pointer"
           >
             Esterilizado/Castrado
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2 col-span-2">
+          <Checkbox
+            id="isDeceased"
+            checked={pet.isDeceased}
+            onCheckedChange={(checked) => 
+              handleCheckboxChange(checked as boolean, "isDeceased")
+            }
+            className="rounded-md h-5 w-5"
+          />
+          <Label 
+            htmlFor="isDeceased" 
+            className="text-sm font-medium text-gray-700 cursor-pointer"
+          >
+            Fallecido
           </Label>
         </div>
 

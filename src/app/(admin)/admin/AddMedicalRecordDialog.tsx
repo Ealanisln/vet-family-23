@@ -44,7 +44,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { EditIcon, PlusCircle, Search, X } from "lucide-react";
 import { searchInventory } from "@/app/actions/pos/inventory";
-import { InventoryItemWithPrice } from "@/lib/type-adapters";
+import { InventoryCategory, InventoryStatus } from '@prisma/client';
 
 interface MedicalHistory {
   id?: string;
@@ -65,11 +65,27 @@ interface SelectedProduct {
   unitPrice: number;
 }
 
+// Adjust date types to match the actual data returned by the action
+interface InventorySearchResultAdjusted {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  quantity: number;
+  presentation: string | null;
+  category: InventoryCategory;
+  status: InventoryStatus;
+  expirationDate: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  measure?: string | null;
+}
+
 interface ProductSection {
   isOpen: boolean;
   selectedProducts: SelectedProduct[];
   searchValue: string;
-  searchResults: InventoryItemWithPrice[];
+  searchResults: InventorySearchResultAdjusted[]; // Use the adjusted type
 }
 
 interface MedicalRecordDialogProps {
@@ -178,7 +194,15 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
           searchTerm: productsSection.searchValue,
           limit: 5,
         });
-        setProductsSection(prev => ({ ...prev, searchResults: results }));
+        
+        // Adaptar los resultados a nuestro tipo
+        const safeResults: InventorySearchResultAdjusted[] = results.map(item => ({
+          ...item,
+          // Convertir explícitamente price a number si es necesario
+          price: typeof item.price === 'number' ? item.price : 0
+        }));
+        
+        setProductsSection(prev => ({ ...prev, searchResults: safeResults }));
       } else {
         setProductsSection(prev => ({ ...prev, searchResults: [] }));
       }
@@ -187,6 +211,44 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
     const timeoutId = setTimeout(searchProducts, 300);
     return () => clearTimeout(timeoutId);
   }, [productsSection.searchValue]);
+
+  // Inicializar productos seleccionados (si existen) cuando se edita un registro
+  useEffect(() => {
+    if (existingRecord && existingRecord.prescriptions) {
+      // Filtrar las prescripciones que parecen ser productos (formato: "Nombre - Cantidad: X")
+      const productPrescriptions = existingRecord.prescriptions
+        .filter(p => p.includes(" - Cantidad: "))
+        .map(p => {
+          const [name, quantityPart] = p.split(" - Cantidad: ");
+          const quantity = parseInt(quantityPart) || 1;
+          
+          return {
+            id: name + "-" + Math.random().toString(36).substring(2, 9), // ID único generado
+            name,
+            quantity,
+            unitPrice: 0 // No tenemos el precio, así que ponemos 0
+          };
+        });
+      
+      // Establecer productos seleccionados
+      if (productPrescriptions.length > 0) {
+        setProductsSection(prev => ({
+          ...prev,
+          selectedProducts: productPrescriptions
+        }));
+        
+        // Filtrar las prescripciones que no son productos
+        const regularPrescriptions = existingRecord.prescriptions
+          .filter(p => !p.includes(" - Cantidad: "));
+        
+        // Actualizar el record con solo las prescripciones regulares
+        setRecord(prev => ({
+          ...prev,
+          prescriptions: regularPrescriptions
+        }));
+      }
+    }
+  }, [existingRecord]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -213,10 +275,18 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
     setRecord((prevState) => ({ ...prevState, prescriptions }));
   };
 
-  const handleAddProduct = (product: InventoryItemWithPrice) => {
-    const fullName = product.presentation 
-      ? `${product.name} - ${product.presentation}`
-      : product.name;
+  const handleAddProduct = (product: InventorySearchResultAdjusted) => {
+    // Construir el nombre completo con presentación y medida (si existen)
+    let fullName = product.name;
+    
+    if (product.presentation) {
+      fullName += ` ${product.presentation}`;
+    }
+    
+    // Agregar la medida si existe (este campo podría ser measure, o estar dentro de presentation)
+    if (product.measure) {
+      fullName += ` - ${product.measure}`;
+    }
 
     setProductsSection((prev) => ({
       ...prev,
@@ -270,6 +340,19 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         throw new Error("Se requiere la razón de la visita");
       }
 
+      // Convertir productos seleccionados a prescripciones
+      let updatedPrescriptions = [...record.prescriptions];
+      
+      // Añadir los productos seleccionados a las prescripciones
+      if (productsSection.selectedProducts.length > 0) {
+        const productsPrescriptions = productsSection.selectedProducts.map(
+          product => `${product.name} - Cantidad: ${product.quantity}`
+        );
+        
+        // Agregar las prescripciones de productos al array existente
+        updatedPrescriptions = [...productsPrescriptions, ...updatedPrescriptions];
+      }
+
       // Luego crear o actualizar el historial médico
       const action = record.id ? updateMedicalHistory : addMedicalHistory;
       const result = await action(record.petId, {
@@ -278,7 +361,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         reasonForVisit: record.reasonForVisit,
         diagnosis: record.diagnosis,
         treatment: record.treatment,
-        prescriptions: record.prescriptions,
+        prescriptions: updatedPrescriptions, // Usando el array actualizado
         notes: record.notes,
       });
 
@@ -511,7 +594,11 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                                 className="cursor-pointer hover:bg-gray-50"
                               >
                                 <div className="flex items-center w-full py-1">
-                                  <span>{product.name}</span>
+                                  <span>
+                                    {product.name}
+                                    {product.presentation ? ` - ${product.presentation}` : ''}
+                                    {product.measure ? ` - ${product.measure}` : ''}
+                                  </span>
                                 </div>
                               </CommandItem>
                             ))}

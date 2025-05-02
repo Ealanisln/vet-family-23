@@ -1,7 +1,7 @@
 // src/app/actions/pos/inventory.ts
 "use server";
 
-import { Prisma, InventoryCategory, InventoryItem } from "@prisma/client";
+import { Prisma, InventoryCategory } from "@prisma/client";
 // Removed unused import
 // import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { prisma } from "@/lib/prismaDB";
@@ -24,19 +24,22 @@ class ServerActionError extends Error {
   }
 }
 
-// Agregar precio predeterminado si es necesario
-function applyDefaultPrice(products: InventoryItem[]) {
-  return products.map(product => {
-    // Si el producto no tiene un precio definido, asignar 0.00
-    if (product.price === undefined || product.price === null) {
-      return {
-        ...product,
-        price: 0.00
-      };
-    }
-    return product;
-  });
-}
+// Define a type for the selected fields in searchInventory
+type SelectedInventoryItem = Prisma.InventoryItemGetPayload<{ 
+  select: { 
+    id: true,
+    name: true,
+    description: true,
+    price: true,
+    quantity: true,
+    presentation: true,
+    category: true,
+    status: true,
+    expirationDate: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+}>;
 
 /**
  * Obtiene productos disponibles para ventas
@@ -183,6 +186,20 @@ export async function searchInventory({
     // Buscar productos
     const products = await prisma.inventoryItem.findMany({
       where: whereClause,
+      select: { // Explicitly select fields
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        quantity: true,
+        presentation: true,
+        measure: true,
+        category: true,
+        status: true,
+        expirationDate: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       orderBy: {
         name: "asc",
       },
@@ -246,4 +263,18 @@ export async function getProductById(id: string) {
     console.error("Error fetching product:", error);
     throw new ServerActionError("Error al obtener el producto");
   }
+}
+
+// Agregar precio predeterminado si es necesario
+function applyDefaultPrice(products: SelectedInventoryItem[]) {
+  return products.map(product => {
+    // Si el producto no tiene un precio definido, asignar 0.00
+    if (product.price === undefined || product.price === null) {
+      return {
+        ...product,
+        price: 0.00
+      };
+    }
+    return product;
+  });
 }

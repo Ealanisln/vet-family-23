@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { createHash } from "crypto";
 
 interface KindeUserData {
   profile: {
@@ -33,10 +32,6 @@ interface KindePayload {
 }
 
 const prisma = new PrismaClient();
-
-function generateUserHash(user: any) {
-  return createHash("md5").update(JSON.stringify(user)).digest("hex");
-}
 
 async function getKindeToken() {
   const baseUrl =
@@ -81,7 +76,17 @@ async function getKindeToken() {
   }
 }
 
-async function createOrUpdateUser(user: any, maxRetries = 5) {
+async function createOrUpdateUser(
+  user: {
+    id: string;
+    email?: string | null;
+    phone?: string | null;
+    given_name: string;
+    family_name: string;
+    roles?: string[];
+  },
+  maxRetries = 5
+) {
   console.log(
     "Starting createOrUpdateUser with user data:",
     JSON.stringify(user, null, 2)
@@ -89,8 +94,9 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const result = await prisma.$transaction(async (prisma) => {
-        const dbUser = await prisma.user.upsert({
+      // Run the upsert and verification within a transaction
+      const dbUser = await prisma.$transaction(async (prisma) => {
+        const upsertedUser = await prisma.user.upsert({
           where: { kindeId: user.id },
           update: {
             email: user.email,
@@ -142,67 +148,45 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
 
         console.log(
           `Attempt ${attempt}: User operation completed. Returned user data:`,
-          JSON.stringify(dbUser, null, 2)
+          JSON.stringify(upsertedUser, null, 2) // Log the upserted user
         );
 
-        // Immediate verification
-        const verifiedUser = await prisma.user.findUnique({
-          where: { kindeId: user.id },
-          include: {
-            userRoles: {
-              include: {
-                role: true,
-              },
-            },
-          },
-        });
-        console.log(
-          `Attempt ${attempt}: Verified user data from database:`,
-          JSON.stringify(verifiedUser, null, 2)
-        );
-
+        // Immediate verification within the transaction
         if (
-          !verifiedUser ||
-          verifiedUser.firstName !== user.given_name ||
-          verifiedUser.lastName !== user.family_name ||
-          !verifiedUser.userRoles.some((ur) =>
+          !upsertedUser || // Check the result of upsert
+          upsertedUser.firstName !== user.given_name ||
+          upsertedUser.lastName !== user.family_name ||
+          !upsertedUser.userRoles.some((ur) =>
             (user.roles || ["user"]).includes(ur.role.key)
           )
         ) {
-          throw new Error("User data not saved correctly");
+          console.error("Verification failed inside transaction:", upsertedUser);
+          throw new Error("User data not saved correctly within transaction");
         }
 
-        return verifiedUser;
+        // If verification passes, return the user from the transaction
+        return upsertedUser;
       });
 
-      // Final verification (without delay)
-      const finalVerifiedUser = await prisma.user.findUnique({
-        where: { kindeId: user.id },
-        include: {
-          userRoles: {
-            include: {
-              role: true,
-            },
-          },
-        },
-      });
+      // Final verification outside the transaction (using the result `dbUser`)
       console.log(
-        `Attempt ${attempt}: Final verified user data:`,
-        JSON.stringify(finalVerifiedUser, null, 2)
+        `Attempt ${attempt}: Final verified user data (after transaction):`,
+        JSON.stringify(dbUser, null, 2) // Log the user returned from transaction
       );
-
       if (
-        !finalVerifiedUser ||
-        finalVerifiedUser.firstName !== user.given_name ||
-        finalVerifiedUser.lastName !== user.family_name ||
-        !finalVerifiedUser.userRoles.some((ur) =>
+        !dbUser || // Check the user returned from transaction
+        dbUser.firstName !== user.given_name ||
+        dbUser.lastName !== user.family_name ||
+        !dbUser.userRoles.some((ur) =>
           (user.roles || ["user"]).includes(ur.role.key)
         )
       ) {
+        console.error("Final verification failed after transaction:", dbUser);
         throw new Error("User data not consistent after final verification");
       }
 
-      return finalVerifiedUser;
+      // If all checks pass, return the verified user data
+      return dbUser;
     } catch (dbError) {
       console.error(
         `Attempt ${attempt}: Error in createOrUpdateUser:`,
@@ -229,18 +213,32 @@ export async function POST(req: NextRequest) {
 
     if (!email && !phone) {
       return NextResponse.json(
-        { error: "Either email or phone must be provided" },
+        { error: "Se debe proporcionar correo electrónico o teléfono" },
         { status: 400 }
       );
     }
 
     let token = await getKindeToken();
 
-    let registeredUser = await registerWithKinde(userData, token);
-    console.log(
-      "User registered with Kinde:",
-      JSON.stringify(registeredUser, null, 2)
-    );
+    let registeredUser;
+    try {
+      registeredUser = await registerWithKinde(userData, token);
+      console.log(
+        "User registered with Kinde:",
+        JSON.stringify(registeredUser, null, 2)
+      );
+    } catch (kindeError) {
+      // Check if it's the specific duplicate user error
+      if (kindeError instanceof Error && kindeError.message.includes("USER_ALREADY_EXISTS")) {
+        console.warn("Attempted to register an existing user:", userData.identities);
+        return NextResponse.json(
+          { error: "Ya existe un usuario con este correo electrónico o teléfono." },
+          { status: 409 } // Conflict
+        );
+      }
+      // Re-throw other Kinde errors
+      throw kindeError;
+    }
 
     const userDataForDb = {
       id: registeredUser.id,
@@ -270,8 +268,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ kindeUser: registeredUser, dbUser: dbUser });
   } catch (error) {
     console.error("Error during user registration:", error);
+    // Check if it's the duplicate user error we threw earlier
+    if (error instanceof Error && error.message === "User with this email or phone already exists.") {
+      return NextResponse.json({ error: "Ya existe un usuario con este correo electrónico o teléfono." }, { status: 409 });
+    }
+    // Check if it's a Kinde registration error that wasn't the duplicate
+    if (error instanceof Error && error.message.startsWith("Failed to register user with Kinde:")) {
+      return NextResponse.json(
+        { error: "Error al registrar el usuario con el proveedor de autenticación.", details: error.message },
+        { status: 500 }
+      );
+    }
+    // Handle other generic errors
     return NextResponse.json(
-      { error: "Failed to register user" },
+      {
+        error: "Ocurrió un error inesperado durante el registro.",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   } finally {
@@ -288,7 +301,10 @@ function formatPhoneNumber(phone: string): string {
 }
 
 async function registerWithKinde(userData: KindeUserData, token: string) {
-  const kindePayload: KindePayload = {
+  const kindeDomain = process.env.KINDE_ISSUER_URL?.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const apiUrl = `https://${kindeDomain}/api/v1/user`;
+
+  const payload: KindePayload = {
     profile: {
       given_name: userData.profile.given_name,
       family_name: userData.profile.family_name,
@@ -310,31 +326,33 @@ async function registerWithKinde(userData: KindeUserData, token: string) {
 
   console.log(
     "Sending payload to Kinde:",
-    JSON.stringify(kindePayload, null, 2)
+    JSON.stringify(payload, null, 2)
   );
 
-  const registerResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_KINDE_ISSUER_URL}/api/v1/user`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-      body: JSON.stringify(kindePayload),
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Kinde registration error response:", errorData);
+    // Throw the specific error code if available
+    if (errorData.errors && errorData.errors[0]?.code === 'USER_ALREADY_EXISTS') {
+       throw new Error('USER_ALREADY_EXISTS: ' + errorData.errors[0]?.message);
     }
-  );
-
-  if (!registerResponse.ok) {
-    const errorData = await registerResponse.json();
-    console.error("Kinde registration error:", errorData);
     throw new Error(
       `Failed to register user with Kinde: ${JSON.stringify(errorData)}`
     );
   }
 
-  return registerResponse.json();
+  const result = await response.json();
+  return result;
 }
 
 async function sendKindeInvite(userId: string, token: string) {

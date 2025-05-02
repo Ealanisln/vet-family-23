@@ -14,9 +14,11 @@ import {
   SyringeIcon,
   Users,
   ShieldCheck,
+  /* Temporarily removed for POS functionality
   CircleDollarSign,
   LayoutDashboard,
   History,
+  */
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -171,6 +173,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     },
   ];
 
+  /* Temporarily removed POS functions
   const posOptions: MenuOptionProps[] = [
     {
       title: "Panel POS",
@@ -191,6 +194,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       description: "Ver historial de ventas",
     },
   ];
+  */
 
   const userManagementOptions: MenuOptionProps[] = [
     {
@@ -272,19 +276,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ))}
           </Section>
 
-          <Section title="Punto de Venta" icon={CircleDollarSign}>
-            {posOptions.map((option, index) => (
-              <MenuOption key={index} {...option} />
-            ))}
-          </Section>
-
-          <Section title="Inventario" icon={Package}>
+          <Section icon={Package} title="Inventario">
             {inventoryOptions.map((option, index) => (
               <MenuOption key={index} {...option} />
             ))}
           </Section>
 
-          <Section title="Administración de Usuarios" icon={ShieldCheck}>
+          {/* Temporarily removed POS section
+          <Section icon={CircleDollarSign} title="Punto de Venta">
+            {posOptions.map((option, index) => (
+              <MenuOption key={index} {...option} />
+            ))}
+          </Section>
+          */}
+
+          <Section icon={ShieldCheck} title="Administración">
             {userManagementOptions.map((option, index) => (
               <MenuOption key={index} {...option} />
             ))}

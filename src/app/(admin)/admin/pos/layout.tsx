@@ -1,12 +1,16 @@
 // src/app/(admin)/admin/pos/layout.tsx
 'use client';
 
-import ClientLayout from "./ClientLayout";
+import { redirect } from "next/navigation";
 
 export default function POSLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <ClientLayout>{children}</ClientLayout>;
+  // Temporarily redirect to admin dashboard as POS functionality is disabled
+  redirect("/admin");
+  
+  // This code will not execute due to the redirect above
+  return <>{children}</>;
 }

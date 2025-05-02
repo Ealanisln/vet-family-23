@@ -1,6 +1,6 @@
 "use client"
 
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 import {
@@ -40,18 +40,38 @@ export function NavMain({
   }[]
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [openSections, setOpenSections] = useState<string[]>([])
+
+  // Redirect to admin dashboard if on a POS page (since POS functionality is disabled)
+  useEffect(() => {
+    if (pathname.startsWith('/admin/pos')) {
+      router.replace('/admin')
+    }
+  }, [pathname, router])
 
   // Inicializar las secciones abiertas basado en la ruta actual
   useEffect(() => {
+    // Find the current section based on URL
     const currentSection = items.find(item => 
       pathname.startsWith(item.url) || 
       item.items?.some(subItem => pathname.startsWith(subItem.url))
     )
     
-    if (currentSection && !openSections.includes(currentSection.title)) {
-      setOpenSections(prev => [...prev, currentSection.title])
-    }
+    // Update openSections: keep only valid sections and add current if needed
+    setOpenSections(prev => {
+      // First, filter out sections that no longer exist
+      const validSections = prev.filter(title => 
+        items.some(item => item.title === title)
+      )
+      
+      // Then, add current section if not already included
+      if (currentSection && !validSections.includes(currentSection.title)) {
+        return [...validSections, currentSection.title]
+      }
+      
+      return validSections
+    })
   }, [pathname, items])
 
   const isItemActive = (url: string) => pathname.startsWith(url)

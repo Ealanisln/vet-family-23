@@ -61,6 +61,7 @@ export default async function PetDetailsPage({
     microchipNumber: pet.microchipNumber || undefined,
     internalId: pet.internalId || undefined,
     isNeutered: pet.isNeutered,
+    isDeceased: pet.isDeceased,
     medicalHistory: pet.medicalHistory.length > 0 ? pet.medicalHistory[0].notes || "" : "",
   };
 

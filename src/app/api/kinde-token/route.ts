@@ -19,13 +19,17 @@ async function getKindeToken(grantType: string, refreshToken?: string) {
     throw new Error("Server configuration error");
   }
 
-  const tokenUrl = `https://${kindeDomain}/oauth2/token`;
+  // Ensure the domain doesn't have a leading/trailing slash or extra scheme
+  const normalizedDomain = kindeDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+  const tokenUrl = `https://${normalizedDomain}/oauth2/token`;
+  const audience = `https://${normalizedDomain}/api`;
 
   const body = new URLSearchParams({
     grant_type: grantType,
     client_id: clientId,
     client_secret: clientSecret,
-    audience: `https://${kindeDomain}/api`,
+    audience: audience, // Use the corrected audience URL
     ...(grantType === "refresh_token" && { refresh_token: refreshToken }),
   });
 

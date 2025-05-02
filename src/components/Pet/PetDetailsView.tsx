@@ -24,6 +24,7 @@ import {
   updatePetDeceasedStatus,
 } from "@/app/actions/add-edit-pet";
 import { VaccinationContainer } from "@/components/Vaccination/VaccinationContainer";
+import { DewormingContainer } from "@/components/Deworming/DewormingContainer";
 
 interface MedicalHistory {
   id: string;
@@ -44,6 +45,22 @@ interface Vaccination {
   nextDoseDate: Date;
 }
 
+interface Deworming {
+  id: string;
+  petId: string;
+  dewormingType: string;
+  stage: string;
+  status: string;
+  administrationDate: Date;
+  nextDoseDate: Date;
+  batchNumber?: string | null;
+  manufacturer?: string | null;
+  veterinarianName?: string | null;
+  notes?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface Pet {
   id: string;
   userId: string;
@@ -59,6 +76,7 @@ interface Pet {
   isDeceased: boolean;
   medicalHistory: MedicalHistory[];
   vaccinations: Vaccination[];
+  Deworming: Deworming[];
 }
 
 const calculateAge = (dateOfBirth: Date): string => {
@@ -305,6 +323,12 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         petId={pet.id}
         petSpecies={pet.species}
         vaccinations={pet.vaccinations}
+      />
+
+      <DewormingContainer 
+        petId={pet.id} 
+        petSpecies={pet.species}
+        dewormings={pet.Deworming}
       />
     </div>
   );

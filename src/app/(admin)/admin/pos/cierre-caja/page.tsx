@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   description: "Cierre de caja para el sistema POS"
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function CloseDrawerPage() {
   /*
   // TEMPORARILY COMMENTED OUT - Role/permission check seems problematic in production for this specific page.

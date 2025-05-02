@@ -144,6 +144,8 @@ export async function searchInventory({
   limit?: number;
 }) {
   try {
+    console.log('Searching inventory with:', { searchTerm, category, limit });
+    
     /*
     // REMOVED - Middleware handles authentication
     const { isAuthenticated } = getKindeServerSession();
@@ -154,11 +156,8 @@ export async function searchInventory({
     }
     */
     
-    // Build the query to search for products
-    const whereClause: Prisma.InventoryItemWhereInput = {
-      status: "ACTIVE",
-      quantity: { gt: 0 } // Solo productos con stock disponible
-    };
+    // Build the query to search for products - removing active and quantity filters temporarily
+    const whereClause: Prisma.InventoryItemWhereInput = {};
     
     // Añadir filtro por categoría si se proporciona
     if (category) {
@@ -166,27 +165,48 @@ export async function searchInventory({
     }
     
     // Añadir búsqueda por términos si se proporciona
-    if (searchTerm) {
+    if (searchTerm && searchTerm.trim().length > 0) {
       whereClause.OR = [
         {
           name: {
-            contains: searchTerm,
+            contains: searchTerm.trim(),
             mode: 'insensitive',
           },
         },
         {
           description: {
-            contains: searchTerm,
+            contains: searchTerm.trim(),
             mode: 'insensitive',
           },
         },
+        {
+          activeCompound: {
+            contains: searchTerm.trim(),
+            mode: 'insensitive',
+          },
+        },
+        {
+          brand: {
+            contains: searchTerm.trim(),
+            mode: 'insensitive',
+          },
+        }
       ];
     }
+
+    console.log('Where clause:', JSON.stringify(whereClause, null, 2));
     
-    // Buscar productos
-    const products = await prisma.inventoryItem.findMany({
+    // First, let's check how many total products match without any status/quantity filter
+    const totalCount = await prisma.inventoryItem.count({
       where: whereClause,
-      select: { // Explicitly select fields
+    });
+    
+    console.log(`Total matching products (without filters): ${totalCount}`);
+
+    // Now let's get all matching products to see their status and quantity
+    const allProducts = await prisma.inventoryItem.findMany({
+      where: whereClause,
+      select: {
         id: true,
         name: true,
         description: true,
@@ -199,27 +219,41 @@ export async function searchInventory({
         expirationDate: true,
         createdAt: true,
         updatedAt: true,
+        activeCompound: true,
+        brand: true,
       },
-      orderBy: {
-        name: "asc",
-      },
-      take: limit,
+      orderBy: [
+        { name: "asc" },
+      ],
     });
+
+    console.log('All matching products:', allProducts.map(p => ({
+      id: p.id,
+      name: p.name,
+      status: p.status,
+      quantity: p.quantity
+    })));
+
+    // Now filter for active products with stock
+    const activeProducts = allProducts.filter(p => 
+      p.status === "ACTIVE" && p.quantity > 0
+    ).slice(0, limit);
+
+    console.log(`Found ${activeProducts.length} active products with stock`);
     
     // Aplicar precio predeterminado y convertir fechas a ISO string
-    const productsWithPrice = applyDefaultPrice(products);
-    return productsWithPrice.map(product => ({
+    const result = activeProducts.map(product => ({
       ...product,
       price: product.price as number,
       expirationDate: product.expirationDate?.toISOString() || null,
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt?.toISOString() || null,
     }));
+
+    console.log('Returning products:', result.length);
+    return result;
     
   } catch (error: unknown) {
-    if (error instanceof ServerActionError) {
-      throw error;
-    }
     console.error("Error searching inventory:", error);
     throw new ServerActionError("Error al buscar en el inventario");
   }

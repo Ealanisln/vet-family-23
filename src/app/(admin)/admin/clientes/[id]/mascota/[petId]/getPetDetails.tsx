@@ -30,6 +30,7 @@ export async function getPetDetails(userId: string, petId: string) {
         isDeceased: true,
         medicalHistory: true,
         vaccinations: true,
+        Deworming: true,
       },
     });
 

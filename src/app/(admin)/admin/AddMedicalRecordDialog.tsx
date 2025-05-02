@@ -42,7 +42,7 @@ import {
   PetForMedicalRecord,
 } from "@/app/actions/add-medical-record";
 import { useToast } from "@/components/ui/use-toast";
-import { EditIcon, PlusCircle, Search, X } from "lucide-react";
+import { EditIcon, PlusCircle, Search, X, Loader2 } from "lucide-react";
 import { searchInventory } from "@/app/actions/pos/inventory";
 import { InventoryCategory, InventoryStatus } from '@prisma/client';
 
@@ -109,6 +109,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [openCombobox, setOpenCombobox] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [record, setRecord] = useState<MedicalHistory>({
     id: existingRecord?.id || undefined,
     petId: existingRecord?.petId || petId || "",
@@ -188,28 +189,60 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
 
   // Efecto para búsqueda automática mientras se escribe
   useEffect(() => {
+    let isSubscribed = true;
+
     const searchProducts = async () => {
-      if (productsSection.searchValue.trim().length > 2) {
+      const searchTerm = productsSection.searchValue.trim();
+      
+      if (searchTerm.length < 3) {
+        return;
+      }
+
+      try {
+        console.log('Iniciando búsqueda para:', searchTerm);
         const results = await searchInventory({
-          searchTerm: productsSection.searchValue,
-          limit: 5,
+          searchTerm,
+          limit: 10,
         });
         
+        console.log('Resultados de búsqueda:', results);
+        
+        if (!isSubscribed) {
+          console.log('Componente desmontado, ignorando resultados');
+          return;
+        }
+
         // Adaptar los resultados a nuestro tipo
         const safeResults: InventorySearchResultAdjusted[] = results.map(item => ({
           ...item,
-          // Convertir explícitamente price a number si es necesario
           price: typeof item.price === 'number' ? item.price : 0
         }));
         
-        setProductsSection(prev => ({ ...prev, searchResults: safeResults }));
-      } else {
-        setProductsSection(prev => ({ ...prev, searchResults: [] }));
+        console.log('Resultados procesados:', safeResults);
+        
+        if (isSubscribed) {
+          setProductsSection(prev => ({
+            ...prev,
+            searchResults: safeResults
+          }));
+        }
+      } catch (error) {
+        console.error('Error en la búsqueda:', error);
+        if (isSubscribed) {
+          setProductsSection(prev => ({
+            ...prev,
+            searchResults: []
+          }));
+        }
       }
     };
 
-    const timeoutId = setTimeout(searchProducts, 300);
-    return () => clearTimeout(timeoutId);
+    const timeoutId = setTimeout(searchProducts, 500);
+
+    return () => {
+      isSubscribed = false;
+      clearTimeout(timeoutId);
+    };
   }, [productsSection.searchValue]);
 
   // Inicializar productos seleccionados (si existen) cuando se edita un registro
@@ -326,6 +359,9 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       if (!record.petId || !record.userId) {
@@ -388,6 +424,8 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -576,12 +614,25 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                         <Input
                           placeholder="Buscar medicamento..."
                           value={productsSection.searchValue}
-                          onChange={(e) => setProductsSection(prev => ({ ...prev, searchValue: e.target.value }))}
+                          onChange={(e) => {
+                            console.log('Search input changed:', e.target.value);
+                            setProductsSection(prev => ({ 
+                              ...prev, 
+                              searchValue: e.target.value,
+                              searchResults: e.target.value.length < 3 ? [] : prev.searchResults 
+                            }));
+                          }}
                           className="w-full pl-9"
                         />
                         <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       </div>
                     </div>
+
+                    {productsSection.searchValue.length > 0 && productsSection.searchValue.length < 3 && (
+                      <div className="text-sm text-gray-500">
+                        Ingrese al menos 3 caracteres para buscar
+                      </div>
+                    )}
 
                     {productsSection.searchResults.length > 0 && (
                       <div className="border rounded-md bg-white shadow-sm">
@@ -593,17 +644,28 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                                 onSelect={() => handleAddProduct(product)}
                                 className="cursor-pointer hover:bg-gray-50"
                               >
-                                <div className="flex items-center w-full py-1">
-                                  <span>
-                                    {product.name}
-                                    {product.presentation ? ` - ${product.presentation}` : ''}
-                                    {product.measure ? ` - ${product.measure}` : ''}
+                                <div className="flex items-center justify-between w-full py-1">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{product.name}</span>
+                                    <span className="text-sm text-gray-500">
+                                      {product.presentation ? `${product.presentation}` : ''}
+                                      {product.measure ? ` - ${product.measure}` : ''}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm text-gray-600">
+                                    Stock: {product.quantity}
                                   </span>
                                 </div>
                               </CommandItem>
                             ))}
                           </CommandGroup>
                         </Command>
+                      </div>
+                    )}
+
+                    {productsSection.searchValue.length >= 3 && productsSection.searchResults.length === 0 && (
+                      <div className="text-sm text-gray-500">
+                        No se encontraron medicamentos
                       </div>
                     )}
 
@@ -697,10 +759,15 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
           </div>
 
           <DialogFooter>
-            <Button type="submit" className="w-full sm:w-auto">
-              {existingRecord
-                ? "Actualizar Historial Médico"
-                : "Guardar Historial Médico"}
+            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {existingRecord ? "Actualizando..." : "Guardando..."}
+                </>
+              ) : (
+                existingRecord ? "Actualizar Historial Médico" : "Guardar Historial Médico"
+              )}
             </Button>
           </DialogFooter>
         </form>

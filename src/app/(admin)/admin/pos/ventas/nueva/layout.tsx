@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: "Crear una nueva venta en el sistema POS",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewSaleLayout({
   children,
 }: {

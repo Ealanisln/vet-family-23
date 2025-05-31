@@ -4,8 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "dotenv -e .env.local next dev",
+    "dev:staging": "dotenv -e .env.development next dev",
     "build": "pnpm prisma generate && next build",
+    "build:development": "dotenv -e .env.development pnpm prisma generate && dotenv -e .env.development next build",
+    "build:production": "dotenv -e .env.production pnpm prisma generate && dotenv -e .env.production next build",
     "start": "dotenv -e .env.production next start",
+    "start:development": "dotenv -e .env.development next start",
+    "start:production": "dotenv -e .env.production next start",
     "lint": "next lint",
     "lint:strict": "eslint --max-warnings=0 .",
     "lint:fix": "eslint --fix .",
@@ -14,7 +19,12 @@
     "backup": "sh src/scripts/backup.sh",
     "verify-backup": "sh src/scripts/verify-backup.sh",
     "backup:build": "tsc src/scripts/backup.ts && node dist/backup.js",
-    "backup:watch": "tsx watch src/scripts/backup.ts"
+    "backup:watch": "tsx watch src/scripts/backup.ts",
+    "setup:env": "node scripts/setup-environments.js",
+    "setup:kinde": "node scripts/update-kinde-config.js",
+    "deploy:dev": "node scripts/deploy.js development",
+    "deploy:prod": "node scripts/deploy.js production",
+    "env:check": "node -e \"console.log('Environment:', process.env.NODE_ENV); console.log('Site URL:', process.env.NEXT_PUBLIC_SITE_URL);\""
   },
   "dependencies": {
     "@cloudinary/react": "^1.13.1",

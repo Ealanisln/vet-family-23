@@ -12,10 +12,11 @@ export const kindeConfig = {
     // 30 días para las cookies de sesión
     sessionCookieLifetime: 30 * 24 * 60 * 60,
     // Configuración de seguridad para las cookies
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' en producción para permitir cookies cross-site
-    secure: process.env.NODE_ENV === 'production', // true en producción
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'lax' para desarrollo local
+    secure: process.env.NODE_ENV === 'production', // false en desarrollo para localhost
     httpOnly: true,
-    domain: process.env.KINDE_COOKIE_DOMAIN || undefined,
+    // No configurar domain para localhost
+    domain: process.env.NODE_ENV === 'production' ? process.env.KINDE_COOKIE_DOMAIN : undefined,
   },
   
   // Scopes para la autenticación
@@ -31,9 +32,9 @@ export const kindeConfig = {
     enableRefreshTokenRotation: true,
   },
   
-  // Configuración de estado
+  // Configuración de estado - Aumentar tiempo para debugging
   stateOptions: {
-    expiresIn: 10 * 60, // 10 minutos para el estado de autenticación
+    expiresIn: 15 * 60, // 15 minutos para el estado de autenticación (aumentado para debugging)
   },
   
   // Configuración de redirección

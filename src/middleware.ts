@@ -15,6 +15,10 @@ const matchesPath = (pathname: string, patterns: string[]) => {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // DESHABILITAR TEMPORALMENTE PARA DEBUG
+  console.log('[Middleware] Bypassing all auth checks for debugging');
+  return NextResponse.next();
+
   // Bypass inmediato para rutas estáticas y de autenticación
   if (
     matchesPath(pathname, [...STATIC_PATHS, ...AUTH_PATHS]) ||

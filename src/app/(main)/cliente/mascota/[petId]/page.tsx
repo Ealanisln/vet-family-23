@@ -7,10 +7,11 @@ import PetDetailsView from './PetDetailsView';
 export default async function PetDetailsPage({
   params,
 }: {
-  params: { petId: string };
+  params: Promise<{ petId: string }>;
 }) {
+  const { petId } = await params;
   try {
-    const pet = await getPetDetails(params.petId);
+    const pet = await getPetDetails(petId);
     if (!pet) {
       notFound();
     }

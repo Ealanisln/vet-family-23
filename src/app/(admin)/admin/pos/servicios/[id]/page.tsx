@@ -16,7 +16,8 @@ export const metadata: Metadata = {
   description: "Detalles del servicio veterinario"
 };
 
-export default async function ServiceDetailPage({ params }: { params: { id: string } }) {
+export default async function ServiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   // Verificar que el usuario tiene permisos para el POS
   const { isAuthenticated, getUser } = getKindeServerSession();
   
@@ -35,7 +36,7 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
   }
   
   // Obtener los detalles del servicio
-  const service = await getServiceById(params.id) as ServiceWithRelations | null;
+  const service = await getServiceById(id) as ServiceWithRelations | null;
   
   if (!service) {
     return (

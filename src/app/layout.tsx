@@ -5,6 +5,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Toaster } from "@/components/ui/toaster";
 import { Metadata } from "next";
 import { KindeProvider } from "@/providers/KindeProvider";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -71,6 +72,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        {/* Umami Analytics */}
+        <Script
+          defer
+          src="https://analytics.alanis.dev/script.js"
+          data-website-id="cf308b66-5594-4efb-99e6-d01d149ec9f3"
+          strategy="afterInteractive"
+        />
+      </head>
       <body>
         <KindeProvider>
           {children}

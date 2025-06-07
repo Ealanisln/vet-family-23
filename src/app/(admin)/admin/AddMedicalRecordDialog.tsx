@@ -44,7 +44,9 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { EditIcon, PlusCircle, Search, X, Loader2 } from "lucide-react";
 import { searchInventory } from "@/app/actions/pos/inventory";
-import { InventoryCategory, InventoryStatus } from '@prisma/client';
+import { prisma } from "@/lib/prismaDB";
+type InventoryCategory = "MEDICATION" | "FOOD" | "ACCESSORIES" | "HYGIENE" | "TOYS" | "SUPPLEMENTS" | "EQUIPMENT" | "CONSUMABLES" | "OTHER";
+type InventoryStatus = "ACTIVE" | "INACTIVE" | "DISCONTINUED";
 
 interface MedicalHistory {
   id?: string;
@@ -213,7 +215,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         }
 
         // Adaptar los resultados a nuestro tipo
-        const safeResults: InventorySearchResultAdjusted[] = results.map(item => ({
+        const safeResults: InventorySearchResultAdjusted[] = results.map((item: any) => ({
           ...item,
           price: typeof item.price === 'number' ? item.price : 0
         }));

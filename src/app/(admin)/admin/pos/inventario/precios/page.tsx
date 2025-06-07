@@ -62,12 +62,13 @@ export const dynamic = "force-dynamic"; // Asegurarse de que la página se rende
 export default async function PriceManagementPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     search?: string;
     page?: string;
-  };
+  }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   /*
   // TEMPORARILY COMMENTED OUT - Role/permission check seems problematic in production for this specific page.
   // Middleware already ensures authentication for /admin routes.
@@ -88,9 +89,9 @@ export default async function PriceManagementPage({
   */
 
   // Obtener parámetros de búsqueda y paginación
-  const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
-  const category = searchParams.category as InventoryCategory | null;
-  const search = searchParams.search || "";
+  const page = resolvedSearchParams.page ? parseInt(resolvedSearchParams.page, 10) : 1;
+  const category = resolvedSearchParams.category as InventoryCategory | null;
+  const search = resolvedSearchParams.search || "";
   const limit = 10;
 
   // Construir la consulta

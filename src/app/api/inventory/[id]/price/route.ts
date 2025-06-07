@@ -5,8 +5,9 @@ import { randomUUID } from "crypto";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const { getUser } = getKindeServerSession();
     const user = await getUser();
@@ -102,7 +103,7 @@ export async function PATCH(
 
     // Actualizar el producto
     const updatedProduct = await prisma.inventoryItem.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         price,
         cost,

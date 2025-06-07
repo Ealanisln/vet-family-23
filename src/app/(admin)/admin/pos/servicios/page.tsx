@@ -38,12 +38,13 @@ export const dynamic = "force-dynamic"; // Asegurarse de que la página se rende
 export default async function ServiciosPage({
   searchParams,
 }: {
-  searchParams: { 
+  searchParams: Promise<{ 
     page?: string;
     category?: string;
     isActive?: string;
-  };
+  }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   /*
   // TEMPORARILY COMMENTED OUT - Role/permission check seems problematic in production for this specific page.
   // Middleware already ensures authentication for /admin routes.
@@ -69,10 +70,10 @@ export default async function ServiciosPage({
   */
 
   // Obtener parámetros de búsqueda y filtrado
-  const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
-  const category = searchParams.category as ServiceCategory | null;
-  const isActive = searchParams.isActive 
-    ? searchParams.isActive === "true" 
+  const page = resolvedSearchParams.page ? parseInt(resolvedSearchParams.page, 10) : 1;
+  const category = resolvedSearchParams.category as ServiceCategory | null;
+  const isActive = resolvedSearchParams.isActive 
+    ? resolvedSearchParams.isActive === "true" 
     : null;
   
   // Obtener los servicios

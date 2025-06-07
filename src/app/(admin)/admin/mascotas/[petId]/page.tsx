@@ -25,10 +25,11 @@ import PetForm from "@/components/Admin/ui/PetForm";
 export default async function PetDetailsPage({
   params,
 }: {
-  params: { petId: string };
+  params: Promise<{ petId: string }>;
 }) {
+  const { petId } = await params;
   const pet = await prisma.pet.findUnique({
-    where: { id: params.petId },
+    where: { id: petId },
     include: {
       user: true,
       vaccinations: true,

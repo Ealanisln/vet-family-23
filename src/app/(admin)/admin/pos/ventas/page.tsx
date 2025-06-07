@@ -12,17 +12,18 @@ export const metadata: Metadata = {
 };
 
 interface SalesPageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string;
     limit?: string;
     search?: string;
     status?: string;
     startDate?: string;
     endDate?: string;
-  };
+  }>;
 }
 
 export default async function SalesPage({ searchParams }: SalesPageProps) {
+  const resolvedSearchParams = await searchParams;
   /*
   // TEMPORARILY COMMENTED OUT - Role/permission check seems problematic in production for this specific page.
   // Middleware already ensures authentication for /admin routes.
@@ -46,8 +47,8 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   */
 
   // Obtener parámetros de búsqueda y paginación
-  const page = parseInt(searchParams.page || "1");
-  const limit = parseInt(searchParams.limit || "10");
+  const page = parseInt(resolvedSearchParams.page || "1");
+  const limit = parseInt(resolvedSearchParams.limit || "10");
   
   // Definir interfaz para los filtros
   interface SalesFilters {
@@ -60,20 +61,20 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   // Construir filtros
   const filters: SalesFilters = {};
   
-  if (searchParams.search) {
-    filters.search = searchParams.search;
+  if (resolvedSearchParams.search) {
+    filters.search = resolvedSearchParams.search;
   }
   
-  if (searchParams.status && searchParams.status !== "ALL") {
-    filters.status = searchParams.status;
+  if (resolvedSearchParams.status && resolvedSearchParams.status !== "ALL") {
+    filters.status = resolvedSearchParams.status;
   }
   
-  if (searchParams.startDate) {
-    filters.startDate = new Date(searchParams.startDate);
+  if (resolvedSearchParams.startDate) {
+    filters.startDate = new Date(resolvedSearchParams.startDate);
   }
   
-  if (searchParams.endDate) {
-    const endDate = new Date(searchParams.endDate);
+  if (resolvedSearchParams.endDate) {
+    const endDate = new Date(resolvedSearchParams.endDate);
     // Ajustar la fecha final para incluir todo el día
     endDate.setHours(23, 59, 59, 999);
     filters.endDate = endDate;

@@ -3,10 +3,11 @@ import { getUserById } from "@/app/actions/get-customers";
 import { notFound } from "next/navigation";
 import ClientDetails from './ClientDetails';
 
-export default async function UserPage({ params }: { params: { id: string } }) {
+export default async function UserPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let user;
   try {
-    user = await getUserById(params.id);
+    user = await getUserById(id);
   } catch (error) {
     notFound();
   }

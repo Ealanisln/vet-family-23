@@ -15,6 +15,16 @@ const nextConfig = {
     ignoreDuringBuilds: false, // Fail build if there are ESLint errors
   },
 
+  // Turbopack configuration (stable in Next.js 15)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
+
   // Images configuration (your existing config is good)
   images: {
     remotePatterns: [
@@ -68,9 +78,16 @@ const nextConfig = {
 
   // Performance optimizations
   poweredByHeader: false,
-  swcMinify: true,
   compress: true, // Add gzip compression
   reactStrictMode: true, // Recommended for better development experience
+
+  // Next.js 15 experimental features
+  experimental: {
+    // Enable React 19 features
+    reactCompiler: false, // Set to true if you want to use React Compiler
+    // Partial Prerendering is stable in Next.js 15
+    ppr: false, // Enable if you want to use Partial Prerendering
+  },
 
   // TypeScript configuration
   typescript: {

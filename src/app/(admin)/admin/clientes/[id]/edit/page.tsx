@@ -23,7 +23,7 @@ type ClientData = {
   nextVisitFree: boolean;
 }
 
-export default function EditClientPage({ params }: { params: { id: string } }) {
+export default function EditClientPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
   const [client, setClient] = useState<ClientData>({
@@ -36,10 +36,22 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
     visits: 0,
     nextVisitFree: false,
   })
+  const [clientId, setClientId] = useState<string>('')
+
+  // Handle async params
+  useEffect(() => {
+    const resolveParams = async () => {
+      const resolvedParams = await params
+      setClientId(resolvedParams.id)
+    }
+    resolveParams()
+  }, [params])
 
   const fetchUser = useCallback(async () => {
+    if (!clientId) return
+    
     try {
-      const userData = await getUserById(params.id)
+      const userData = await getUserById(clientId)
       setClient({
         id: userData.id,
         firstName: userData.firstName ?? '',
@@ -58,7 +70,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
         variant: "destructive",
       })
     }
-  }, [params.id, toast])
+  }, [clientId, toast])
 
   useEffect(() => {
     fetchUser()

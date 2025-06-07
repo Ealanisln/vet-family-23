@@ -11,17 +11,19 @@ import { Sale } from "@/types/pos"; // Keep Sale type for data fetching
 import SaleDetailClient from './SaleDetailClient'; 
 
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   try {
+    const { id } = await params;
     // Fetch basic sale info for title - consider fetching only necessary fields if performance is key
-    const sale = await getSaleById(params.id);
+    const sale = await getSaleById(id);
     return {
       title: `Venta ${sale.receiptNumber} | POS`,
       description: `Detalles de la venta ${sale.receiptNumber}`
     };
   } catch (error) {
     // Handle cases where the sale might not be found or other errors
-    console.error(`Error generating metadata for sale ${params.id}:`, error);
+    const { id } = await params;
+    console.error(`Error generating metadata for sale ${id}:`, error);
     return {
       title: "Detalle de Venta | POS",
       description: "Ver detalles de una venta"
@@ -31,10 +33,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 // Define the component props
 interface SaleDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function SaleDetailPage({ params }: SaleDetailPageProps) {
+  const { id } = await params;
   // Verify user permissions (Keep this server-side logic)
   const { isAuthenticated, getUser } = getKindeServerSession();
   
@@ -54,9 +57,9 @@ export default async function SaleDetailPage({ params }: SaleDetailPageProps) {
   // Fetch the complete sale details (Keep this server-side logic)
   let sale: Sale;
   try {
-    sale = await getSaleById(params.id);
+    sale = await getSaleById(id);
   } catch (error) {
-    console.error(`Error fetching sale ${params.id}:`, error);
+    console.error(`Error fetching sale ${id}:`, error);
     // If getSaleById throws "Venta no encontrada.", notFound() is appropriate
     if (error instanceof Error && error.message === "Venta no encontrada.") {
         return notFound();

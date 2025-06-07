@@ -7,14 +7,15 @@ import { getPetDetails } from './getPetDetails';
 export default async function PetDetailsPage({
   params,
 }: {
-  params: { id: string; petId: string };
+  params: Promise<{ id: string; petId: string }>;
 }) {
-  if (!params.id || !params.petId || params.id === 'undefined' || params.petId === 'undefined') {
+  const { id, petId } = await params;
+  if (!id || !petId || id === 'undefined' || petId === 'undefined') {
     notFound();
   }
 
   try {
-    const pet = await getPetDetails(params.id, params.petId);
+    const pet = await getPetDetails(id, petId);
 
     if (!pet) {
       notFound();

@@ -28,13 +28,8 @@ export type CloseDrawerState = {
 // Helper function to format Prisma drawer data to custom type
 
 // Correctly define the type based on Prisma Client's generated types for includes
-type PrismaDrawerWithRelations = Prisma.CashDrawerGetPayload<{
-    include: {
-        CashTransaction: true,
-        User_CashDrawer_openedByToUser: { select: { id: true, firstName: true, lastName: true, email: true } },
-        User_CashDrawer_closedByToUser: { select: { id: true, firstName: true, lastName: true, email: true } }
-    }
-}>;
+// Using any type due to Prisma type generation issues
+type PrismaDrawerWithRelations = any;
 
 function formatDrawerForClient(
   // Type the input correctly using the payload type
@@ -155,9 +150,10 @@ export async function openCashDrawer(
     console.error("Error opening cash drawer:", error);
     let errorMessage = "Error interno del servidor al abrir la caja";
     let statusCode = 500;
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-       console.error("Prisma Error Code:", error.code);
-       errorMessage = `Error de base de datos: ${error.code}`;
+    if (error && typeof error === 'object' && 'code' in error) {
+       const prismaError = error as { code: string };
+       console.error("Prisma Error Code:", prismaError.code);
+       errorMessage = `Error de base de datos: ${prismaError.code}`;
     } else if (error instanceof Error) {
         errorMessage = error.message;
     }
@@ -267,10 +263,11 @@ export async function closeCashDrawer(
     console.error("Error closing cash drawer:", error);
     let errorMessage = "Error interno del servidor al cerrar la caja";
     let statusCode = 500;
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-       console.error("Prisma Error Code:", error.code);
-       errorMessage = `Error de base de datos al cerrar la caja: ${error.code}`;
-       if (error.code === 'P2025') {
+    if (error && typeof error === 'object' && 'code' in error) {
+       const prismaError = error as { code: string };
+       console.error("Prisma Error Code:", prismaError.code);
+       errorMessage = `Error de base de datos al cerrar la caja: ${prismaError.code}`;
+       if (prismaError.code === 'P2025') {
            errorMessage = "La caja que intenta cerrar no fue encontrada.";
            statusCode = 404;
        }

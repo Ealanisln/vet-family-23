@@ -148,7 +148,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
           setPets(alivePets);
           setError(null);
         } else {
-          console.error("Error fetching pets:", result.error);
+          console.error("Error fetching pets:", (result as any).error);
           setError(
             "No se pudieron cargar las mascotas. Por favor, intente de nuevo más tarde."
           );
@@ -179,7 +179,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
              // setRecord(prev => ({ ...prev, petId: '', userId: '' })); 
           }
         } else {
-          console.error("Error fetching pets:", result.error);
+          console.error("Error fetching pets:", (result as any).error);
           setError(
             "No se pudieron cargar los datos de las mascotas. Por favor, intente de nuevo más tarde."
           );
@@ -413,7 +413,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         
         setIsOpen(false);
       } else {
-        throw new Error(result.error);
+        throw new Error((result as any).error);
       }
     } catch (error) {
       console.error("Error al procesar el historial médico:", error);

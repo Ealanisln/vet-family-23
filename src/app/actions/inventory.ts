@@ -40,8 +40,8 @@ export async function searchInventoryItems({
               { brand: { contains: searchTerm, mode: "insensitive" } },
             ],
           },
-          category ? { category: category as InventoryCategory } : {},
-          status ? { status: status as InventoryStatus } : {},
+          category ? { category: category } : {},
+          status ? { status: status } : {},
         ],
       },
       orderBy: [{ name: "asc" }],
@@ -150,10 +150,10 @@ export async function updateInventoryItem(
           status:
             data.quantity !== undefined
               ? data.quantity <= (data.minStock || currentItem.minStock || 0)
-                ? InventoryStatus.LOW_STOCK
+                ? "LOW_STOCK"
                 : data.quantity === 0
-                  ? InventoryStatus.OUT_OF_STOCK
-                  : InventoryStatus.ACTIVE
+                  ? "OUT_OF_STOCK"
+                  : "ACTIVE"
               : data.status,
         },
       });
@@ -167,8 +167,8 @@ export async function updateInventoryItem(
             itemId: id,
             type:
               data.quantity > currentItem.quantity
-                ? MovementType.IN
-                : MovementType.OUT,
+                ? "IN"
+                : "OUT",
             quantity: Math.abs(data.quantity - currentItem.quantity),
             reason: reason || "Manual adjustment",
             date: new Date(),
@@ -241,10 +241,10 @@ export async function createInventoryItem(
         specialNotes: data.specialNotes?.trim() || null,
         status:
           data.quantity <= (data.minStock || 0)
-            ? InventoryStatus.LOW_STOCK
+            ? "LOW_STOCK"
             : data.quantity === 0
-              ? InventoryStatus.OUT_OF_STOCK
-              : InventoryStatus.ACTIVE,
+              ? "OUT_OF_STOCK"
+              : "ACTIVE",
       },
     });
 
@@ -252,7 +252,7 @@ export async function createInventoryItem(
       await prisma.inventoryMovement.create({
         data: {
           itemId: newItem.id,
-          type: MovementType.IN,
+          type: "IN",
           quantity: data.quantity,
           reason: reason || "Initial stock",
           date: new Date(),

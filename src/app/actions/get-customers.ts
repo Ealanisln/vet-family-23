@@ -10,13 +10,32 @@ import { prisma } from "@/lib/prismaDB";
 // Type guard for Prisma errors
 function isPrismaError(
   error: unknown
-): error is Prisma.PrismaClientKnownRequestError {
-  return error instanceof Prisma.PrismaClientKnownRequestError;
+): error is { code: string } {
+  return error !== null && typeof error === 'object' && 'code' in error;
 }
 
 // Define better return types
-type UserWithRoles = any & {
-  roles: any[];
+type UserWithRoles = {
+  id: string;
+  kindeId: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  name: string | null;
+  phone: string | null;
+  address: string | null;
+  preferredContactMethod: string | null;
+  pet: string | null;
+  visits: number;
+  nextVisitFree: boolean;
+  lastVisit: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  roles: Array<{
+    id: string;
+    key: string;
+    name: string;
+  }>;
 };
 
 // Custom error class
@@ -43,9 +62,9 @@ export async function getUsers(): Promise<UserWithRoles[]> {
       },
     });
 
-    return users.map((user) => ({
+    return users.map((user: any) => ({
       ...user,
-      roles: user.userRoles.map((ur) => ur.role),
+      roles: user.userRoles.map((ur: any) => ur.role),
       userRoles: undefined,
     })) as UserWithRoles[];
   } catch (error: unknown) {
@@ -77,7 +96,7 @@ export async function getUserById(id: string): Promise<UserWithRoles> {
 
     return {
       ...user,
-      roles: user.userRoles.map((ur) => ur.role),
+      roles: user.userRoles.map((ur: any) => ur.role),
       userRoles: undefined,
     } as UserWithRoles;
   } catch (error: unknown) {
@@ -148,7 +167,7 @@ export async function updateUser(
 
     return {
       ...updatedUser,
-      roles: updatedUser.userRoles.map((ur) => ur.role),
+      roles: updatedUser.userRoles.map((ur: any) => ur.role),
       userRoles: undefined,
     } as UserWithRoles;
   } catch (error: unknown) {
@@ -204,7 +223,7 @@ export async function createUser(
       : [];
 
     // Create user with transaction to ensure atomicity
-    const user = await prisma.$transaction(async (tx) => {
+    const user = await prisma.$transaction(async (tx: any) => {
       const newUser = await tx.user.create({
         data: {
           id: randomUUID(),
@@ -249,7 +268,7 @@ export async function createUser(
 
     return {
       ...userWithRoles,
-      roles: userWithRoles.userRoles.map((ur) => ur.role),
+      roles: userWithRoles.userRoles.map((ur: any) => ur.role),
       userRoles: undefined,
     } as UserWithRoles;
   } catch (error: unknown) {
@@ -267,7 +286,7 @@ export async function createUser(
   }
 }
 
-export async function deleteUser(userId: string): Promise<User> {
+export async function deleteUser(userId: string): Promise<any> {
   try {
     // Delete user and all related data using cascade
     const deletedUser = await prisma.user.delete({

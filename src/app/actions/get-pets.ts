@@ -5,8 +5,8 @@
 import { PrismaClient, Prisma } from '@prisma/client'
 
 // Type guard for Prisma errors
-function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
-  return error instanceof Prisma.PrismaClientKnownRequestError;
+function isPrismaError(error: unknown): error is { code: string } {
+  return error !== null && typeof error === 'object' && 'code' in error;
 }
 
 // Custom error class

@@ -41,7 +41,7 @@ export const getClientData = cache(async (): Promise<ClientData> => {
 
   try {
     // Use a transaction for atomicity
-    const user = await prisma.$transaction(async (tx) => {
+    const user = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       let user = await tx.user.findUnique({
         where: { kindeId: kindeUser.id },
         select: {
@@ -240,29 +240,30 @@ export const getClientData = cache(async (): Promise<ClientData> => {
       address: user.address ?? "",
       visits: user.visits,
       nextVisitFree: user.nextVisitFree,
-      pets: user.pets.map((pet) => ({
+      pets: user.pets.map((pet: { id: string; name: string; species: string }) => ({
         id: pet.id,
         name: pet.name,
         species: pet.species,
       })),
-      appointments: user.appointments.map((appointment) => ({
+      appointments: user.appointments.map((appointment: { id: string; dateTime: Date; reason: string }) => ({
         id: appointment.id,
         dateTime: appointment.dateTime.toISOString(),
         reason: appointment.reason,
       })),
-      roles: user.userRoles.map((userRole) => userRole.role.key),
+      roles: user.userRoles.map((userRole: { role: { key: string } }) => userRole.role.key),
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching client data:", error);
     
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      switch (error.code) {
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
         case 'P2002':
           throw new Error('Duplicate user record found');
         case 'P2025':
           throw new Error('User record not found');
         default:
-          throw new Error(`Database error: ${error.code}`);
+          throw new Error(`Database error: ${prismaError.code}`);
       }
     }
     

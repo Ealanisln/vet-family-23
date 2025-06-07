@@ -1,6 +1,6 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 const prisma = new PrismaClient();
@@ -13,6 +13,31 @@ export interface PetForMedicalRecord {
   isDeceased: boolean;
   userId: string;
 }
+
+// Define the type for the pet query result
+type PetWithUser = {
+  id: string;
+  name: string;
+  species: string;
+  isDeceased: boolean;
+  userId: string;
+  user: {
+    firstName: string | null;
+    lastName: string | null;
+  } | null;
+};
+
+// Define MedicalHistory type
+type MedicalHistory = {
+  id: string;
+  petId: string;
+  visitDate: Date;
+  reasonForVisit: string;
+  diagnosis: string;
+  treatment: string;
+  prescriptions: string[];
+  notes: string | null;
+};
 
 type GetPetsForMedicalRecordResult =
   | { success: true; pets: PetForMedicalRecord[] }
@@ -45,7 +70,7 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
       ],
     });
 
-    const formattedPets: PetForMedicalRecord[] = pets.map((pet) => ({
+    const formattedPets: PetForMedicalRecord[] = pets.map((pet: PetWithUser) => ({
       id: pet.id,
       name: pet.name,
       species: pet.species,
@@ -59,15 +84,16 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
     return { success: true, pets: formattedPets };
   } catch (error) {
     console.error("Failed to fetch pets for medical record:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error && typeof error === 'object' && 'code' in error) {
       // Handle specific PostgreSQL errors
-      switch (error.code) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
         case 'P2002':
           return { success: false, error: "Duplicate record found" };
         case 'P2025':
           return { success: false, error: "Record not found" };
         default:
-          return { success: false, error: `Database error: ${error.code}` };
+          return { success: false, error: `Database error: ${prismaError.code}` };
       }
     }
     return { success: false, error: "Failed to fetch pets for medical record" };
@@ -108,7 +134,7 @@ export async function addMedicalHistory(
     }
 
     // Start a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const data = recordData;
       
       const newRecord = await tx.medicalHistory.create({
@@ -138,12 +164,13 @@ export async function addMedicalHistory(
     return { success: true, record: result };
   } catch (error) {
     console.error("Failed to add medical history:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      switch (error.code) {
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
         case 'P2003':
           return { success: false, error: "Referenced pet does not exist" };
         default:
-          return { success: false, error: `Database error: ${error.code}` };
+          return { success: false, error: `Database error: ${prismaError.code}` };
       }
     }
     return { success: false, error: "Failed to add medical history" };
@@ -192,14 +219,15 @@ export async function updateMedicalHistory(
     return { success: true, record: updatedRecord };
   } catch (error) {
     console.error("Failed to update medical history:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      switch (error.code) {
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
         case 'P2025':
           return { success: false, error: "Record not found" };
         case 'P2003':
           return { success: false, error: "Referenced pet does not exist" };
         default:
-          return { success: false, error: `Database error: ${error.code}` };
+          return { success: false, error: `Database error: ${prismaError.code}` };
       }
     }
     return { success: false, error: "Failed to update medical history" };

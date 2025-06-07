@@ -25,7 +25,7 @@ export async function deletePet(
   }
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // First verify the pet belongs to the user
       const existingPet = await tx.pet.findFirst({
         where: {
@@ -58,12 +58,13 @@ export async function deletePet(
     return { 
       success: true 
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to delete pet:", error);
     console.error("Error stack trace:", error instanceof Error ? error.stack : "No stack trace available");
     
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      switch (error.code) {
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
         case 'P2025':
           return { 
             success: false, 
@@ -77,7 +78,7 @@ export async function deletePet(
         default:
           return { 
             success: false, 
-            error: `Error de base de datos: ${error.code}` 
+            error: `Error de base de datos: ${prismaError.code}` 
           };
       }
     }

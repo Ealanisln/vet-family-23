@@ -3,8 +3,7 @@
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
 import { IDewormingInput } from "@/types/pet";
-import { DewormingType, DewormingStage, DewormingStatus } from "@prisma/client";
-
+// Using string literals instead of importing enums due to type generation issues
 export async function addDeworming(petId: string, data: IDewormingInput) {
   try {
     if (!data.dewormingType || !data.stage || !data.administrationDate || !data.nextDoseDate) {
@@ -18,9 +17,9 @@ export async function addDeworming(petId: string, data: IDewormingInput) {
       data: {
         id: crypto.randomUUID(),
         petId,
-        dewormingType: data.dewormingType as DewormingType,
-        stage: data.stage as DewormingStage,
-        status: 'SCHEDULED' as DewormingStatus,
+        dewormingType: data.dewormingType,
+        stage: data.stage,
+        status: 'SCHEDULED',
         administrationDate: data.administrationDate,
         nextDoseDate: data.nextDoseDate,
         batchNumber: data.batchNumber || null,
@@ -56,8 +55,8 @@ export async function updateDeworming(id: string, data: IDewormingInput) {
     const deworming = await prisma.deworming.update({
       where: { id },
       data: {
-        dewormingType: data.dewormingType as DewormingType,
-        stage: data.stage as DewormingStage,
+        dewormingType: data.dewormingType,
+        stage: data.stage,
         administrationDate: data.administrationDate,
         nextDoseDate: data.nextDoseDate,
         batchNumber: data.batchNumber || null,

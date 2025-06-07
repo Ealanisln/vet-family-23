@@ -4,7 +4,7 @@
 
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
-import { InventoryCategory, InventoryStatus, MovementType } from "@prisma/client";
+// Using string literals instead of importing enums due to type generation issues
 import {
   GetInventoryResponse,
   UpdateInventoryData,

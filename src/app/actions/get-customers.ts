@@ -2,10 +2,10 @@
 
 "use server";
 
-import { PrismaClient, Role, User } from "@prisma/client";
 import { createKindeManagementAPIClient } from "@kinde-oss/kinde-auth-nextjs/server";
 import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prismaDB";
 
 // Type guard for Prisma errors
 function isPrismaError(
@@ -15,8 +15,8 @@ function isPrismaError(
 }
 
 // Define better return types
-type UserWithRoles = User & {
-  roles: Role[];
+type UserWithRoles = any & {
+  roles: any[];
 };
 
 // Custom error class
@@ -30,17 +30,6 @@ class ServerActionError extends Error {
   }
 }
 
-// Implement a singleton pattern for PrismaClient
-const prismaClientSingleton = () => {
-  return new PrismaClient();
-};
-
-declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
-}
-
-const prisma = globalThis.prisma ?? prismaClientSingleton();
-if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
 
 export async function getUsers(): Promise<UserWithRoles[]> {
   try {

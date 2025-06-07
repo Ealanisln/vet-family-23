@@ -1,9 +1,10 @@
 // app/actions/get-client-data.ts
 
-import { PrismaClient, Prisma, User } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";
 import { cache } from 'react';
+import { prisma } from "@/lib/prismaDB";
 
 // Define return type for better type safety
 interface ClientData {
@@ -27,9 +28,6 @@ interface ClientData {
   }>;
   roles: string[];
 }
-
-// Create a singleton instance of PrismaClient
-const prisma = new PrismaClient();
 
 // Cache the getClientData function to avoid unnecessary database calls
 export const getClientData = cache(async (): Promise<ClientData> => {

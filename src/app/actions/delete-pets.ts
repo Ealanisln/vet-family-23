@@ -3,7 +3,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prismaDB";
 
 interface ActionResult {
   success: boolean;

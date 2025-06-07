@@ -45,7 +45,7 @@ export default async function ProductosPage() {
   
 
   // Formatear los datos para la tabla
-  const formattedProducts = products.map(product => ({
+  const formattedProducts = products.map((product: any) => ({
     id: product.id,
     name: product.name,
     category: product.category,

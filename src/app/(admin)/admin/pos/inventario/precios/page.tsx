@@ -3,7 +3,7 @@ import { Metadata } from "next";
 // import { redirect } from "next/navigation";
 import Link from "next/link";
 // import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { PrismaClient, InventoryCategory, Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -90,12 +90,12 @@ export default async function PriceManagementPage({
 
   // Obtener parámetros de búsqueda y paginación
   const page = resolvedSearchParams.page ? parseInt(resolvedSearchParams.page, 10) : 1;
-  const category = resolvedSearchParams.category as InventoryCategory | null;
+  const category = resolvedSearchParams.category as any;
   const search = resolvedSearchParams.search || "";
   const limit = 10;
 
   // Construir la consulta
-  const whereClause: Prisma.InventoryItemWhereInput = {};
+  const whereClause: any = {};
 
   if (category) {
     whereClause.category = category;
@@ -137,7 +137,7 @@ export default async function PriceManagementPage({
   const totalPages = Math.ceil(total / limit);
 
   // Obtener todas las categorías disponibles
-  const categories = categoriesCount.map((c) => c.category);
+  const categories = categoriesCount.map((c: any) => c.category);
 
   return (
     <div className="container py-6">
@@ -190,7 +190,7 @@ export default async function PriceManagementPage({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Todas las categorías</SelectItem>
-                      {categories.map((cat) => (
+                      {categories.map((cat: any) => (
                         <SelectItem key={cat} value={cat}>
                           {translateInventoryCategory(cat)}
                         </SelectItem>
@@ -234,7 +234,7 @@ export default async function PriceManagementPage({
                       </TableCell>
                     </TableRow>
                   ) : (
-                    products.map((product) => {
+                    products.map((product: any) => {
                       const margin = calculateMargin(
                         product.price,
                         product.cost

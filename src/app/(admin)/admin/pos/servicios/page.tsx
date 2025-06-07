@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { getServices } from "@/app/actions/pos/services";
 import { translateServiceCategory } from "@/utils/pos-helpers";
-import { ServiceCategory } from "@prisma/client";
+// import { ServiceCategory } from "@prisma/client";
 import { ServiceActions } from "@/components/POS/Services/ServiceActions";
 
 
@@ -71,7 +71,7 @@ export default async function ServiciosPage({
 
   // Obtener parámetros de búsqueda y filtrado
   const page = resolvedSearchParams.page ? parseInt(resolvedSearchParams.page, 10) : 1;
-  const category = resolvedSearchParams.category as ServiceCategory | null;
+  const category = resolvedSearchParams.category as any;
   const isActive = resolvedSearchParams.isActive 
     ? resolvedSearchParams.isActive === "true" 
     : null;
@@ -88,7 +88,7 @@ export default async function ServiciosPage({
   });
   
   // Categorías de servicios para filtrar
-  const serviceCategories: ServiceCategory[] = [
+  const serviceCategories: any[] = [
     "CONSULTATION",
     "SURGERY",
     "VACCINATION",
@@ -187,7 +187,7 @@ export default async function ServiciosPage({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {services.map((service) => (
+              {services.map((service: any) => (
                 <TableRow key={service.id}>
                   <TableCell className="font-medium">{service.name}</TableCell>
                   <TableCell>{translateServiceCategory(service.category)}</TableCell>

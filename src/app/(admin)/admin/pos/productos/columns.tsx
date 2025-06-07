@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import { InventoryCategory } from "@prisma/client";
+// import { InventoryCategory } from "@prisma/client";
 import { ProductActions } from "./components/product-actions";
 import { CATEGORY_TRANSLATIONS } from "@/utils/category-translations";
 
@@ -11,7 +11,7 @@ import { CATEGORY_TRANSLATIONS } from "@/utils/category-translations";
 export type Product = {
   id: string;
   name: string;
-  category: InventoryCategory;
+  category: any;
   description: string;
   price: number;
   cost: number;
@@ -39,7 +39,7 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: "category",
     header: "Categoría",
     cell: ({ row }) => {
-      const category = row.getValue("category") as InventoryCategory;
+      const category = row.getValue("category") as any;
       return CATEGORY_TRANSLATIONS[category] || category;
     }
   },

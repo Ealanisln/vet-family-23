@@ -1,6 +1,6 @@
 "use server";
 
-import { PrismaClient, MedicalHistory, Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 const prisma = new PrismaClient();

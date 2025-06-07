@@ -5,7 +5,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prismaDB";
 
 interface PetDataForSubmit {
   name: string;

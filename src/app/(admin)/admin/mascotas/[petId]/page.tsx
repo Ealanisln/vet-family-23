@@ -204,7 +204,7 @@ export default async function PetDetailsPage({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {pet.medicalHistory.map((record) => {
+                        {pet.medicalHistory.map((record: any) => {
                           console.log("Medical Record Data:", JSON.stringify(record, null, 2));
                           return (
                             <TableRow key={record.id}>
@@ -216,9 +216,9 @@ export default async function PetDetailsPage({
                               <TableCell>{record.treatment}</TableCell>
                               <TableCell>
                                 {(() => {
-                                  const prescriptions = (record.prescriptions || []).map(prescription =>
+                                  const prescriptions = (record.prescriptions || []).map((prescription: string) =>
                                     prescription.replace(/Prueba\\s*-\\s*Testing,?\\s*/g, '')
-                                  ).filter(p => p.trim());
+                                  ).filter((p: string) => p.trim());
                                   
                                   const allMeds = [...prescriptions];
                                   

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { ServiceCategory } from "@prisma/client";
+// import { ServiceCategory } from "@prisma/client";
 import { NewServiceForm } from "@/components/Admin/pos/NewServiceForm"; // Corrected import path casing
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"; // Asegurarse de que la página se renderiza en cada solicitud
 
 // Definir explícitamente que las categorías son del tipo ServiceCategory
-const serviceCategories: ServiceCategory[] = [
+const serviceCategories: any[] = [
   "CONSULTATION",
   "SURGERY",
   "VACCINATION",

@@ -18,7 +18,8 @@ export async function generateStaticParams() {
   return posts;
 }
 
-export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<PageParams> }): Promise<Metadata> {
+  const params = await props.params;
   const post = await sanityFetch<SanityDocument>({ query: postQuery, params });
 
   if (!post) {
@@ -60,7 +61,8 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   };
 }
 
-export default async function Page({ params }: { params: PageParams }) {
+export default async function Page(props: { params: Promise<PageParams> }) {
+  const params = await props.params;
   const post = await sanityFetch<SanityDocument>({ query: postQuery, params });
 
   if (!post) {

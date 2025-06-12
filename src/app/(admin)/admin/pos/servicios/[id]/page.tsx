@@ -16,27 +16,28 @@ export const metadata: Metadata = {
   description: "Detalles del servicio veterinario"
 };
 
-export default async function ServiceDetailPage({ params }: { params: { id: string } }) {
+export default async function ServiceDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // Verificar que el usuario tiene permisos para el POS
   const { isAuthenticated, getUser } = getKindeServerSession();
-  
+
   const user = await getUser();
 
   // If user is null or not authenticated, redirect to login
   if (!user || !(await isAuthenticated())) {
     return redirect("/api/auth/login");
   }
-  
+
   // Now that we know user is not null, we can safely access user.id
   const hasPermission = await userHasPOSPermission(user.id);
-  
+
   if (!hasPermission) {
     return redirect("/admin");
   }
-  
+
   // Obtener los detalles del servicio
   const service = await getServiceById(params.id) as ServiceWithRelations | null;
-  
+
   if (!service) {
     return (
       <div className="container py-6">
@@ -58,7 +59,7 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
       </div>
     );
   }
-  
+
   return (
     <div className="container py-6">
       <div className="flex justify-between items-center mb-6">

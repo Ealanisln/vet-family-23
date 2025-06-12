@@ -4,11 +4,12 @@ import { notFound } from 'next/navigation';
 import PetDetailsView from '@/components/Pet/PetDetailsView';
 import { getPetDetails } from './getPetDetails';
 
-export default async function PetDetailsPage({
-  params,
-}: {
-  params: { id: string; petId: string };
-}) {
+export default async function PetDetailsPage(
+  props: {
+    params: Promise<{ id: string; petId: string }>;
+  }
+) {
+  const params = await props.params;
   if (!params.id || !params.petId || params.id === 'undefined' || params.petId === 'undefined') {
     notFound();
   }

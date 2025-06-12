@@ -22,11 +22,12 @@ import {
 } from "@/components/ui/table";
 import PetForm from "@/components/Admin/ui/PetForm";
 
-export default async function PetDetailsPage({
-  params,
-}: {
-  params: { petId: string };
-}) {
+export default async function PetDetailsPage(
+  props: {
+    params: Promise<{ petId: string }>;
+  }
+) {
+  const params = await props.params;
   const pet = await prisma.pet.findUnique({
     where: { id: params.petId },
     include: {

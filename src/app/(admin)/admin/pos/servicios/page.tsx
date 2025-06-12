@@ -35,15 +35,16 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic"; // Asegurarse de que la página se renderiza en cada solicitud
 
-export default async function ServiciosPage({
-  searchParams,
-}: {
-  searchParams: { 
-    page?: string;
-    category?: string;
-    isActive?: string;
-  };
-}) {
+export default async function ServiciosPage(
+  props: {
+    searchParams: Promise<{ 
+      page?: string;
+      category?: string;
+      isActive?: string;
+    }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   /*
   // TEMPORARILY COMMENTED OUT - Role/permission check seems problematic in production for this specific page.
   // Middleware already ensures authentication for /admin routes.
@@ -74,7 +75,7 @@ export default async function ServiciosPage({
   const isActive = searchParams.isActive 
     ? searchParams.isActive === "true" 
     : null;
-  
+
   // Obtener los servicios
   const { 
     services, 
@@ -85,7 +86,7 @@ export default async function ServiciosPage({
     isActive,
     limit: 10
   });
-  
+
   // Categorías de servicios para filtrar
   const serviceCategories: ServiceCategory[] = [
     "CONSULTATION",
@@ -98,7 +99,7 @@ export default async function ServiciosPage({
     "HOSPITALIZATION",
     "OTHER"
   ];
-  
+
   return (
     <div className="container py-6">
       <div className="mb-6">

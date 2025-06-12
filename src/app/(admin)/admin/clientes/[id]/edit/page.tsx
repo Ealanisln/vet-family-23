@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -23,7 +23,8 @@ type ClientData = {
   nextVisitFree: boolean;
 }
 
-export default function EditClientPage({ params }: { params: { id: string } }) {
+export default function EditClientPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter()
   const { toast } = useToast()
   const [client, setClient] = useState<ClientData>({

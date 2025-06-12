@@ -68,7 +68,7 @@ const nextConfig = {
 
   // Performance optimizations
   poweredByHeader: false,
-  swcMinify: true,
+  // swcMinify: true, // Removed - Next.js 15 uses SWC by default
   compress: true, // Add gzip compression
   reactStrictMode: true, // Recommended for better development experience
 

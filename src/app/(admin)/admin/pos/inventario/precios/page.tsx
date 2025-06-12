@@ -59,15 +59,16 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic"; // Asegurarse de que la página se renderiza en cada solicitud
 
-export default async function PriceManagementPage({
-  searchParams,
-}: {
-  searchParams: {
-    category?: string;
-    search?: string;
-    page?: string;
-  };
-}) {
+export default async function PriceManagementPage(
+  props: {
+    searchParams: Promise<{
+      category?: string;
+      search?: string;
+      page?: string;
+    }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   /*
   // TEMPORARILY COMMENTED OUT - Role/permission check seems problematic in production for this specific page.
   // Middleware already ensures authentication for /admin routes.

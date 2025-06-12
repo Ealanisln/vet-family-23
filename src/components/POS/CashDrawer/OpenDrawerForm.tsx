@@ -1,4 +1,5 @@
 "use client";
+import { useActionState } from "react";
 // src/components/POS/CashDrawer/OpenDrawerForm.tsx
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DollarSign, ArrowRight } from "lucide-react";
 import { openCashDrawer, type OpenDrawerState } from "@/app/actions/pos/cash-drawer";
-import { useFormState } from "react-dom";
 
 // Define initial state conforming to OpenDrawerState
 const initialState: OpenDrawerState = {
@@ -18,7 +18,7 @@ const initialState: OpenDrawerState = {
 
 export default function OpenDrawerForm() {
   // useFormState para manejar errores y mensajes
-  const [state, formAction] = useFormState(openCashDrawer, initialState);
+  const [state, formAction] = useActionState(openCashDrawer, initialState);
 
   return (
     <Card className="max-w-md mx-auto">

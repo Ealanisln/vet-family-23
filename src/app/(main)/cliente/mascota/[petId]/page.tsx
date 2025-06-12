@@ -4,11 +4,12 @@ import { notFound } from 'next/navigation';
 import { getPetDetails } from './getPetDetails';
 import PetDetailsView from './PetDetailsView';
 
-export default async function PetDetailsPage({
-  params,
-}: {
-  params: { petId: string };
-}) {
+export default async function PetDetailsPage(
+  props: {
+    params: Promise<{ petId: string }>;
+  }
+) {
+  const params = await props.params;
   try {
     const pet = await getPetDetails(params.petId);
     if (!pet) {

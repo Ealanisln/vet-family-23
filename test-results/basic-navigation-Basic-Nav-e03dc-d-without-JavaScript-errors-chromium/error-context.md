@@ -1,0 +1,289 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - link "Vet Family logo":
+    - /url: /
+    - img "Vet Family logo"
+  - link "Promociones":
+    - /url: /promociones
+  - link "Servicios":
+    - /url: "#servicios"
+  - link "Blog":
+    - /url: /blog
+  - link "Contacto":
+    - /url: "#contacto"
+  - link "Ubicación":
+    - /url: "#ubicacion"
+  - link "Iniciar sesión":
+    - /url: /api/auth/login?
+  - link "Registrarse":
+    - /url: /api/auth/register?
+- main:
+  - img
+  - text: Celebrando la diversidad - Mes del Orgullo 🏳️‍🌈
+  - heading "Salud y felicidad para tu mejor amigo." [level=1]
+  - paragraph: Porque ellos no son solo mascotas, son familia. En Vet Family, cuidamos de tu ser querido con el mismo amor y dedicación que tú le brindas cada día.
+  - link "Promociones":
+    - /url: /promociones
+    - button "Promociones":
+      - img
+      - text: Promociones
+  - link "Hotel Canino":
+    - /url: /hotel-mascotas
+    - button "Hotel Canino"
+  - button "Agenda una cita":
+    - text: Agenda una cita
+    - img
+  - img
+  - text: Atención de lunes a sábado
+  - img
+  - text: Experiencia veterinaria a tu servicio
+  - img
+  - text: Amor y profesionalismo en un solo lugar
+  - region:
+    - group:
+      - img "Vet Family"
+    - group:
+      - img "Marca Guanajuato"
+    - button "Previous slide" [disabled]:
+      - img
+      - text: Previous slide
+    - button "Next slide":
+      - img
+      - text: Next slide
+  - img "Testimonios de clientes satisfechos"
+  - img
+  - text: 5.0 ★★★★★ Rating
+  - img
+  - text: 500+ Clientes Felices
+  - heading "Nuestros clientes son nuestra prioridad." [level=1]
+  - paragraph: En nuestra veterinaria, cuidamos y amamos a tus mascotas tanto como tú. Con servicios de calidad, personal dedicado y un entorno acogedor, tu tranquilidad y la salud de tus animales son nuestra misión.
+  - img
+  - text: Confía en nosotros para el mejor cuidado veterinario
+  - img
+  - text: Certificados
+  - img
+  - text: Horarios flexibles
+  - img
+  - text: Garantía total
+  - heading "Nuestros servicios" [level=2]
+  - paragraph: Comprometidos con el bienestar de tus mascotas, ofrecemos una gama completa de servicios veterinarios premium para mantenerlas saludables y felices toda su vida.
+  - img
+  - text: Más de 500 mascotas felices nos respaldan MÁS SOLICITADO
+  - img "Consultas Médicas"
+  - heading "Consultas Médicas" [level=3]
+  - paragraph: Diagnósticos precisos con historial médico digital completo y seguimiento de tratamientos especializados para cada mascota.
+  - text: Historial médico digital Diagnóstico especializado Seguimiento de tratamientos MÁS POPULAR
+  - img "Plan de Vacunación"
+  - heading "Plan de Vacunación" [level=3]
+  - paragraph: Protocolos de vacunación DHPPI, Séxtuple, Rabia y Bordetella con sistema automatizado de recordatorios y seguimiento digital.
+  - text: Vacunas DHPPI/Séxtuple/Rabia Recordatorios automáticos Seguimiento por etapas
+  - img "Desparasitación"
+  - heading "Desparasitación" [level=3]
+  - paragraph: Programa integral de desparasitación interna y externa con antiparasitarios de última generación y control veterinario especializado.
+  - text: Desparasitación interna/externa Antiparasitarios premium Control especializado
+  - img "Limpieza Dental"
+  - heading "Limpieza Dental" [level=3]
+  - paragraph: Procedimientos odontológicos completos con anestésicos seguros, antisépticos cicatrizantes y técnicas de pulido profesional.
+  - text: Anestésicos seguros Antisépticos cicatrizantes Técnicas profesionales SPA PREMIUM
+  - img "Estética Canina"
+  - heading "Estética Canina" [level=3]
+  - paragraph: Spa veterinario con champús medicados dermatológicos, corticosteroides tópicos y tratamientos especializados por raza.
+  - text: Champús medicados Tratamientos dermatológicos Especialización por raza
+  - img "Asesoría Nutricional"
+  - heading "Asesoría Nutricional" [level=3]
+  - paragraph: Planes nutricionales personalizados con estimulantes del apetito, suplementos especializados y seguimiento gastroenterológico.
+  - text: Planes personalizados Suplementos especializados Seguimiento gastroenterológico TECNOLOGÍA AVANZADA
+  - img "Cirugías"
+  - heading "Cirugías" [level=3]
+  - paragraph: Quirófano equipado con anestésicos-sedativos avanzados, material quirúrgico estéril y tecnología de imagenología digital.
+  - text: Anestésicos-sedativos avanzados Material quirúrgico estéril Imagenología digital 5 ESTRELLAS
+  - img "Hotel para Mascotas"
+  - heading "Hotel para Mascotas" [level=3]
+  - paragraph: Hospitalización veterinaria con monitoreo cardiológico, tratamientos respiratorios y cuidado especializado 24/7.
+  - text: Monitoreo cardiológico Tratamientos respiratorios Cuidado especializado 24/7
+  - img
+  - paragraph: ¿No encuentras lo que buscas?
+  - paragraph: Contáctanos para servicios personalizados
+  - img
+  - text: Galería de Fotos
+  - heading "Nuestras Instalaciones" [level=1]
+  - paragraph: Explora nuestra galería de fotos dedicada a nuestras queridas mascotas y los servicios de atención veterinaria que ofrecemos. Desde adorables cachorros hasta felices gatitos, nuestras imágenes capturan momentos especiales en la vida de tus compañeros peludos.
+  - img
+  - textbox "Buscar por categoría..."
+  - button:
+    - img
+  - button:
+    - img
+  - button "Filtros 1":
+    - img
+    - text: Filtros 1
+  - paragraph: Mostrando 9 fotos (filtradas)
+  - img
+  - text: Hotel para Mascotas
+  - heading "Tu Mascota, Nuestro Huésped de Honor" [level=2]
+  - paragraph: Brindamos un alojamiento seguro y amoroso para perros y gatos, donde cada peludo huésped es tratado con cuidado excepcional y atención personalizada. Un hogar temporal lleno de amor y profesionalismo.
+  - img
+  - heading "Seguridad 24/7" [level=4]
+  - paragraph: Supervisión constante
+  - img
+  - heading "Cuidado personalizado" [level=4]
+  - paragraph: Atención individual
+  - img
+  - heading "Ejercicio diario" [level=4]
+  - paragraph: Actividades y juegos
+  - img
+  - heading "Horarios flexibles" [level=4]
+  - paragraph: Estadías adaptables
+  - img
+  - heading "Servicios incluidos" [level=4]
+  - text: Instalaciones completamente equipadas Personal veterinario especializado Alimentación balanceada personalizada Área de juegos segura y amplia Cámaras de monitoreo 24/7 Servicio de transporte disponible
+  - img
+  - text: Disponible próximamente
+  - img "Hotel para mascotas - Instalaciones seguras y cómodas"
+  - img
+  - img
+  - img
+  - img
+  - img
+  - img
+  - text: "5.0"
+  - img
+  - heading "Máxima Seguridad" [level=3]
+  - paragraph: Instalaciones completamente seguras con monitoreo 24/7 para la tranquilidad de tu mascota.
+  - img
+  - heading "Amor y Cuidado" [level=3]
+  - paragraph: Personal capacitado que trata a cada mascota con el amor y respeto que merece.
+  - img
+  - heading "Experiencia Única" [level=3]
+  - paragraph: Cada estadía es diseñada para que tu mascota se sienta como en casa y disfrute al máximo.
+  - img "Servicio veterinario a domicilio"
+  - img
+  - text: Servicio a Domicilio
+  - heading "Atención Veterinaria en la Puerta de tu Hogar" [level=2]
+  - paragraph: Nuestro servicio a domicilio ofrece la atención experta que tus mascotas merecen, brindando comodidad y tranquilidad directamente a tu puerta. Sin estrés, sin viajes, solo cuidado profesional.
+  - img
+  - heading "Comodidad total" [level=4]
+  - paragraph: Sin estrés para tu mascota
+  - img
+  - heading "A tu domicilio" [level=4]
+  - paragraph: Llegamos donde estés
+  - img
+  - heading "Flexibilidad" [level=4]
+  - paragraph: Horarios adaptados a ti
+  - img
+  - heading "Atención personalizada" [level=4]
+  - paragraph: Cuidado profesional
+  - link "Solicítalo ahora":
+    - /url: https://wa.link/n193eh
+    - text: Solicítalo ahora
+    - img
+  - img
+  - heading "Servicios disponibles" [level=4]
+  - paragraph: Consultas generales, vacunación, desparasitación, curaciones y cuidados básicos. Disponible de lunes a sábado en León, Guanajuato.
+  - img
+  - text: Contáctanos
+  - heading "Envíanos un Mensaje" [level=2]
+  - paragraph: Si necesitas alguna cita, tienes alguna duda o comentario, escribenos un mensaje y te contáctaremos a la brevedad.
+  - img
+  - text: Tu nombre
+  - textbox "Escribe aquí tu nombre"
+  - img
+  - img
+  - text: Tu correo
+  - textbox "Escribe tu email"
+  - img
+  - text: Tu mensaje
+  - textbox "Aquí escribe tu mensaje"
+  - text: "Max: 500 caracteres"
+  - button "Enviar mensaje":
+    - img
+    - text: Enviar mensaje
+  - img
+  - heading "Respuesta rápida garantizada" [level=4]
+  - paragraph: Nos comprometemos a responder tu mensaje en un máximo de 24 horas. Para emergencias, llámanos directamente.
+  - img
+  - text: Ubicación
+  - heading "Encuéntranos" [level=2]
+  - paragraph: Visítanos en nuestro consultorio veterinario en León, Guanajuato. Estamos aquí para cuidar de tus mascotas con el mejor servicio y atención profesional.
+  - img
+  - heading "Teléfono" [level=3]
+  - paragraph: 477-332-7152
+  - paragraph: "Lunes a Viernes: 9:00 am - 9:00 pm"
+  - link "Contactar":
+    - /url: tel:477-332-7152
+    - text: Contactar
+    - img
+  - img
+  - heading "Correo Electrónico" [level=3]
+  - paragraph: vet.family.23@gmail.com
+  - paragraph: Respuesta en 24 horas
+  - link "Contactar":
+    - /url: mailto:vet.family.23@gmail.com
+    - text: Contactar
+    - img
+  - img
+  - heading "Dirección" [level=3]
+  - paragraph: Poetas 144, Panorama
+  - paragraph: León de los Aldamas, Guanajuato
+  - link "Contactar":
+    - /url: https://maps.app.goo.gl/XiLPjx4ZuchBSnMs6
+    - text: Contactar
+    - img
+  - img
+  - heading "Horarios" [level=3]
+  - paragraph: Lunes - Viernes
+  - paragraph: 9:00 AM - 9:00 PM
+  - heading "Nuestra Ubicación" [level=3]
+  - paragraph: Poetas 144, Panorama, León de los Aldamas, Guanajuato
+  - iframe
+  - img
+  - text: Vet Family
+  - paragraph: Poetas 144, Panorama
+  - link "Obtener direcciones":
+    - /url: https://www.google.com/maps/dir/?api=1&destination=21.149511162191708,-101.70312782990445
+    - img
+  - link "Ver en Google Maps":
+    - /url: https://maps.app.goo.gl/XiLPjx4ZuchBSnMs6
+    - img
+  - link "Ver en Google Maps":
+    - /url: https://maps.app.goo.gl/XiLPjx4ZuchBSnMs6
+    - img
+    - text: Ver en Google Maps
+  - link "Contactar por WhatsApp":
+    - /url: https://wa.link/u5njd1
+    - img
+    - text: Contactar por WhatsApp
+  - heading "¿Necesitas ayuda para llegar?" [level=4]
+  - paragraph: Estamos ubicados en una zona accesible de León, Guanajuato. Si necesitas ayuda para encontrarnos, no dudes en contactarnos.
+  - text: Estacionamiento disponible Acceso para mascotas Transporte público cercano
+- img "logo"
+- link "Testimonios":
+  - /url: "#testimonios"
+- link "Servicios":
+  - /url: "#servicios"
+- link "Blog":
+  - /url: /blog
+- link "Contacto":
+  - /url: "#contacto"
+- link "Ubicación":
+  - /url: "#ubicacion"
+- link "/assets/footer/facebook.svg":
+  - /url: https://www.facebook.com/people/Family-Vet-23/100067098365828/
+  - img "/assets/footer/facebook.svg"
+- link "/assets/footer/instagram.svg":
+  - /url: https://www.instagram.com/vet.family.23/
+  - img "/assets/footer/instagram.svg"
+- heading "2025 Vet Family - Todos los derechos reservados." [level=4]
+- link "Creada con ❤️ por Alanis Web Dev.":
+  - /url: https://www.alanis.dev
+- region "Notifications (F8)":
+  - list
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+- button "Open issues overlay": 1 Issue
+- button "Collapse issues badge":
+  - img
+```

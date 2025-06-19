@@ -354,7 +354,7 @@ export default function SaleForm() {
       // Verificar el éxito correctamente
       if (!saleResult || !saleResult.success) { // Más robusto, verifica si saleResult existe
         console.error("handlePayment: createSale NO fue exitoso o resultado inválido.", saleResult); // Log 9a: Fallo
-        throw new Error(saleResult?.error || "Error desconocido al crear la venta.");
+        throw new Error((saleResult && 'error' in saleResult) ? saleResult.error : "Error desconocido al crear la venta.");
       }
 
       // Éxito

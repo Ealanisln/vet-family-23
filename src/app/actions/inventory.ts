@@ -4,6 +4,7 @@
 
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
+import { InventoryCategory, InventoryStatus } from "@prisma/client";
 // Using string literals instead of importing enums due to type generation issues
 import {
   GetInventoryResponse,
@@ -40,8 +41,8 @@ export async function searchInventoryItems({
               { brand: { contains: searchTerm, mode: "insensitive" } },
             ],
           },
-          category ? { category: category } : {},
-          status ? { status: status } : {},
+          ...(category ? [{ category: category as InventoryCategory }] : []),
+          ...(status ? [{ status: status as InventoryStatus }] : []),
         ],
       },
       orderBy: [{ name: "asc" }],
@@ -150,10 +151,10 @@ export async function updateInventoryItem(
           status:
             data.quantity !== undefined
               ? data.quantity <= (data.minStock || currentItem.minStock || 0)
-                ? "LOW_STOCK"
+                ? ("LOW_STOCK" as InventoryStatus)
                 : data.quantity === 0
-                  ? "OUT_OF_STOCK"
-                  : "ACTIVE"
+                  ? ("OUT_OF_STOCK" as InventoryStatus)
+                  : ("ACTIVE" as InventoryStatus)
               : data.status,
         },
       });
@@ -241,10 +242,10 @@ export async function createInventoryItem(
         specialNotes: data.specialNotes?.trim() || null,
         status:
           data.quantity <= (data.minStock || 0)
-            ? "LOW_STOCK"
+            ? ("LOW_STOCK" as InventoryStatus)
             : data.quantity === 0
-              ? "OUT_OF_STOCK"
-              : "ACTIVE",
+              ? ("OUT_OF_STOCK" as InventoryStatus)
+              : ("ACTIVE" as InventoryStatus),
       },
     });
 

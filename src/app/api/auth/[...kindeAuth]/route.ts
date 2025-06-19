@@ -2,12 +2,12 @@ import { handleAuth } from "@kinde-oss/kinde-auth-nextjs/server";
 import { NextRequest } from "next/server";
 
 // Handler personalizado con logging para debug
-async function debugHandler(request: NextRequest, params: { kindeAuth: string[] }) {
+async function debugHandler(request: NextRequest, context: { params: { kindeAuth: string[] } }) {
   const url = new URL(request.url);
   const pathname = url.pathname;
   
   console.log(`[Kinde Auth Debug] ${request.method} ${pathname}`);
-  console.log(`[Kinde Auth Debug] Params:`, params);
+  console.log(`[Kinde Auth Debug] Params:`, context.params);
   console.log(`[Kinde Auth Debug] Query params:`, Object.fromEntries(url.searchParams));
   
   // Log cookies entrantes
@@ -39,8 +39,13 @@ async function debugHandler(request: NextRequest, params: { kindeAuth: string[] 
   return null; // Continuar con el handler normal
 }
 
-export async function GET(request: NextRequest, context: { params: { kindeAuth: string[] } }) {
-  await debugHandler(request, context.params);
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ kindeAuth: string[] }> }
+) {
+  const resolvedParams = await params;
+  const context = { params: resolvedParams };
+  await debugHandler(request, context);
   
   try {
     // Usar configuración completamente básica
@@ -60,8 +65,13 @@ export async function GET(request: NextRequest, context: { params: { kindeAuth: 
   }
 }
 
-export async function POST(request: NextRequest, context: { params: { kindeAuth: string[] } }) {
-  await debugHandler(request, context.params);
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ kindeAuth: string[] }> }
+) {
+  const resolvedParams = await params;
+  const context = { params: resolvedParams };
+  await debugHandler(request, context);
   
   try {
     // Usar configuración completamente básica

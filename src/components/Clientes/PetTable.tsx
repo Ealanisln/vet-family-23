@@ -65,7 +65,7 @@ export default function PetsTable() {
         }));
         setData(tablePets);
       } else {
-        console.error("Failed to fetch pets:", result.error);
+        console.error("Failed to fetch pets:", 'error' in result ? result.error : 'Unknown error');
       }
     } catch (error) {
       console.error("Error fetching pets:", error);

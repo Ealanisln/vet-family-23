@@ -1,11 +1,12 @@
 import React from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Package, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -138,11 +139,24 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-full h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-gray-900">
-            {initialData ? "Editar Item" : "Nuevo Item"}
-          </DialogTitle>
+      <DialogContent className="max-w-4xl w-full h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm">
+        <DialogHeader className="pb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Package className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                {initialData ? "Editar Item de Inventario" : "Nuevo Item de Inventario"}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 mt-1">
+                {initialData 
+                  ? "Modifica los detalles del item seleccionado" 
+                  : "Ingresa los detalles del nuevo item de inventario"
+                }
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -348,13 +362,18 @@ const InventoryItemForm: React.FC<InventoryFormProps> = ({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full sm:w-auto bg-[#47b3b6] hover:bg-[#47b3b6]/90 text-white"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {isSubmitting
-                ? "Guardando..."
-                : initialData
-                  ? "Guardar Cambios"
-                  : "Crear Item"}
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Guardando...
+                </div>
+              ) : initialData ? (
+                "Guardar Cambios"
+              ) : (
+                "Crear Item"
+              )}
             </Button>
           </DialogFooter>
         </form>

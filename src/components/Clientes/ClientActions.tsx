@@ -1,5 +1,5 @@
 import * as React from "react";
-import { MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { User } from "@/types/user";
 
@@ -80,17 +80,25 @@ export default function ClientActions({ user, onDelete }: ActionsProps) {
       </DropdownMenu>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el
-              cliente {user.firstName} {user.lastName} y todos sus datos
-              asociados.
-            </AlertDialogDescription>
+        <AlertDialogContent className="bg-white/95 backdrop-blur-sm">
+          <AlertDialogHeader className="pb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-red-50 rounded-lg">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-xl font-semibold text-gray-900">
+                  ¿Estás seguro?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-600 mt-1">
+                  Esta acción no se puede deshacer. Se eliminará permanentemente el
+                  cliente {user.firstName} {user.lastName} y todos sus datos asociados.
+                </AlertDialogDescription>
+              </div>
+            </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel disabled={isDeleting} className="border-gray-200 hover:bg-gray-50">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
@@ -98,7 +106,14 @@ export default function ClientActions({ user, onDelete }: ActionsProps) {
               className="bg-red-600 hover:bg-red-700"
               disabled={isDeleting}
             >
-              {isDeleting ? "Eliminando..." : "Eliminar"}
+              {isDeleting ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Eliminando...
+                </div>
+              ) : (
+                "Eliminar"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

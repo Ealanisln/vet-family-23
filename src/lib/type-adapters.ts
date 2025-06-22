@@ -86,6 +86,7 @@ export function adaptCartPetToPet(pet: CartPetProps | null): Pet | null {
     microchipNumber: null, // Valor por defecto
     isNeutered: pet.isNeutered, // Sin necesidad de ??
     isDeceased: false,
+    isArchived: false, // Add missing isArchived field
     medicalHistory: [],
     vaccinations: [],
   };

@@ -2,7 +2,7 @@
 
 'use server'
 
-import { PrismaClient, Prisma } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 // Type guard for Prisma errors
 function isPrismaError(error: unknown): error is { code: string } {
@@ -39,6 +39,7 @@ export interface Pet {
   userId: string;
   ownerName: string; // Calculado
   isDeceased: boolean;
+  isArchived: boolean;
   dateOfBirth: Date | null;
   gender: string;
   weight: number | null;
@@ -56,6 +57,7 @@ type PrismaPetData = {
   breed: string;
   userId: string;
   isDeceased: boolean;
+  isArchived: boolean;
   dateOfBirth: Date | null;
   gender: string;
   weight: number | null;
@@ -105,6 +107,7 @@ function formatPrismaPet(prismaPet: PrismaPetData): Pet {
     userId: prismaPet.userId,
     ownerName: ownerName,
     isDeceased: prismaPet.isDeceased,
+    isArchived: prismaPet.isArchived,
     dateOfBirth: prismaPet.dateOfBirth,
     gender: prismaPet.gender,
     weight: prismaPet.weight,
@@ -127,6 +130,7 @@ export async function getPets(): Promise<GetPetsResult> {
         breed: true,
         userId: true,
         isDeceased: true,
+        isArchived: true,
         dateOfBirth: true,
         gender: true,
         weight: true,
@@ -188,6 +192,7 @@ export async function getPetsByUserId(userId: string): Promise<GetPetsResult> {
         breed: true,
         userId: true,
         isDeceased: true,
+        isArchived: true,
         dateOfBirth: true,
         gender: true,
         weight: true,

@@ -1,12 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prismaDB";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
   try {
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Client ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch the client's pets
     const pets = await prisma.pet.findMany({
       where: {
         userId: id,
@@ -16,18 +25,24 @@ export async function GET(
         name: true,
         species: true,
         breed: true,
+        dateOfBirth: true,
+        gender: true,
+        weight: true,
+        microchipNumber: true,
+        internalId: true,
+        isNeutered: true,
         isDeceased: true,
       },
       orderBy: {
-        name: "asc",
+        name: 'asc',
       },
     });
 
-    return NextResponse.json({ success: true, pets });
+    return NextResponse.json(pets);
   } catch (error) {
-    console.error("Error fetching pets:", error);
+    console.error("Error fetching client pets:", error);
     return NextResponse.json(
-      { success: false, error: "Error fetching pets" },
+      { error: "Failed to fetch pets" },
       { status: 500 }
     );
   }

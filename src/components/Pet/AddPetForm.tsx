@@ -16,6 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeftIcon, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface AddPetFormProps {
   onSubmit: (petData: PetDataForSubmit) => Promise<void>;
@@ -184,7 +185,7 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
               <Label htmlFor="microchipNumber">Número de Microchip</Label>
               <Input
                 id="microchipNumber"
-                value={petData.microchipNumber}
+                value={petData.microchipNumber || ""}
                 onChange={(e) => setPetData({ ...petData, microchipNumber: e.target.value })}
                 disabled={isSubmitting}
               />
@@ -194,7 +195,7 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
               <Label htmlFor="medicalHistory">Historial Médico</Label>
               <Textarea
                 id="medicalHistory"
-                value={petData.medicalHistory}
+                value={petData.medicalHistory || ""}
                 onChange={(e) => setPetData({ ...petData, medicalHistory: e.target.value })}
                 disabled={isSubmitting}
                 rows={4}
@@ -202,36 +203,34 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isNeutered"
                   checked={petData.isNeutered}
-                  onChange={(e) => setPetData({ ...petData, isNeutered: e.target.checked })}
+                  onCheckedChange={(checked) => setPetData({ ...petData, isNeutered: checked })}
                   disabled={isSubmitting}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
-                <span>Esterilizado/a</span>
-              </Label>
+                <Label htmlFor="isNeutered">Esterilizado/a</Label>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isDeceased"
                   checked={petData.isDeceased}
-                  onChange={(e) => setPetData({ ...petData, isDeceased: e.target.checked })}
+                  onCheckedChange={(checked) => setPetData({ ...petData, isDeceased: checked })}
                   disabled={isSubmitting}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
-                <span>Fallecido/a</span>
-              </Label>
+                <Label htmlFor="isDeceased">Fallecido/a</Label>
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="internalId">ID Interno</Label>
               <Input
                 id="internalId"
-                value={petData.internalId}
+                value={petData.internalId || ""}
                 onChange={(e) => setPetData({ ...petData, internalId: e.target.value })}
                 disabled={isSubmitting}
               />

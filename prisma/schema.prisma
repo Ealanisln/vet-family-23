@@ -81,6 +81,7 @@ model Pet {
   microchipNumber     String?
   isNeutered          Boolean               @default(false)
   isDeceased          Boolean               @default(false)
+  isArchived          Boolean               @default(false)
   appointments        Appointment[]
   billings            Billing[]
   Deworming           Deworming[]
@@ -94,6 +95,7 @@ model Pet {
   VaccinationSchedule VaccinationSchedule[]
 
   @@index([userId])
+  @@index([isArchived])
 }
 
 model MedicalHistory {

@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { EditIcon, PlusIcon } from "lucide-react";
+import { EditIcon, PlusIcon, Syringe } from "lucide-react";
 import { addVaccination, updateVaccination } from "@/app/actions/vaccination";
 import {
   isFelineVaccine,
@@ -463,72 +463,83 @@ const VaccinationCard: React.FC<VaccinationCardProps> = ({
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle>Vacunas</CardTitle>
-        <VaccinationDialog
-          petId={petId}
-          petSpecies={petSpecies}
-          onSave={handleSave}
-        />
+    <Card className="shadow-sm border-0 bg-white">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Syringe className="w-5 h-5 text-green-600" />
+            Vacunas
+          </CardTitle>
+          <VaccinationDialog
+            petId={petId}
+            petSpecies={petSpecies}
+            onSave={handleSave}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         {vaccinations.length > 0 ? (
-          <div className="overflow-x-auto -mx-4 sm:-mx-6">
-            <div className="inline-block min-w-full align-middle">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vacuna</TableHead>
-                    <TableHead>Etapa</TableHead>
-                    <TableHead>Aplicación</TableHead>
-                    <TableHead>Próxima Dosis</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Veterinario</TableHead>
-                    <TableHead className="w-[80px]">Acciones</TableHead>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-200">
+                  <TableHead className="font-semibold text-gray-700">Vacuna</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Etapa</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Aplicación</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Próxima Dosis</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Estado</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Veterinario</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {vaccinations.map((vaccination, index) => (
+                  <TableRow key={vaccination.id} className={index % 2 === 0 ? "bg-gray-50/50" : ""}>
+                    <TableCell className="font-medium">
+                      {vaccineTypeLabels[vaccination.vaccineType]}
+                    </TableCell>
+                    <TableCell>
+                      {vaccination.stage === "PUPPY" ? "Cachorro" : "Adulto"}
+                    </TableCell>
+                    <TableCell>
+                      {vaccination.administrationDate.toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {vaccination.nextDoseDate.toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(vaccination.status)}`}
+                      >
+                        {getStatusLabel(vaccination.status)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {vaccination.veterinarianName || "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      <VaccinationDialog
+                        existingVaccination={vaccination}
+                        petId={petId}
+                        petSpecies={petSpecies}
+                        onSave={handleSave}
+                      />
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {vaccinations.map((vaccination) => (
-                    <TableRow key={vaccination.id}>
-                      <TableCell>
-                        {vaccineTypeLabels[vaccination.vaccineType]}
-                      </TableCell>
-                      <TableCell>
-                        {vaccination.stage === "PUPPY" ? "Cachorro" : "Adulto"}
-                      </TableCell>
-                      <TableCell>
-                        {vaccination.administrationDate.toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {vaccination.nextDoseDate.toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(vaccination.status)}`}
-                        >
-                          {getStatusLabel(vaccination.status)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {vaccination.veterinarianName || "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        <VaccinationDialog
-                          existingVaccination={vaccination}
-                          petId={petId}
-                          petSpecies={petSpecies}
-                          onSave={handleSave}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ) : (
-          <p className="text-muted-foreground">No hay vacunas registradas.</p>
+          <div className="text-center py-12">
+            <Syringe className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">
+              No hay vacunas registradas.
+            </p>
+            <p className="text-gray-400 text-sm mt-2">
+              Las vacunas aparecerán aquí una vez que se agreguen.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

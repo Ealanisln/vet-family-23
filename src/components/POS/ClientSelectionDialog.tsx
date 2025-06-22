@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Search, Users, UserCheck, Phone, Mail, Loader2 } from "lucide-react";
 import { User } from "@prisma/client";
 
 interface ClientSelectionDialogProps {
@@ -59,70 +59,106 @@ export function ClientSelectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Seleccionar Cliente</DialogTitle>
-          <DialogDescription>
-            Busca y selecciona un cliente o realiza una venta al público
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[700px] bg-white/95 backdrop-blur-sm">
+        <DialogHeader className="pb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Users className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                Seleccionar Cliente
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 mt-1">
+                Busca y selecciona un cliente o realiza una venta al público
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Búsqueda */}
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 type="search"
                 placeholder="Buscar por nombre, teléfono o email..."
-                className="pl-8"
+                className="pl-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && searchClients()}
               />
             </div>
-            <Button onClick={searchClients} disabled={loading}>
+            <Button 
+              onClick={searchClients} 
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
               Buscar
             </Button>
           </div>
 
           {/* Tabla de resultados */}
-          <div className="border rounded-md">
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="text-right">Acción</TableHead>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="font-medium text-gray-700">Nombre</TableHead>
+                  <TableHead className="font-medium text-gray-700">Teléfono</TableHead>
+                  <TableHead className="font-medium text-gray-700">Email</TableHead>
+                  <TableHead className="text-right font-medium text-gray-700">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-8">
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-800"></div>
-                        <span className="ml-2">Buscando...</span>
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                        <span className="text-gray-600">Buscando clientes...</span>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : clients.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-8">
-                      {searchTerm
-                        ? "No se encontraron clientes"
-                        : "Busca un cliente para comenzar"}
+                      <div className="flex flex-col items-center gap-2">
+                        <Users className="h-8 w-8 text-gray-400" />
+                        <p className="text-gray-600">
+                          {searchTerm
+                            ? "No se encontraron clientes"
+                            : "Busca un cliente para comenzar"}
+                        </p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
                   clients.map((client) => (
-                    <TableRow key={client.id}>
-                      <TableCell>
-                        {client.firstName} {client.lastName}
+                    <TableRow key={client.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium text-gray-900">
+                        <div className="flex items-center gap-2">
+                          <UserCheck className="h-4 w-4 text-blue-600" />
+                          {client.firstName} {client.lastName}
+                        </div>
                       </TableCell>
-                      <TableCell>{client.phone || "N/A"}</TableCell>
-                      <TableCell>{client.email || "N/A"}</TableCell>
+                      <TableCell className="text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-gray-400" />
+                          {client.phone || "N/A"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          {client.email || "N/A"}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="default"
@@ -131,7 +167,7 @@ export function ClientSelectionDialog({
                             onSelect(client);
                             onOpenChange(false);
                           }}
-                          className="bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+                          className="bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                         >
                           Seleccionar
                         </Button>
@@ -144,18 +180,18 @@ export function ClientSelectionDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex justify-between sm:justify-between gap-2">
+        <DialogFooter className="flex justify-between sm:justify-between gap-3">
           <Button
             variant="outline"
             onClick={handlePublicSale}
-            className="flex-1 sm:flex-none"
+            className="flex-1 sm:flex-none border-gray-200 hover:bg-gray-50"
           >
             Venta al Público
           </Button>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="flex-1 sm:flex-none"
+            className="flex-1 sm:flex-none border-gray-200 hover:bg-gray-50"
           >
             Cancelar
           </Button>

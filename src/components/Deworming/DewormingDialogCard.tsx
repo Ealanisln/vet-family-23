@@ -25,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Shield } from "lucide-react";
 import { IDewormingInput, IDeworming } from "@/types/pet";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -325,77 +326,86 @@ const DewormingCard: React.FC<DewormingCardProps> = ({
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle>Desparasitaciones</CardTitle>
-        <DewormingDialog
-          petId={petId}
-          petSpecies={petSpecies}
-          onSave={handleSave}
-        />
+    <Card className="shadow-sm border-0 bg-white">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Shield className="w-5 h-5 text-blue-600" />
+            Desparasitaciones
+          </CardTitle>
+          <DewormingDialog
+            petId={petId}
+            petSpecies={petSpecies}
+            onSave={handleSave}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         {dewormings.length > 0 ? (
-          <div className="overflow-x-auto -mx-4 sm:-mx-6">
-            <div className="inline-block min-w-full align-middle">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Etapa</TableHead>
-                    <TableHead>Aplicación</TableHead>
-                    <TableHead>Próxima Dosis</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Veterinario</TableHead>
-                    <TableHead className="w-[80px]">Acciones</TableHead>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-200">
+                  <TableHead className="font-semibold text-gray-700">Tipo</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Etapa</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Aplicación</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Próxima Dosis</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Estado</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Veterinario</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dewormings.map((deworming, index) => (
+                  <TableRow key={deworming.id} className={index % 2 === 0 ? "bg-gray-50/50" : ""}>
+                    <TableCell className="font-medium">
+                      {dewormingTypeLabels[deworming.dewormingType as string]}
+                    </TableCell>
+                    <TableCell>
+                      {deworming.stage === "PUPPY" ? "Cachorro" : "Adulto"}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(deworming.administrationDate), "dd/MM/yyyy", {
+                        locale: es,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(deworming.nextDoseDate), "dd/MM/yyyy", {
+                        locale: es,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={getStatusBadgeColor(
+                          deworming.status as string
+                        )}
+                      >
+                        {getStatusLabel(deworming.status as string)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{deworming.veterinarianName || "-"}</TableCell>
+                    <TableCell>
+                      <DewormingDialog
+                        existingDeworming={deworming}
+                        petId={petId}
+                        petSpecies={petSpecies}
+                        onSave={handleSave}
+                      />
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {dewormings.map((deworming) => (
-                    <TableRow key={deworming.id}>
-                      <TableCell>
-                        {dewormingTypeLabels[deworming.dewormingType as string]}
-                      </TableCell>
-                      <TableCell>
-                        {deworming.stage === "PUPPY" ? "Cachorro" : "Adulto"}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(deworming.administrationDate), "dd/MM/yyyy", {
-                          locale: es,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(deworming.nextDoseDate), "dd/MM/yyyy", {
-                          locale: es,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={getStatusBadgeColor(
-                            deworming.status as string
-                          )}
-                        >
-                          {getStatusLabel(deworming.status as string)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{deworming.veterinarianName || "-"}</TableCell>
-                      <TableCell>
-                        <DewormingDialog
-                          existingDeworming={deworming}
-                          petId={petId}
-                          petSpecies={petSpecies}
-                          onSave={handleSave}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ) : (
-          <div className="text-center py-4 text-gray-500">
-            No hay registros de desparasitación
+          <div className="text-center py-12">
+            <Shield className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">
+              No hay registros de desparasitación
+            </p>
+            <p className="text-gray-400 text-sm mt-2">
+              Las desparasitaciones aparecerán aquí una vez que se agreguen.
+            </p>
           </div>
         )}
       </CardContent>

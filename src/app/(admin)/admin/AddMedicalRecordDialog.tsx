@@ -44,7 +44,6 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { EditIcon, PlusCircle, Search, X, Loader2 } from "lucide-react";
 import { searchInventory } from "@/app/actions/pos/inventory";
-import { prisma } from "@/lib/prismaDB";
 type InventoryCategory = "MEDICATION" | "FOOD" | "ACCESSORIES" | "HYGIENE" | "TOYS" | "SUPPLEMENTS" | "EQUIPMENT" | "CONSUMABLES" | "OTHER";
 type InventoryStatus = "ACTIVE" | "INACTIVE" | "DISCONTINUED";
 
@@ -148,7 +147,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
           setPets(alivePets);
           setError(null);
         } else {
-          console.error("Error fetching pets:", (result as any).error);
+          console.error("Error fetching pets:", 'error' in result ? result.error : 'Unknown error');
           setError(
             "No se pudieron cargar las mascotas. Por favor, intente de nuevo más tarde."
           );
@@ -179,7 +178,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
              // setRecord(prev => ({ ...prev, petId: '', userId: '' })); 
           }
         } else {
-          console.error("Error fetching pets:", (result as any).error);
+          console.error("Error fetching pets:", 'error' in result ? result.error : 'Unknown error');
           setError(
             "No se pudieron cargar los datos de las mascotas. Por favor, intente de nuevo más tarde."
           );
@@ -215,10 +214,13 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         }
 
         // Adaptar los resultados a nuestro tipo
-        const safeResults: InventorySearchResultAdjusted[] = results.map((item: any) => ({
-          ...item,
-          price: typeof item.price === 'number' ? item.price : 0
-        }));
+        const safeResults: InventorySearchResultAdjusted[] = results.map((item: unknown) => {
+          const inventoryItem = item as Record<string, unknown>;
+          return {
+            ...inventoryItem,
+            price: typeof inventoryItem.price === 'number' ? inventoryItem.price : 0
+          } as InventorySearchResultAdjusted;
+        });
         
         console.log('Resultados procesados:', safeResults);
         
@@ -413,7 +415,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         
         setIsOpen(false);
       } else {
-        throw new Error((result as any).error);
+        throw new Error('error' in result ? result.error : 'Unknown error occurred');
       }
     } catch (error) {
       console.error("Error al procesar el historial médico:", error);
@@ -432,8 +434,16 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
-      <DialogTrigger asChild>
+    <>
+      <style jsx global>{`
+        .dialog-overlay {
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+        }
+      `}</style>
+      <Dialog open={isOpen} onOpenChange={setIsOpen} modal={true}>
+        <DialogTrigger asChild>
         {triggerButton ? (
           triggerButton
         ) : existingRecord ? (
@@ -447,24 +457,30 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[800px] w-full max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl sm:text-2xl">
-            {existingRecord
-              ? "Editar Historial Médico"
-              : "Agregar Nuevo Historial Médico"}
-          </DialogTitle>
-          <DialogDescription className="text-sm sm:text-base">
-            {existingRecord
-              ? "Modifique los detalles del historial médico. Haga clic en guardar cuando haya terminado."
-              : "Ingrese los detalles del nuevo historial médico. Haga clic en guardar cuando haya terminado."}
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[900px] w-full max-h-[90vh] overflow-y-auto bg-white shadow-2xl border-0 rounded-2xl">
+        <DialogHeader className="border-b border-gray-200 pb-6">
+          <div className="flex justify-between items-center">
+            <div className="space-y-2">
+              <DialogTitle className="text-2xl font-bold text-gray-900">
+                {existingRecord
+                  ? "Editar Historial Médico"
+                  : "Agregar Nuevo Historial Médico"}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                {existingRecord
+                  ? "Modifique los detalles del historial médico. Haga clic en guardar cuando haya terminado."
+                  : "Ingrese los detalles del nuevo historial médico. Haga clic en guardar cuando haya terminado."}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
         {error && (
-          <div className="text-red-500 mb-4 text-sm sm:text-base">{error}</div>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid gap-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-6">
             {!petId && !existingRecord && (
               <div className="grid sm:grid-cols-4 items-center gap-2 sm:gap-4">
                 <Label htmlFor="pet" className="sm:text-right text-sm sm:text-base">
@@ -536,10 +552,10 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                 </div>
               </div>
             )}
-            <div className="grid sm:grid-cols-4 items-center gap-2 sm:gap-4">
+            <div className="grid sm:grid-cols-4 items-center gap-4">
               <Label
                 htmlFor="visitDate"
-                className="sm:text-right text-sm sm:text-base"
+                className="sm:text-right font-medium text-gray-700"
               >
                 Fecha de Visita
               </Label>
@@ -549,14 +565,14 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                 type="date"
                 value={record.visitDate}
                 onChange={handleInputChange}
-                className="sm:col-span-3"
+                className="sm:col-span-3 bg-white border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
-            <div className="grid sm:grid-cols-4 items-center gap-2 sm:gap-4">
+            <div className="grid sm:grid-cols-4 items-center gap-4">
               <Label
                 htmlFor="reasonForVisit"
-                className="sm:text-right text-sm sm:text-base"
+                className="sm:text-right font-medium text-gray-700"
               >
                 Razón de Visita
               </Label>
@@ -565,14 +581,14 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                 name="reasonForVisit"
                 value={record.reasonForVisit}
                 onChange={handleInputChange}
-                className="sm:col-span-3"
+                className="sm:col-span-3 bg-white border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
-            <div className="grid sm:grid-cols-4 items-start gap-2 sm:gap-4">
+            <div className="grid sm:grid-cols-4 items-start gap-4">
               <Label
                 htmlFor="diagnosis"
-                className="sm:text-right text-sm sm:text-base pt-2"
+                className="sm:text-right font-medium text-gray-700 pt-2"
               >
                 Diagnóstico
               </Label>
@@ -581,14 +597,14 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                 name="diagnosis"
                 value={record.diagnosis}
                 onChange={handleInputChange}
-                className="sm:col-span-3"
+                className="sm:col-span-3 bg-white border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 rows={3}
               />
             </div>
-            <div className="grid sm:grid-cols-4 items-start gap-2 sm:gap-4">
+            <div className="grid sm:grid-cols-4 items-start gap-4">
               <Label
                 htmlFor="treatment"
-                className="sm:text-right text-sm sm:text-base pt-2"
+                className="sm:text-right font-medium text-gray-700 pt-2"
               >
                 Tratamiento
               </Label>
@@ -597,19 +613,23 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                 name="treatment"
                 value={record.treatment}
                 onChange={handleInputChange}
-                className="sm:col-span-3"
+                className="sm:col-span-3 bg-white border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 rows={3}
               />
             </div>
-            <div className="grid sm:grid-cols-4 items-start gap-2 sm:gap-4">
+          </div>
+
+          {/* Sección de Medicamentos */}
+          <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+            <div className="grid sm:grid-cols-4 items-start gap-4">
               <Label
                 htmlFor="prescriptions"
-                className="sm:text-right text-sm sm:text-base pt-2"
+                className="sm:text-right font-medium text-gray-700 pt-2"
               >
                 Medicamentos y Prescripciones
               </Label>
               <div className="sm:col-span-3 space-y-6">
-                <div className="border rounded-lg p-4 bg-white">
+                <div className="border rounded-lg p-4 bg-white shadow-sm">
                   <div className="space-y-4">
                     <div className="flex gap-2">
                       <div className="relative flex-1">
@@ -738,10 +758,14 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                 </div>
               </div>
             </div>
-            <div className="grid sm:grid-cols-4 items-start gap-2 sm:gap-4">
+          </div>
+
+          {/* Sección de Notas */}
+          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+            <div className="grid sm:grid-cols-4 items-start gap-4">
               <Label
                 htmlFor="notes"
-                className="sm:text-right text-sm sm:text-base pt-2"
+                className="sm:text-right font-medium text-gray-700 pt-2"
               >
                 Notas Internas
               </Label>
@@ -753,15 +777,28 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                   value={record.notes}
                   onChange={handleInputChange}
                   placeholder="Ingrese notas internas que no aparecerán en la receta..."
-                  className="resize-none"
+                  className="resize-none bg-white border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={2}
                 />
               </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+          <DialogFooter className="bg-gray-50 border-t border-gray-200 mt-8 pt-6 flex gap-3 justify-end">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsOpen(false)}
+              className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg" 
+              disabled={isSubmitting}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -775,5 +812,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 };

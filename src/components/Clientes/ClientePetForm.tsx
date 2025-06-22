@@ -25,9 +25,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ArrowLeftIcon, PlusIcon, Edit } from "lucide-react";
+import { ArrowLeftIcon, PlusIcon, Edit, PawPrint } from "lucide-react";
 import { addPet, updatePet } from "@/app/actions/add-edit-pet";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 interface PetFormProps {
   isEditing?: boolean;
@@ -80,7 +80,7 @@ const ClientePetForm: React.FC<PetFormProps> = ({
     setPet((prevState) => ({ ...prevState, [name]: value }));
   };
 
-  const handleCheckboxChange = (checked: boolean) => {
+  const handleSwitchChange = (checked: boolean) => {
     setPet((prevState) => ({ ...prevState, isNeutered: checked }));
   };
 
@@ -194,7 +194,7 @@ const ClientePetForm: React.FC<PetFormProps> = ({
             <Input
               id="microchipNumber"
               name="microchipNumber"
-              value={pet.microchipNumber}
+              value={pet.microchipNumber || ""}
               onChange={handleInputChange}
               maxLength={15}
               inputMode="numeric"
@@ -202,10 +202,10 @@ const ClientePetForm: React.FC<PetFormProps> = ({
             />
           </div>
           <div className="flex items-center space-x-2">
-            <Checkbox
+            <Switch
               id="isNeutered"
               checked={pet.isNeutered}
-              onCheckedChange={(checked) => handleCheckboxChange(checked as boolean)}
+              onCheckedChange={(checked) => handleSwitchChange(checked as boolean)}
             />
             <Label htmlFor="isNeutered">Esterilizado/Castrado</Label>
           </div>
@@ -240,13 +240,21 @@ const ClientePetForm: React.FC<PetFormProps> = ({
         <DialogTrigger asChild>
           <Button>Editar Mascota</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Editar Mascota</DialogTitle>
-            <DialogDescription>
-              Realiza cambios en la información de la mascota aquí. Haz clic en
-              guardar cuando hayas terminado.
-            </DialogDescription>
+        <DialogContent className="sm:max-w-[600px] bg-white/95 backdrop-blur-sm">
+          <DialogHeader className="pb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <PawPrint className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-semibold text-gray-900">
+                  Editar Mascota
+                </DialogTitle>
+                <DialogDescription className="text-gray-600 mt-1">
+                  Realiza cambios en la información de la mascota aquí
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           <form onSubmit={handleSubmit}>{formContent}</form>
         </DialogContent>

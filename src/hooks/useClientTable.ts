@@ -10,11 +10,11 @@ import { User } from '../types/user';
 import { deleteUser, fetchUsers } from '../services/user';
 
 export function useClientTable() {
-  // Inicializamos el estado de ordenamiento con updatedAt descendente
+  // Inicializamos el estado de ordenamiento con firstName ascendente
   const [sorting, setSorting] = useState<SortingState>([
     {
-      id: "updatedAt",
-      desc: true
+      id: "firstName",
+      desc: false
     }
   ]);
 
@@ -34,11 +34,11 @@ export function useClientTable() {
     try {
       setLoading(true);
       const users = await fetchUsers();
-      // Ordenar los usuarios por fecha de actualización antes de establecerlos
+      // Ordenar los usuarios por nombre antes de establecerlos
       const sortedUsers = [...users].sort((a, b) => {
-        const dateA = new Date(a.updatedAt).getTime();
-        const dateB = new Date(b.updatedAt).getTime();
-        return dateB - dateA; // Orden descendente (más reciente primero)
+        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+        return nameA.localeCompare(nameB); // Orden alfabético ascendente
       });
       setData(sortedUsers);
     } catch (error) {
@@ -57,11 +57,11 @@ export function useClientTable() {
       await deleteUser(userId);
       setData((prevData) => {
         const updatedData = prevData.filter((user) => user.id !== userId);
-        // Mantener el orden después de eliminar
+        // Mantener el orden alfabético después de eliminar
         return [...updatedData].sort((a, b) => {
-          const dateA = new Date(a.updatedAt).getTime();
-          const dateB = new Date(b.updatedAt).getTime();
-          return dateB - dateA;
+          const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+          const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+          return nameA.localeCompare(nameB);
         });
       });
       toast({

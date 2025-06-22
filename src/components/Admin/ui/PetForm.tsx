@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -23,13 +22,14 @@ import {
 } from "@/components/ui/dialog";
 import { X, Calendar, Pencil } from "lucide-react";
 import { addPet, updatePet } from "@/app/actions/add-edit-pet";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 interface PetFormProps {
   isEditing?: boolean;
   initialPet?: Pet | null;
   onClose?: () => void;
   userId?: string;
+  onPetUpdated?: () => void;
 }
 
 interface Pet {
@@ -44,7 +44,6 @@ interface Pet {
   weight: string;
   isNeutered: boolean;
   microchipNumber?: string;
-  medicalHistory?: string;
   isDeceased: boolean;
 }
 
@@ -53,6 +52,7 @@ const PetForm: React.FC<PetFormProps> = ({
   initialPet = null,
   onClose,
   userId,
+  onPetUpdated,
 }) => {
   const params = useParams();
   const router = useRouter();
@@ -67,7 +67,6 @@ const PetForm: React.FC<PetFormProps> = ({
     gender: "",
     isNeutered: false,
     microchipNumber: "",
-    medicalHistory: "",
     isDeceased: false,
   });
 
@@ -88,7 +87,7 @@ const PetForm: React.FC<PetFormProps> = ({
     setPet((prevState) => ({ ...prevState, [name]: value }));
   };
 
-  const handleCheckboxChange = (checked: boolean, name: string) => {
+  const handleSwitchChange = (checked: boolean, name: string) => {
     setPet((prevState) => ({ ...prevState, [name]: checked }));
   };
 
@@ -122,13 +121,14 @@ const PetForm: React.FC<PetFormProps> = ({
       setOpen(false);
       if (onClose) onClose();
       router.refresh();
+      if (onPetUpdated) onPetUpdated();
     } else {
       console.error(result.error);
     }
   };
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="internalId" className="text-sm font-medium text-gray-700">
@@ -259,7 +259,7 @@ const PetForm: React.FC<PetFormProps> = ({
           <Input
             id="microchipNumber"
             name="microchipNumber"
-            value={pet.microchipNumber}
+            value={pet.microchipNumber || ""}
             onChange={handleInputChange}
             maxLength={15}
             inputMode="numeric"
@@ -269,13 +269,12 @@ const PetForm: React.FC<PetFormProps> = ({
         </div>
 
         <div className="flex items-center space-x-2 col-span-2">
-          <Checkbox
+          <Switch
             id="isNeutered"
             checked={pet.isNeutered}
             onCheckedChange={(checked) => 
-              handleCheckboxChange(checked as boolean, "isNeutered")
+              handleSwitchChange(checked as boolean, "isNeutered")
             }
-            className="rounded-md h-5 w-5"
           />
           <Label 
             htmlFor="isNeutered" 
@@ -286,13 +285,12 @@ const PetForm: React.FC<PetFormProps> = ({
         </div>
 
         <div className="flex items-center space-x-2 col-span-2">
-          <Checkbox
+          <Switch
             id="isDeceased"
             checked={pet.isDeceased}
             onCheckedChange={(checked) => 
-              handleCheckboxChange(checked as boolean, "isDeceased")
+              handleSwitchChange(checked as boolean, "isDeceased")
             }
-            className="rounded-md h-5 w-5"
           />
           <Label 
             htmlFor="isDeceased" 
@@ -302,34 +300,21 @@ const PetForm: React.FC<PetFormProps> = ({
           </Label>
         </div>
 
-        <div className="col-span-2 space-y-2">
-          <Label htmlFor="medicalHistory" className="text-sm font-medium text-gray-700">
-            Historial Médico
-          </Label>
-          <Textarea
-            id="medicalHistory"
-            name="medicalHistory"
-            value={pet.medicalHistory}
-            onChange={handleInputChange}
-            rows={4}
-            className="w-full border rounded-lg focus:ring-2 focus:ring-primary/20 resize-none"
-            placeholder="Ingrese notas o historial médico relevante..."
-          />
-        </div>
+
       </div>
 
-      <div className="flex justify-end space-x-4 pt-4">
+      <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
         <Button
           type="button"
           variant="outline"
           onClick={() => setOpen(false)}
-          className="px-4 py-2"
+          className="px-6 py-3 h-12"
         >
           Cancelar
         </Button>
         <Button
           type="submit"
-          className="px-4 py-2"
+          className="px-6 py-3 h-12 bg-blue-600 hover:bg-blue-700"
         >
           {isEditing ? "Actualizar Mascota" : "Agregar Mascota"}
         </Button>
@@ -341,29 +326,35 @@ const PetForm: React.FC<PetFormProps> = ({
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button>
+          <Button className="shadow-sm hover:shadow-md transition-shadow">
             <Pencil className="h-4 w-4 mr-2" />
             Editar Mascota
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-gray-200 pb-4">
             <div className="flex justify-between items-center">
-              <DialogTitle className="text-xl font-semibold">Editar Mascota</DialogTitle>
+              <div>
+                <DialogTitle className="text-2xl font-bold text-gray-900">
+                  Editar Mascota
+                </DialogTitle>
+                <DialogDescription className="text-gray-600 mt-2">
+                  Realiza cambios en la información de la mascota aquí. Haz clic en guardar cuando hayas terminado.
+                </DialogDescription>
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 rounded-full"
+                className="h-8 w-8 rounded-full hover:bg-gray-100"
                 onClick={() => setOpen(false)}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <DialogDescription className="text-gray-500">
-              Realiza cambios en la información de la mascota aquí. Haz clic en guardar cuando hayas terminado.
-            </DialogDescription>
           </DialogHeader>
-          {formContent}
+          <div className="mt-6">
+            {formContent}
+          </div>
         </DialogContent>
       </Dialog>
     );

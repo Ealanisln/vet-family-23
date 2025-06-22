@@ -194,7 +194,7 @@ export default function AddPetView() {
                   id="internalId"
                   name="internalId"
                   type="number"
-                  value={pet.internalId ?? ""}
+                  value={pet.internalId || ""}
                   onChange={handleInputChange}
                   className="w-full sm:w-1/2"
                   min="0"

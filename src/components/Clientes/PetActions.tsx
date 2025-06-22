@@ -1,7 +1,7 @@
 // src/components/Clientes/PetActions.tsx
 
 import * as React from "react";
-import { MoreHorizontal, Eye, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { deletePet } from "@/app/actions/delete-pets";
+import { archivePet } from "@/app/actions/archive-pet";
 import { TablePet } from "@/types/pet"; // Import the shared type
 
 interface PetActionsProps {
@@ -33,7 +34,9 @@ interface PetActionsProps {
 export default function PetActions({ pet, onPetDeleted }: PetActionsProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isArchiving, setIsArchiving] = React.useState(false);
 
   const handleDelete = async () => {
     if (!pet?.userId) {
@@ -76,6 +79,47 @@ export default function PetActions({ pet, onPetDeleted }: PetActionsProps) {
     }
   };
 
+  const handleArchive = async () => {
+    if (!pet?.userId) {
+      console.error("Pet data:", pet);
+      toast({
+        title: "Error",
+        description: "Datos de usuario incompletos. Por favor, recarga la página.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsArchiving(true);
+    try {
+      const result = await archivePet(pet.userId, pet.id, !pet.isArchived);
+
+      if (result.success) {
+        toast({
+          title: pet.isArchived ? "Mascota desarchivada" : "Mascota archivada",
+          description: `${pet.name} se ha ${pet.isArchived ? 'desarchivado' : 'archivado'} correctamente`,
+        });
+        setShowArchiveDialog(false);
+        onPetDeleted?.();  // Reutilizamos esta función para recargar la tabla
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || `No se pudo ${pet.isArchived ? 'desarchivar' : 'archivar'} la mascota`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error al archivar mascota:", error);
+      toast({
+        title: "Error",
+        description: `Ocurrió un error al intentar ${pet.isArchived ? 'desarchivar' : 'archivar'} la mascota`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -93,6 +137,17 @@ export default function PetActions({ pet, onPetDeleted }: PetActionsProps) {
           >
             <Eye className="mr-2 h-4 w-4" />
             Ver detalles
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setShowArchiveDialog(true)}
+            className={pet.isArchived ? "text-green-600" : "text-orange-600"}
+          >
+            {pet.isArchived ? (
+              <ArchiveRestore className="mr-2 h-4 w-4" />
+            ) : (
+              <Archive className="mr-2 h-4 w-4" />
+            )}
+            {pet.isArchived ? "Desarchivar mascota" : "Archivar mascota"}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setShowDeleteDialog(true)}
@@ -129,6 +184,41 @@ export default function PetActions({ pet, onPetDeleted }: PetActionsProps) {
               disabled={isDeleting}
             >
               {isDeleting ? "Eliminando..." : "Eliminar"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Estás seguro de {pet.isArchived ? 'desarchivar' : 'archivar'} a {pet.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pet.isArchived 
+                ? `Esta acción hará que ${pet.name} vuelva a ser visible en la lista principal de mascotas.`
+                : `Esta acción ocultará a ${pet.name} de la vista principal, pero mantendrá todos sus registros. Podrás revertir esta acción cuando lo desees.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowArchiveDialog(false)}
+              disabled={isArchiving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant={pet.isArchived ? "default" : "secondary"}
+              onClick={handleArchive}
+              disabled={isArchiving}
+            >
+              {isArchiving 
+                ? (pet.isArchived ? "Desarchivando..." : "Archivando...") 
+                : (pet.isArchived ? "Desarchivar" : "Archivar")
+              }
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

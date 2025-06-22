@@ -49,21 +49,12 @@ export default function ClientsTable() {
 
   // Estado global de búsqueda
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [isMounted, setIsMounted] = React.useState(false);
 
   const columns = React.useMemo(
     () => createColumns(handleDeleteUser),
     [handleDeleteUser]
   );
-
-  // Configurar ordenamiento inicial alfabético por nombre 
-  React.useEffect(() => {
-    setSorting([
-      {
-        id: "firstName",
-        desc: false
-      }
-    ]);
-  }, [setSorting]);
 
   // Función para manejar la búsqueda global
   const handleSearch = React.useCallback((value: string) => {
@@ -86,15 +77,35 @@ export default function ClientsTable() {
       pagination,
       globalFilter,
     },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    onSortingChange: (updater) => {
+      if (isMounted) {
+        setSorting(updater);
+      }
+    },
+    onColumnFiltersChange: (updater) => {
+      if (isMounted) {
+        setColumnFilters(updater);
+      }
+    },
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    onPaginationChange: setPagination,
+    onColumnVisibilityChange: (updater) => {
+      if (isMounted) {
+        setColumnVisibility(updater);
+      }
+    },
+    onRowSelectionChange: (updater) => {
+      if (isMounted) {
+        setRowSelection(updater);
+      }
+    },
+    onPaginationChange: (updater) => {
+      if (isMounted) {
+        setPagination(updater);
+      }
+    },
     manualPagination: false,
     // Función de filtro global
     globalFilterFn: (row, columnId, filterValue) => {
@@ -108,12 +119,22 @@ export default function ClientsTable() {
           : false;
       });
     },
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: (updater) => {
+      if (isMounted) {
+        setGlobalFilter(updater);
+      }
+    },
   });
 
   useEffect(() => {
-    loadUsers();
-  }, [loadUsers]);
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      loadUsers();
+    }
+  }, [loadUsers, isMounted]);
 
   return (
     <Card className="w-full bg-gradient-to-br from-white via-white to-blue-50 border-none shadow-lg">

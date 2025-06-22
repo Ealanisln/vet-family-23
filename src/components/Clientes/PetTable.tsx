@@ -41,6 +41,7 @@ export default function PetsTable() {
   const [rowSelection, setRowSelection] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   const [showDeceased, setShowDeceased] = React.useState(false);
+  const [showArchived, setShowArchived] = React.useState(false);
   const [globalFilter, setGlobalFilter] = React.useState("");
 
   const fetchPets = React.useCallback(async () => {
@@ -56,6 +57,7 @@ export default function PetsTable() {
           breed: pet.breed,
           ownerName: pet.ownerName,
           isDeceased: pet.isDeceased,
+          isArchived: pet.isArchived,
           internalId: pet.internalId,
           dateOfBirth: pet.dateOfBirth,
           gender: pet.gender,
@@ -83,7 +85,19 @@ export default function PetsTable() {
           href={`/admin/mascotas/${row.original.id}`}
           className="hover:underline text-[#47b3b6] font-medium"
         >
-          <div className="capitalize">{row.getValue("name")}</div>
+          <div className="flex items-center gap-2">
+            <span className="capitalize">{row.getValue("name")}</span>
+            {row.original.isArchived && (
+              <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                Archivada
+              </span>
+            )}
+            {row.original.isDeceased && (
+              <span className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded">
+                Fallecida
+              </span>
+            )}
+          </div>
         </Link>
       ),
     },
@@ -128,8 +142,20 @@ export default function PetsTable() {
   }, [fetchPets]);
 
   const filteredData = React.useMemo(() => {
-    return showDeceased ? data : data.filter((pet) => !pet.isDeceased);
-  }, [data, showDeceased]);
+    let filtered = data;
+    
+    // Filtrar por estado de fallecimiento
+    if (!showDeceased) {
+      filtered = filtered.filter((pet) => !pet.isDeceased);
+    }
+    
+    // Filtrar por estado de archivado
+    if (!showArchived) {
+      filtered = filtered.filter((pet) => !pet.isArchived);
+    }
+    
+    return filtered;
+  }, [data, showDeceased, showArchived]);
 
   const handleSearch = React.useCallback((value: string) => {
     setGlobalFilter(value);
@@ -187,16 +213,29 @@ export default function PetsTable() {
               className="pl-10 w-full border-[#47b3b6]/20 focus:border-[#47b3b6]/50 bg-white rounded-xl h-11"
             />
           </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="show-deceased"
-              checked={showDeceased}
-              onCheckedChange={(checked) => setShowDeceased(checked as boolean)}
-              className="border-[#47b3b6]/20 data-[state=checked]:bg-[#47b3b6]"
-            />
-            <label htmlFor="show-deceased" className="text-gray-600">
-              Mostrar mascotas fallecidas
-            </label>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="show-deceased"
+                checked={showDeceased}
+                onCheckedChange={(checked) => setShowDeceased(checked as boolean)}
+                className="border-[#47b3b6]/20 data-[state=checked]:bg-[#47b3b6]"
+              />
+              <label htmlFor="show-deceased" className="text-gray-600 text-sm">
+                Mostrar mascotas fallecidas
+              </label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="show-archived"
+                checked={showArchived}
+                onCheckedChange={(checked) => setShowArchived(checked as boolean)}
+                className="border-[#47b3b6]/20 data-[state=checked]:bg-[#47b3b6]"
+              />
+              <label htmlFor="show-archived" className="text-gray-600 text-sm">
+                Mostrar mascotas archivadas
+              </label>
+            </div>
           </div>
         </div>
 

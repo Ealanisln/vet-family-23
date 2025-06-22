@@ -11,6 +11,7 @@ export interface PetForMedicalRecord {
   species: string;
   ownerName: string;
   isDeceased: boolean;
+  isArchived: boolean;
   userId: string;
 }
 
@@ -20,6 +21,7 @@ type PetWithUser = {
   name: string;
   species: string;
   isDeceased: boolean;
+  isArchived: boolean;
   userId: string;
   user: {
     firstName: string | null;
@@ -52,6 +54,7 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
         name: true,
         species: true,
         isDeceased: true,
+        isArchived: true,
         userId: true,
         user: {
           select: {
@@ -61,8 +64,8 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
         },
       },
       where: {
-        // Optionally exclude soft-deleted pets if needed
-        // isDeceased: false,
+        // Por defecto no mostrar mascotas archivadas en el historial médico
+        isArchived: false,
       },
       orderBy: [
         { isDeceased: 'asc' }, // Show active pets first
@@ -78,6 +81,7 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
         .filter(Boolean)
         .join(' ') || 'N/A',
       isDeceased: pet.isDeceased,
+      isArchived: pet.isArchived,
       userId: pet.userId,
     }));
 

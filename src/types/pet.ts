@@ -54,6 +54,7 @@ export interface Pet {
   isNeutered: boolean;
   microchipNumber: string | null;
   isDeceased: boolean;
+  isArchived: boolean;
   medicalHistory: MedicalHistory[];
   vaccinations: PrismaVaccination[];
 }
@@ -66,6 +67,7 @@ export interface TablePet {
   breed: string;
   ownerName: string;
   isDeceased: boolean;
+  isArchived: boolean;
   internalId: string | null;
   dateOfBirth: Date | null; // Allow null
   gender: string;

@@ -12,8 +12,8 @@ import { prisma } from "@/lib/prismaDB";
 // Función auxiliar para verificar errores de Prisma
 function isPrismaError(
   error: unknown
-): error is Prisma.PrismaClientKnownRequestError {
-  return error instanceof Prisma.PrismaClientKnownRequestError;
+): error is any {
+  return error && typeof error === 'object' && 'code' in error;
 }
 
 // Custom error class para manejar errores específicos
@@ -28,21 +28,19 @@ class ServerActionError extends Error {
 }
 
 // Define a type for the selected fields in searchInventory
-type SelectedInventoryItem = Prisma.InventoryItemGetPayload<{ 
-  select: { 
-    id: true,
-    name: true,
-    description: true,
-    price: true,
-    quantity: true,
-    presentation: true,
-    category: true,
-    status: true,
-    expirationDate: true,
-    createdAt: true,
-    updatedAt: true,
-  }
-}>;
+type SelectedInventoryItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+  quantity: number;
+  presentation: string | null;
+  category: InventoryCategory;
+  status: string;
+  expirationDate: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 /**
  * Obtiene productos disponibles para ventas
@@ -70,7 +68,7 @@ export async function getInventoryForSale({
     */
     
     // Build the query to get only active products with stock
-    const whereClause: Prisma.InventoryItemWhereInput = {
+    const whereClause: any = {
       status: "ACTIVE",
       quantity: { gt: 0 } // Solo productos con stock disponible
     };
@@ -160,7 +158,7 @@ export async function searchInventory({
     */
     
     // Build the query to search for products - removing active and quantity filters temporarily
-    const whereClause: Prisma.InventoryItemWhereInput = {};
+    const whereClause: any = {};
     
     // Añadir filtro por categoría si se proporciona
     if (category) {

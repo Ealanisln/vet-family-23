@@ -4,17 +4,41 @@
 import { revalidatePath } from "next/cache";
 // Kinde Imports
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-// Prisma Imports - Importar Enums directamente desde @prisma/client
-import {
-    Prisma,
-    InventoryStatus,
-    PaymentMethod,
-    SaleStatus,
-    TransactionType,
-    MovementType,
-    // Asumiendo que DrawerStatus está definido en tus enums si lo usas explícitamente
-    // DrawerStatus
- } from '@prisma/client';
+// Prisma Imports
+import { Prisma } from '@prisma/client';
+
+// Using const objects instead of importing enums due to type generation issues
+const InventoryStatus = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  DISCONTINUED: 'DISCONTINUED' as const,
+};
+
+const PaymentMethod = {
+  CASH: 'CASH' as const,
+  CARD: 'CARD' as const,
+  TRANSFER: 'TRANSFER' as const,
+  CHECK: 'CHECK' as const,
+};
+
+const SaleStatus = {
+  PENDING: 'PENDING' as const,
+  COMPLETED: 'COMPLETED' as const,
+  CANCELLED: 'CANCELLED' as const,
+  REFUNDED: 'REFUNDED' as const,
+};
+
+const TransactionType = {
+  SALE: 'SALE' as const,
+  REFUND: 'REFUND' as const,
+  ADJUSTMENT: 'ADJUSTMENT' as const,
+};
+
+const MovementType = {
+  IN: 'IN' as const,
+  OUT: 'OUT' as const,
+  ADJUSTMENT: 'ADJUSTMENT' as const,
+};
 // Importar la instancia de prisma desde tu archivo lib
 import { prisma } from "@/lib/prismaDB";
 // Utils & Types

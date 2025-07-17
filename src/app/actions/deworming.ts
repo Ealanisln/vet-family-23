@@ -3,8 +3,12 @@
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
 import { IDewormingInput } from "@/types/pet";
-import { DewormingType, DewormingStage, DewormingStatus } from "@prisma/client";
+
 // Using string literals instead of importing enums due to type generation issues
+type DewormingType = 'INTERNAL' | 'EXTERNAL' | 'BOTH';
+type DewormingStage = 'PUPPY' | 'ADULT';
+type DewormingStatus = 'PENDING' | 'COMPLETED' | 'OVERDUE' | 'SCHEDULED';
+
 export async function addDeworming(petId: string, data: IDewormingInput) {
   try {
     if (!data.dewormingType || !data.stage || !data.administrationDate || !data.nextDoseDate) {

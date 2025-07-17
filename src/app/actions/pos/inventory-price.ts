@@ -1,6 +1,9 @@
 'use server';
 
-import { Prisma, InventoryCategory } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+
+// Using string literals instead of importing enums due to type generation issues
+type InventoryCategory = 'MEDICINE' | 'SURGICAL_MATERIAL' | 'VACCINE' | 'FOOD' | 'ACCESSORY' | 'CONSUMABLE' | 'ANTI_INFLAMMATORY_ANALGESICS' | 'ANTIBIOTIC' | 'ANTIFUNGAL' | 'DEWORMERS' | 'GASTROPROTECTORS_GASTROENTEROLOGY' | 'CARDIOLOGY' | 'DERMATOLOGY' | 'ENDOCRINOLOGY_HORMONAL' | 'ANESTHETICS_SEDATIVES' | 'OTIC' | 'OINTMENTS' | 'RESPIRATORY' | 'OPHTHALMIC' | 'DRY_FOOD' | 'WET_FOOD' | 'CHIPS' | 'ANTI_EMETIC' | 'ANTISEPTICS_HEALING' | 'NEPHROLOGY' | 'ANTAGONISTS' | 'IMMUNOSTIMULANT' | 'APPETITE_STIMULANTS_HEMATOPOIESIS' | 'SUPPLEMENTS_OTHERS' | 'LAXATIVES' | 'ANTIDIARRHEAL' | 'ANTIHISTAMINE' | 'MEDICATED_SHAMPOO' | 'CORTICOSTEROIDS' | 'EXPECTORANT' | 'BRONCHODILATOR';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prismaDB';
 
@@ -120,14 +123,14 @@ export async function previewBulkPriceAdjustment({
 
   try {
     // Build the query
-    const whereClause: Prisma.InventoryItemWhereInput = {};
+    const whereClause: any = {};
     
     if (category) {
       whereClause.category = category;
     }
     
     // Filtrar productos que tienen precio o costo dependiendo del componente a ajustar
-    const orConditions: Prisma.InventoryItemWhereInput[] = [];
+    const orConditions: any[] = [];
     
     if (priceComponent === 'price' || priceComponent === 'both') {
       orConditions.push({ price: { not: null } });
@@ -267,14 +270,14 @@ export async function applyBulkPriceAdjustment({
 
   try {
     // Build the query
-    const whereClause: Prisma.InventoryItemWhereInput = {};
+    const whereClause: any = {};
     
     if (category) {
       whereClause.category = category;
     }
     
     // Filtrar productos que tienen precio o costo dependiendo del componente a ajustar
-    const orConditions: Prisma.InventoryItemWhereInput[] = [];
+    const orConditions: any[] = [];
     
     if (priceComponent === 'price' || priceComponent === 'both') {
       orConditions.push({ price: { not: null } });
@@ -300,7 +303,7 @@ export async function applyBulkPriceAdjustment({
     
     // Actualizar cada producto
     const updates = products.map(product => {
-      const updates: Prisma.InventoryItemUpdateInput = { updatedAt: new Date() };
+      const updates: any = { updatedAt: new Date() };
       
       if ((priceComponent === 'price' || priceComponent === 'both') && product.price !== null) {
         let newPrice = product.price;

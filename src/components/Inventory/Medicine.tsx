@@ -62,7 +62,21 @@ import {
   CreateInventoryResponse,
   InventoryFormItem,
 } from "@/types/inventory";
-import { InventoryStatus, MovementType } from "@prisma/client";
+// Manual type definitions due to Prisma client export issues
+const InventoryStatus = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  DISCONTINUED: 'DISCONTINUED' as const,
+  OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
+  LOW_STOCK: 'LOW_STOCK' as const,
+};
+
+const MovementType = {
+  IN: 'IN' as const,
+  OUT: 'OUT' as const,
+  ADJUSTMENT: 'ADJUSTMENT' as const,
+  RETURN: 'RETURN' as const,
+};
 
 // Componentes
 import InventoryItemForm from "./ui/InventoryItemForm";
@@ -113,7 +127,7 @@ export default function Medicine() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<
-    InventoryStatus | "all_statuses" | null
+    typeof InventoryStatus[keyof typeof InventoryStatus] | "all_statuses" | null
   >(null);
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedItem, setSelectedItem] = useState<InventoryFormItem | null>(

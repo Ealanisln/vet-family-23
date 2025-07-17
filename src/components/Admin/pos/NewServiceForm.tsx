@@ -12,7 +12,8 @@ import { Save, Clock, DollarSign, Loader2, Terminal } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { createService } from "@/app/actions/pos/services"; // Adjust path if needed
 import { translateServiceCategory } from "@/utils/pos-helpers"; // Adjust path if needed
-import { ServiceCategory } from "@prisma/client";
+// Manual type definition due to Prisma client export issues
+type ServiceCategory = 'CONSULTATION' | 'SURGERY' | 'VACCINATION' | 'GROOMING' | 'BOARDING' | 'EMERGENCY' | 'LABORATORY' | 'IMAGING' | 'DENTAL' | 'THERAPY';
 import { cn } from "@/lib/utils"; // Import the cn utility
 
 interface NewServiceFormProps {

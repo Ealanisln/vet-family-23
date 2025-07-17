@@ -1,5 +1,8 @@
 import DewormingCard from './DewormingDialogCard';
-import type { DewormingType, DewormingStage, DewormingStatus } from '@prisma/client';
+// Manual type definitions due to Prisma client export issues
+type DewormingType = 'INTERNAL' | 'EXTERNAL' | 'BOTH';
+type DewormingStage = 'PUPPY' | 'YOUNG' | 'ADULT' | 'SENIOR';
+type DewormingStatus = 'PENDING' | 'COMPLETED' | 'OVERDUE' | 'CANCELLED';
 
 interface PrismaDeworming {
   id: string;

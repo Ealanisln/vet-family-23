@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate");
 
     // Construir filtros
-    const whereClause: Prisma.SaleWhereInput = {};
+    const whereClause: any = {};
 
     if (search) {
       whereClause.OR = [
@@ -123,12 +123,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      whereClause.status = status as Prisma.EnumSaleStatusFilter;
+      whereClause.status = status;
     }
 
     if (paymentMethod) {
-      whereClause.paymentMethod =
-        paymentMethod as Prisma.EnumPaymentMethodFilter;
+      whereClause.paymentMethod = paymentMethod;
     }
 
     if (startDate && endDate) {
@@ -293,7 +292,7 @@ export async function POST(request: NextRequest) {
           discount: data.discount,
           total: data.total,
           paymentMethod: data.paymentMethod,
-          status: "COMPLETED" as SaleStatus, // Added type assertion
+          status: "COMPLETED" as typeof SaleStatus[keyof typeof SaleStatus], // Added type assertion
           notes: data.notes,
           SaleItem: {
             create: data.items.map((item: SaleItemInput) => ({

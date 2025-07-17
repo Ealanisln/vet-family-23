@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { userHasPOSPermission } from "@/utils/pos-helpers";
 import { prisma } from "@/lib/prismaDB";
-import { ServiceCategory, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+
+// Manual type definition due to Prisma client export issues
+type ServiceCategory = 'CONSULTATION' | 'SURGERY' | 'VACCINATION' | 'GROOMING' | 'BOARDING' | 'EMERGENCY' | 'LABORATORY' | 'IMAGING' | 'DENTAL' | 'THERAPY';
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +47,7 @@ export async function GET(request: NextRequest) {
     const isActive = searchParams.get("isActive");
 
     // Construir filtros
-    const whereClause: Prisma.ServiceWhereInput = {};
+    const whereClause: any = {};
 
     if (search) {
       whereClause.OR = [

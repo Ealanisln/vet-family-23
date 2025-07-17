@@ -12,6 +12,8 @@ const InventoryStatus = {
   ACTIVE: 'ACTIVE' as const,
   INACTIVE: 'INACTIVE' as const,
   DISCONTINUED: 'DISCONTINUED' as const,
+  OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
+  LOW_STOCK: 'LOW_STOCK' as const,
 };
 
 const PaymentMethod = {
@@ -38,6 +40,7 @@ const MovementType = {
   IN: 'IN' as const,
   OUT: 'OUT' as const,
   ADJUSTMENT: 'ADJUSTMENT' as const,
+  RETURN: 'RETURN' as const,
 };
 // Importar la instancia de prisma desde tu archivo lib
 import { prisma } from "@/lib/prismaDB";
@@ -81,7 +84,7 @@ interface GetSalesResult {
 
 // Define un nuevo tipo que extienda SaleFormData para incluir el status
 interface CreateSaleData extends SaleFormData {
-  status: SaleStatus; // Añadir el estado deseado
+  status: typeof SaleStatus[keyof typeof SaleStatus]; // Añadir el estado deseado
 }
 
 // ------------------------------------------------------
@@ -184,7 +187,7 @@ export async function createSale(data: CreateSaleData): Promise<CreateSaleResult
           tax: data.tax,
           discount: data.discount,
           total: data.total,
-          paymentMethod: data.paymentMethod as PaymentMethod,
+          paymentMethod: data.paymentMethod as typeof PaymentMethod[keyof typeof PaymentMethod],
           status: data.status,
           notes: data.notes,
           SaleItem: {
@@ -202,7 +205,7 @@ export async function createSale(data: CreateSaleData): Promise<CreateSaleResult
              const product = await tx.inventoryItem.findUnique({ where: { id: item.itemId } });
              if (product) {
                const newQuantity = product.quantity - item.quantity;
-               let newStatus: InventoryStatus = product.status;
+               let newStatus: typeof InventoryStatus[keyof typeof InventoryStatus] = product.status;
                if (newQuantity <= 0) newStatus = InventoryStatus.OUT_OF_STOCK;
                else if (product.minStock != null && newQuantity <= product.minStock) newStatus = InventoryStatus.LOW_STOCK;
                else if (product.status === InventoryStatus.OUT_OF_STOCK || product.status === InventoryStatus.LOW_STOCK) newStatus = InventoryStatus.ACTIVE;
@@ -316,7 +319,7 @@ export async function getSales({
   */
 
   try {
-    const whereClause: Prisma.SaleWhereInput = {};
+    const whereClause: any = {};
     const parsedStartDate = startDate ? new Date(startDate) : undefined;
     const parsedEndDate = endDate ? new Date(endDate) : undefined;
     if(parsedStartDate) parsedStartDate.setHours(0, 0, 0, 0);

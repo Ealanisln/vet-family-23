@@ -1,5 +1,67 @@
 import { prisma } from "@/lib/prismaDB";
-import type { Sale, SaleItem, User, Pet } from "@prisma/client";
+
+// Manual type definitions due to Prisma client export issues
+type Sale = {
+  id: string;
+  userId: string;
+  petId: string | null;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  paymentMethod: string;
+  status: string;
+  notes: string | null;
+  date: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type SaleItem = {
+  id: string;
+  saleId: string;
+  itemId: string | null;
+  serviceId: string | null;
+  name: string;
+  description: string | null;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+};
+
+type User = {
+  id: string;
+  kindeId: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  name: string | null;
+  phone: string | null;
+  address: string | null;
+  preferredContactMethod: string | null;
+  pet: string | null;
+  visits: number;
+  nextVisitFree: boolean;
+  lastVisit: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type Pet = {
+  id: string;
+  internalId: string | null;
+  userId: string;
+  name: string;
+  species: string;
+  breed: string;
+  dateOfBirth: Date;
+  gender: string;
+  weight: number;
+  microchipNumber: string | null;
+  isNeutered: boolean;
+  isDeceased: boolean;
+  isArchived: boolean;
+};
 
 export type FullSaleDetails = Sale & {
   items: SaleItem[];

@@ -1,7 +1,10 @@
 // src/app/api/pos/inventory/price/preview/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
-import { PrismaClient, InventoryCategory, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+
+// Manual type definition due to Prisma client export issues
+type InventoryCategory = 'MEDICINE' | 'SURGICAL_MATERIAL' | 'VACCINE' | 'FOOD' | 'ACCESSORY' | 'CONSUMABLE' | 'ANTI_INFLAMMATORY_ANALGESICS' | 'ANTIBIOTIC' | 'ANTIFUNGAL' | 'DEWORMERS' | 'GASTROPROTECTORS_GASTROENTEROLOGY' | 'CARDIOLOGY' | 'DERMATOLOGY' | 'ENDOCRINOLOGY_HORMONAL' | 'ANESTHETICS_SEDATIVES' | 'OTIC' | 'OINTMENTS' | 'RESPIRATORY' | 'OPHTHALMIC' | 'DRY_FOOD' | 'WET_FOOD' | 'CHIPS' | 'ANTI_EMETIC' | 'ANTISEPTICS_HEALING' | 'NEPHROLOGY' | 'ANTAGONISTS' | 'IMMUNOSTIMULANT' | 'APPETITE_STIMULANTS_HEMATOPOIESIS' | 'SUPPLEMENTS_OTHERS' | 'LAXATIVES' | 'ANTIDIARRHEAL' | 'ANTIHISTAMINE' | 'MEDICATED_SHAMPOO' | 'CORTICOSTEROIDS' | 'EXPECTORANT' | 'BRONCHODILATOR';
 import { userHasPOSPermission } from '@/utils/pos-helpers';
 
 // Implementación del patrón singleton para PrismaClient
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Construir la consulta
-    const whereClause: Prisma.InventoryItemWhereInput = {};
+    const whereClause: any = {};
     
     if (category) {
       whereClause.category = category as InventoryCategory;

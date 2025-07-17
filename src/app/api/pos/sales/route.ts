@@ -3,7 +3,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { userHasPOSPermission } from "@/utils/pos-helpers";
 import { prisma } from "@/lib/prismaDB";
-import { Prisma, PaymentMethod, SaleStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+
+// Manual type definitions due to Prisma client export issues
+const PaymentMethod = {
+  CASH: 'CASH' as const,
+  CARD: 'CARD' as const,
+  TRANSFER: 'TRANSFER' as const,
+  CHECK: 'CHECK' as const,
+};
+
+const SaleStatus = {
+  PENDING: 'PENDING' as const,
+  COMPLETED: 'COMPLETED' as const,
+  CANCELLED: 'CANCELLED' as const,
+  REFUNDED: 'REFUNDED' as const,
+};
 import crypto from "crypto";
 
 interface SaleItemInput {
@@ -24,7 +39,7 @@ interface SaleCreateRequest {
   tax: number;
   discount: number;
   total: number;
-  paymentMethod: PaymentMethod;
+  paymentMethod: typeof PaymentMethod[keyof typeof PaymentMethod];
   notes?: string;
   items: SaleItemInput[];
 }

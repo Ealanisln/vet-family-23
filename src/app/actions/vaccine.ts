@@ -2,12 +2,52 @@
 
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
-import {
-  InventoryStatus,
-  MovementType,
-  InventoryCategory,
-  type InventoryItem
-} from "@prisma/client";
+// Manual type definitions due to Prisma client export issues
+const InventoryStatus = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  DISCONTINUED: 'DISCONTINUED' as const,
+  OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
+  LOW_STOCK: 'LOW_STOCK' as const,
+};
+
+const MovementType = {
+  IN: 'IN' as const,
+  OUT: 'OUT' as const,
+  ADJUSTMENT: 'ADJUSTMENT' as const,
+  RETURN: 'RETURN' as const,
+};
+
+const InventoryCategory = {
+  MEDICINE: 'MEDICINE' as const,
+  SURGICAL_MATERIAL: 'SURGICAL_MATERIAL' as const,
+  VACCINE: 'VACCINE' as const,
+  FOOD: 'FOOD' as const,
+  ACCESSORY: 'ACCESSORY' as const,
+  CONSUMABLE: 'CONSUMABLE' as const,
+} as const;
+
+type InventoryItem = {
+  id: string;
+  name: string;
+  category: typeof InventoryCategory[keyof typeof InventoryCategory];
+  description: string | null;
+  activeCompound: string | null;
+  presentation: string | null;
+  measure: string | null;
+  brand: string | null;
+  quantity: number;
+  minStock: number | null;
+  location: string | null;
+  expirationDate: Date | null;
+  status: string;
+  batchNumber: string | null;
+  specialNotes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  cost: number | null;
+  price: number | null;
+};
 import type { VaccineType } from "@/utils/vaccines";
 
 export interface VaccineItem {
@@ -112,7 +152,7 @@ export async function getVaccines() {
 
 interface UpdateVaccineData {
   quantity?: number;
-  status?: InventoryStatus;
+  status?: typeof InventoryStatus[keyof typeof InventoryStatus];
   location?: string;
   minStock?: number;
   expirationDate?: Date;

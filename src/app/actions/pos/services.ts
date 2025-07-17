@@ -3,14 +3,17 @@
 
 import { revalidatePath } from "next/cache";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { PrismaClient, Prisma, ServiceCategory } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
+
+// Manual type definition due to Prisma client export issues
+type ServiceCategory = 'CONSULTATION' | 'SURGERY' | 'VACCINATION' | 'GROOMING' | 'BOARDING' | 'EMERGENCY' | 'LABORATORY' | 'IMAGING' | 'DENTAL' | 'THERAPY';
 import { randomUUID } from "crypto";
 
 // Función auxiliar para verificar errores de Prisma
 function isPrismaError(
   error: unknown
-): error is Prisma.PrismaClientKnownRequestError {
-  return error instanceof Prisma.PrismaClientKnownRequestError;
+): error is any {
+  return error && typeof error === 'object' && 'code' in error;
 }
 
 // Custom error class para utilizar en casos específicos

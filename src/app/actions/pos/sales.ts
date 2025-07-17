@@ -329,12 +329,12 @@ export async function getSales({
     else if (parsedStartDate) whereClause.date = { gte: parsedStartDate };
     else if (parsedEndDate) whereClause.date = { lte: parsedEndDate };
 
-    if (paymentMethod) whereClause.paymentMethod = paymentMethod as PaymentMethod;
-    if (status) whereClause.status = status as SaleStatus;
+    if (paymentMethod) whereClause.paymentMethod = paymentMethod as typeof PaymentMethod[keyof typeof PaymentMethod];
+    if (status) whereClause.status = status as typeof SaleStatus[keyof typeof SaleStatus];
 
     console.log("getSales: Cláusula Where construida:", JSON.stringify(whereClause));
 
-    const orderBy: Prisma.SaleOrderByWithRelationInput[] = [{ date: 'desc' }];
+    const orderBy: any[] = [{ date: 'desc' }];
 
     const [sales, total] = await prisma.$transaction([
       prisma.sale.findMany({
@@ -477,7 +477,7 @@ export async function cancelSale(id: string): Promise<CancelSaleResult> {
             const product = await tx.inventoryItem.findUnique({ where: { id: item.itemId } });
             if (product) {
               const newQuantity = product.quantity + item.quantity;
-              let newStatus: InventoryStatus = product.status;
+              let newStatus: typeof InventoryStatus[keyof typeof InventoryStatus] = product.status;
               if (newQuantity <= 0 && product.status !== InventoryStatus.OUT_OF_STOCK) {
                   newStatus = InventoryStatus.OUT_OF_STOCK;
               } else if (newQuantity > 0 && product.minStock != null && newQuantity <= product.minStock && product.status !== InventoryStatus.LOW_STOCK) {

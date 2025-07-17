@@ -1,6 +1,21 @@
 // src/types/inventory.ts
 
-import { InventoryStatus, MovementType } from "@prisma/client";
+// Manual type definitions due to Prisma client export issues
+const InventoryStatus = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  DISCONTINUED: 'DISCONTINUED' as const,
+  OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
+  LOW_STOCK: 'LOW_STOCK' as const,
+  EXPIRED: 'EXPIRED' as const,
+};
+
+const MovementType = {
+  IN: 'IN' as const,
+  OUT: 'OUT' as const,
+  ADJUSTMENT: 'ADJUSTMENT' as const,
+  RETURN: 'RETURN' as const,
+};
 
 // Enums y Types Base
 export type InventoryCategory =
@@ -50,7 +65,7 @@ export interface InventoryMovementUser {
 export interface InventoryMovement {
   id: string;
   itemId: string;
-  type: MovementType;
+  type: typeof MovementType[keyof typeof MovementType];
   quantity: number;
   date: string;
   reason: string | null;
@@ -78,7 +93,7 @@ export interface InventoryItemBase {
   expirationDate: string | null;
   batchNumber: string | null;
   specialNotes: string | null;
-  status: InventoryStatus;
+  status: typeof InventoryStatus[keyof typeof InventoryStatus];
 }
 
 // Item del servidor (con fechas como string)
@@ -141,7 +156,7 @@ export interface UpdateInventoryData {
   expirationDate?: string | null;
   batchNumber?: string | null;
   specialNotes?: string | null;
-  status?: InventoryStatus;
+  status?: typeof InventoryStatus[keyof typeof InventoryStatus];
 }
 
 // Respuestas del Servidor
@@ -167,7 +182,7 @@ export interface CreateInventoryResponse extends ServerResponse {
 // Tipos para Filtros y Búsqueda
 export interface InventoryFilters {
   category?: InventoryCategory;
-  status?: InventoryStatus;
+  status?: typeof InventoryStatus[keyof typeof InventoryStatus];
   search?: string;
 }
 
@@ -189,7 +204,7 @@ export interface SortParams {
 
 // Tipos para Movimientos
 export interface CreateMovementData {
-  type: MovementType;
+  type: typeof MovementType[keyof typeof MovementType];
   quantity: number;
   reason?: string;
   notes?: string;
@@ -211,4 +226,4 @@ export interface SearchInventoryParams {
   offset?: number;
 }
 
-export { InventoryStatus };
+export type { InventoryStatus };

@@ -47,7 +47,15 @@ import { Badge, BadgeProps } from "@/components/ui/custom-badge";
 import { toast } from "@/components/ui/use-toast";
 
 import { InventoryFormItem } from "@/types/inventory";
-import { InventoryStatus } from "@prisma/client";
+// Manual type definitions due to Prisma client export issues
+const InventoryStatus = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  DISCONTINUED: 'DISCONTINUED' as const,
+  OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
+  LOW_STOCK: 'LOW_STOCK' as const,
+  EXPIRED: 'EXPIRED' as const,
+};
 import { getInventory } from "@/app/actions/inventory";
 
 import ItemDetails from "./ui/ItemDetails";
@@ -64,7 +72,7 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [statusFilter, setStatusFilter] = useState<
-    InventoryStatus | "all_statuses" | null
+    typeof InventoryStatus[keyof typeof InventoryStatus] | "all_statuses" | null
   >(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<InventoryFormItem | null>(
@@ -74,11 +82,12 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
 
   // Helper functions with type safety
   const getStatusBadgeVariant = (
-    status: InventoryStatus
+    status: typeof InventoryStatus[keyof typeof InventoryStatus]
   ): BadgeProps["variant"] => {
-    const statusMap: Record<InventoryStatus, BadgeProps["variant"]> = {
+    const statusMap: Record<typeof InventoryStatus[keyof typeof InventoryStatus], BadgeProps["variant"]> = {
       ACTIVE: "success",
       INACTIVE: "secondary",
+      DISCONTINUED: "secondary",
       LOW_STOCK: "warning",
       OUT_OF_STOCK: "destructive",
       EXPIRED: "destructive",
@@ -151,10 +160,11 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
       accessorKey: "status",
       header: "Estado",
       cell: ({ row }) => {
-        const status = row.getValue("status") as InventoryStatus;
-        const statusMap: Record<InventoryStatus, string> = {
+        const status = row.getValue("status") as typeof InventoryStatus[keyof typeof InventoryStatus];
+        const statusMap: Record<typeof InventoryStatus[keyof typeof InventoryStatus], string> = {
           ACTIVE: "Activo",
           INACTIVE: "Inactivo",
+          DISCONTINUED: "Descontinuado",
           LOW_STOCK: "Stock Bajo",
           OUT_OF_STOCK: "Sin Stock",
           EXPIRED: "Expirado",
@@ -273,7 +283,7 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
               </div>
               <Select
                 value={statusFilter || "all_statuses"}
-                onValueChange={(value: InventoryStatus | "all_statuses") =>
+                onValueChange={(value: typeof InventoryStatus[keyof typeof InventoryStatus] | "all_statuses") =>
                   setStatusFilter(value)
                 }
               >

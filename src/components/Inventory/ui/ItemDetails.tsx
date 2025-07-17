@@ -3,7 +3,15 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/custom-badge";
 import type { BadgeProps } from "@/components/ui/custom-badge";
 import { InventoryFormItem } from "@/types/inventory";
-import { InventoryStatus } from "@prisma/client";
+// Manual type definitions due to Prisma client export issues
+const InventoryStatus = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  DISCONTINUED: 'DISCONTINUED' as const,
+  OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
+  LOW_STOCK: 'LOW_STOCK' as const,
+  EXPIRED: 'EXPIRED' as const,
+};
 
 interface ItemDetailsProps {
   selectedItem: InventoryFormItem | null;
@@ -28,10 +36,11 @@ const formatDate = (dateString: string | Date) => {
   });
 };
 
-const getStatusText = (status: InventoryStatus): string => {
+const getStatusText = (status: typeof InventoryStatus[keyof typeof InventoryStatus]): string => {
   const statusMap: Record<string, string> = {
     ACTIVE: "Activo",
     INACTIVE: "Inactivo",
+    DISCONTINUED: "Descontinuado",
     LOW_STOCK: "Stock Bajo",
     OUT_OF_STOCK: "Sin Stock",
     EXPIRED: "Expirado",

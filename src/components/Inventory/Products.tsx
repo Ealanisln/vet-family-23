@@ -64,7 +64,21 @@ import {
   CreateInventoryResponse,
   InventoryFormItem,
 } from "@/types/inventory";
-import { InventoryStatus, MovementType } from "@prisma/client";
+// Manual type definitions due to Prisma client export issues
+const InventoryStatus = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  DISCONTINUED: 'DISCONTINUED' as const,
+  OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
+  LOW_STOCK: 'LOW_STOCK' as const,
+};
+
+const MovementType = {
+  IN: 'IN' as const,
+  OUT: 'OUT' as const,
+  ADJUSTMENT: 'ADJUSTMENT' as const,
+  RETURN: 'RETURN' as const,
+};
 import type { InventoryCategory } from "@/types/inventory";
 
 // Componentes
@@ -131,7 +145,7 @@ export default function Inventory() {
     InventoryCategory | "all_categories" | null
   >(null);
   const [statusFilter, setStatusFilter] = useState<
-    InventoryStatus | "all_statuses" | null
+    typeof InventoryStatus[keyof typeof InventoryStatus] | "all_statuses" | null
   >(null);
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedItem, setSelectedItem] = useState<InventoryFormItem | null>(
@@ -262,7 +276,7 @@ export default function Inventory() {
         );
       },
       cell: ({ row }) => {
-        const status = row.getValue("status") as InventoryStatus;
+        const status = row.getValue("status") as typeof InventoryStatus[keyof typeof InventoryStatus];
         const statusMap: Record<string, string> = {
           ACTIVE: "Activo",
           INACTIVE: "Inactivo",
@@ -622,7 +636,7 @@ export default function Inventory() {
 
                 <Select
                   value={statusFilter || "all_statuses"}
-                  onValueChange={(value: InventoryStatus | "all_statuses") => {
+                  onValueChange={(value: typeof InventoryStatus[keyof typeof InventoryStatus] | "all_statuses") => {
                     setStatusFilter(value);
                   }}
                 >

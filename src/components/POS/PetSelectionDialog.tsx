@@ -16,7 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pet, User } from "@prisma/client";
+import { Pet } from "@/types/pet";
+import { User } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
 import { PawPrint, UserCheck, Loader2, Heart, Dog } from "lucide-react";
 

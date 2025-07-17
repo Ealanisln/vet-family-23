@@ -1,6 +1,35 @@
 // src/types/pos.ts
 
-import { CashDrawer as PrismaCashDrawer, CashTransaction as PrismaCashTransaction, User as PrismaUser } from '@prisma/client';
+// Basic type definitions for Prisma models
+interface PrismaCashDrawer {
+  id: string;
+  initialAmount: number;
+  openedAt: Date;
+  closedAt?: Date | null;
+  openedBy?: string | null;
+  closedBy?: string | null;
+  finalAmount?: number | null;
+  expectedAmount?: number | null;
+  difference?: number | null;
+  status: string;
+  notes?: string | null;
+}
+
+interface PrismaCashTransaction {
+  id: string;
+  type: string;
+  amount: number;
+  description: string | null;
+  createdAt: Date;
+  saleId?: string | null;
+}
+
+interface PrismaUser {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+}
 
 // Enums as string literal types
 export type PaymentMethod = 

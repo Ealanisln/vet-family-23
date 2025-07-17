@@ -1,5 +1,19 @@
 // import { InventoryFormItem } from "@/types/inventory";
-import { InventoryStatus, MovementType } from "@prisma/client";
+// Manual type definitions due to Prisma client export issues
+const InventoryStatus = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  DISCONTINUED: 'DISCONTINUED' as const,
+  OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
+  LOW_STOCK: 'LOW_STOCK' as const,
+};
+
+const MovementType = {
+  IN: 'IN' as const,
+  OUT: 'OUT' as const,
+  ADJUSTMENT: 'ADJUSTMENT' as const,
+  RETURN: 'RETURN' as const,
+};
 
 // Enums
 export type InventoryCategory =
@@ -79,7 +93,7 @@ interface InventoryMovementUser {
 
 export interface InventoryMovement {
   id: string;
-  type: MovementType;
+  type: typeof MovementType[keyof typeof MovementType];
   quantity: number;
   date: string;
   itemId: string;
@@ -106,7 +120,7 @@ export interface InventoryItem {
   expirationDate: string | null;
   batchNumber: string | null;
   specialNotes: string | null;
-  status: InventoryStatus;
+  status: typeof InventoryStatus[keyof typeof InventoryStatus];
   createdAt: Date;
   updatedAt: Date;
   movements: InventoryMovement[];
@@ -131,7 +145,7 @@ export type InventoryItemFormData = Omit<
 // Unified interface for inventory updates
 export interface UpdateInventoryData {
   quantity?: number;
-  status?: InventoryStatus;
+  status?: typeof InventoryStatus[keyof typeof InventoryStatus];
   location?: string | null;
   minStock?: number | null;
   name?: string;
@@ -171,7 +185,7 @@ export interface ServerActionResponse {
 
 // Movement-specific types
 export interface CreateMovementData {
-  type: MovementType;
+  type: typeof MovementType[keyof typeof MovementType];
   quantity: number;
   reason?: string;
   notes?: string;
@@ -181,7 +195,7 @@ export interface CreateMovementData {
 // Search and filter types
 export interface InventoryFilters {
   category?: InventoryCategory | 'ALL_MEDICINE'; // Add special filter group
-  status?: InventoryStatus;
+  status?: typeof InventoryStatus[keyof typeof InventoryStatus];
   search?: string;
 }
 // Pagination types

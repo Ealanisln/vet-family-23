@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Search, Users, UserCheck, Phone, Mail, Loader2 } from "lucide-react";
-import { User } from "@prisma/client";
+import { User } from "@/types/user";
 
 interface ClientSelectionDialogProps {
   open: boolean;

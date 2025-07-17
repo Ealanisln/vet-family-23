@@ -1,5 +1,44 @@
 // src/utils/pos-helpers.ts
-import { PrismaClient, InventoryCategory } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+// Manual type definitions due to Prisma client export issues
+const InventoryCategory = {
+  MEDICINE: 'MEDICINE' as const,
+  SURGICAL_MATERIAL: 'SURGICAL_MATERIAL' as const,
+  VACCINE: 'VACCINE' as const,
+  FOOD: 'FOOD' as const,
+  ACCESSORY: 'ACCESSORY' as const,
+  CONSUMABLE: 'CONSUMABLE' as const,
+  ANTI_INFLAMMATORY_ANALGESICS: 'ANTI_INFLAMMATORY_ANALGESICS' as const,
+  ANTIBIOTIC: 'ANTIBIOTIC' as const,
+  ANTIDIARRHEAL: 'ANTIDIARRHEAL' as const,
+  ANTIFUNGAL: 'ANTIFUNGAL' as const,
+  ANTIHISTAMINE: 'ANTIHISTAMINE' as const,
+  DEWORMERS: 'DEWORMERS' as const,
+  GASTROPROTECTORS_GASTROENTEROLOGY: 'GASTROPROTECTORS_GASTROENTEROLOGY' as const,
+  CARDIOLOGY: 'CARDIOLOGY' as const,
+  DERMATOLOGY: 'DERMATOLOGY' as const,
+  ENDOCRINOLOGY_HORMONAL: 'ENDOCRINOLOGY_HORMONAL' as const,
+  ANESTHETICS_SEDATIVES: 'ANESTHETICS_SEDATIVES' as const,
+  OTIC: 'OTIC' as const,
+  OINTMENTS: 'OINTMENTS' as const,
+  RESPIRATORY: 'RESPIRATORY' as const,
+  OPHTHALMIC: 'OPHTHALMIC' as const,
+  DRY_FOOD: 'DRY_FOOD' as const,
+  WET_FOOD: 'WET_FOOD' as const,
+  CHIPS: 'CHIPS' as const,
+  ANTI_EMETIC: 'ANTI_EMETIC' as const,
+  ANTISEPTICS_HEALING: 'ANTISEPTICS_HEALING' as const,
+  NEPHROLOGY: 'NEPHROLOGY' as const,
+  ANTAGONISTS: 'ANTAGONISTS' as const,
+  IMMUNOSTIMULANT: 'IMMUNOSTIMULANT' as const,
+  APPETITE_STIMULANTS_HEMATOPOIESIS: 'APPETITE_STIMULANTS_HEMATOPOIESIS' as const,
+  SUPPLEMENTS_OTHERS: 'SUPPLEMENTS_OTHERS' as const,
+  CORTICOSTEROIDS: 'CORTICOSTEROIDS' as const,
+  BRONCHODILATOR: 'BRONCHODILATOR' as const,
+  EXPECTORANT: 'EXPECTORANT' as const,
+  LAXATIVES: 'LAXATIVES' as const,
+  MEDICATED_SHAMPOO: 'MEDICATED_SHAMPOO' as const,
+};
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 // Asegúrate que estas importaciones sean correctas respecto a la ubicación real de tus tipos
@@ -133,7 +172,7 @@ export function translateServiceCategory(category: string): string {
 /**
  * Traduce las categorías de inventario a español
  */
-export function translateInventoryCategory(category: InventoryCategory | string): string {
+export function translateInventoryCategory(category: typeof InventoryCategory[keyof typeof InventoryCategory] | string): string {
   if (!category) return "";
   const translations: Record<string, string> = {
     ACCESSORY: "Accesorios",

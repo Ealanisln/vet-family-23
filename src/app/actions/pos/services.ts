@@ -6,7 +6,7 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 
 // Manual type definition due to Prisma client export issues
-type ServiceCategory = 'CONSULTATION' | 'SURGERY' | 'VACCINATION' | 'GROOMING' | 'BOARDING' | 'EMERGENCY' | 'LABORATORY' | 'IMAGING' | 'DENTAL' | 'THERAPY';
+type ServiceCategory = 'CONSULTATION' | 'SURGERY' | 'VACCINATION' | 'GROOMING' | 'DENTAL' | 'LABORATORY' | 'IMAGING' | 'HOSPITALIZATION' | 'OTHER';
 import { randomUUID } from "crypto";
 
 // Función auxiliar para verificar errores de Prisma

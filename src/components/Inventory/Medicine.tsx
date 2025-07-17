@@ -196,7 +196,7 @@ export default function Medicine() {
       accessorKey: "status",
       header: "Estado",
       cell: ({ row }) => {
-        const status = row.getValue("status") as InventoryStatus;
+        const status = row.getValue("status") as typeof InventoryStatus[keyof typeof InventoryStatus];
         const statusMap: Record<string, string> = {
           ACTIVE: "Activo",
           INACTIVE: "Inactivo",
@@ -519,7 +519,7 @@ export default function Medicine() {
             <div className="flex gap-2">
               <Select
                 value={statusFilter || "all_statuses"}
-                onValueChange={(value: InventoryStatus | "all_statuses") => {
+                onValueChange={(value: typeof InventoryStatus[keyof typeof InventoryStatus] | "all_statuses") => {
                   setStatusFilter(value);
                 }}
               >

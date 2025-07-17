@@ -1,7 +1,47 @@
 // src/lib/type-adapters.ts
 import type { CartClientProps, CartPetProps } from "@/contexts/CartContext";
 import type { Client } from "@/components/Clientes/ClientSearch";
-import type { InventoryCategory, InventoryStatus } from "@prisma/client";
+// Manual type definitions due to Prisma client export issues
+const InventoryCategory = {
+  MEDICINE: 'MEDICINE' as const,
+  SURGICAL_MATERIAL: 'SURGICAL_MATERIAL' as const,
+  VACCINE: 'VACCINE' as const,
+  FOOD: 'FOOD' as const,
+  ACCESSORY: 'ACCESSORY' as const,
+  CONSUMABLE: 'CONSUMABLE' as const,
+  ANTI_INFLAMMATORY_ANALGESICS: 'ANTI_INFLAMMATORY_ANALGESICS' as const,
+  ANTIBIOTIC: 'ANTIBIOTIC' as const,
+  ANTIFUNGAL: 'ANTIFUNGAL' as const,
+  DEWORMERS: 'DEWORMERS' as const,
+  GASTROPROTECTORS_GASTROENTEROLOGY: 'GASTROPROTECTORS_GASTROENTEROLOGY' as const,
+  CARDIOLOGY: 'CARDIOLOGY' as const,
+  DERMATOLOGY: 'DERMATOLOGY' as const,
+  ENDOCRINOLOGY_HORMONAL: 'ENDOCRINOLOGY_HORMONAL' as const,
+  ANESTHETICS_SEDATIVES: 'ANESTHETICS_SEDATIVES' as const,
+  OTIC: 'OTIC' as const,
+  OINTMENTS: 'OINTMENTS' as const,
+  RESPIRATORY: 'RESPIRATORY' as const,
+  OPHTHALMIC: 'OPHTHALMIC' as const,
+  DRY_FOOD: 'DRY_FOOD' as const,
+  WET_FOOD: 'WET_FOOD' as const,
+  CHIPS: 'CHIPS' as const,
+  ANTI_EMETIC: 'ANTI_EMETIC' as const,
+  ANTISEPTICS_HEALING: 'ANTISEPTICS_HEALING' as const,
+  NEPHROLOGY: 'NEPHROLOGY' as const,
+  ANTAGONISTS: 'ANTAGONISTS' as const,
+  IMMUNOSTIMULANT: 'IMMUNOSTIMULANT' as const,
+  APPETITE_STIMULANTS_HEMATOPOIESIS: 'APPETITE_STIMULANTS_HEMATOPOIESIS' as const,
+  SUPPLEMENTS_OTHERS: 'SUPPLEMENTS_OTHERS' as const,
+};
+
+const InventoryStatus = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  DISCONTINUED: 'DISCONTINUED' as const,
+  OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
+  LOW_STOCK: 'LOW_STOCK' as const,
+  EXPIRED: 'EXPIRED' as const,
+};
 import { Pet } from "@/types/pet";
 
 /**
@@ -10,7 +50,7 @@ import { Pet } from "@/types/pet";
 export interface InventoryItemWithPrice {
   id: string;
   name: string;
-  category: InventoryCategory;
+  category: typeof InventoryCategory[keyof typeof InventoryCategory];
   description: string | null;
   activeCompound: string | null;
   presentation: string | null;
@@ -20,7 +60,7 @@ export interface InventoryItemWithPrice {
   minStock: number | null;
   location: string | null;
   expirationDate: string | null;
-  status: InventoryStatus;
+  status: typeof InventoryStatus[keyof typeof InventoryStatus];
   batchNumber: string | null;
   specialNotes: string | null;
   createdAt: Date | string;
@@ -119,7 +159,7 @@ export function adaptInventoryItem(
   return {
     id: typeof item.id === "string" ? item.id : "",
     name: typeof item.name === "string" ? item.name : "",
-    category: typeof item.category === "string" ? item.category as InventoryCategory : "MEDICINE" as InventoryCategory,
+    category: typeof item.category === "string" ? item.category as typeof InventoryCategory[keyof typeof InventoryCategory] : "MEDICINE" as typeof InventoryCategory[keyof typeof InventoryCategory],
     description: typeof item.description === "string" ? item.description : null,
     activeCompound:
       typeof item.activeCompound === "string" ? item.activeCompound : null,
@@ -136,7 +176,7 @@ export function adaptInventoryItem(
         : typeof item.expirationDate === "string"
           ? item.expirationDate
           : null,
-    status: typeof item.status === "string" ? item.status as InventoryStatus : "ACTIVE" as InventoryStatus,
+    status: typeof item.status === "string" ? item.status as typeof InventoryStatus[keyof typeof InventoryStatus] : "ACTIVE" as typeof InventoryStatus[keyof typeof InventoryStatus],
     batchNumber: typeof item.batchNumber === "string" ? item.batchNumber : null,
     specialNotes:
       typeof item.specialNotes === "string" ? item.specialNotes : null,

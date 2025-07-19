@@ -5,7 +5,7 @@
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/hooks/use-debounce';
-import AddPetForm from '@/components/Pet/AddPetForm';
+import UnifiedPetForm, { PetFormData } from '@/components/ui/UnifiedPetForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,17 +23,7 @@ interface User {
   phone: string | null;
 }
 
-interface PetDataForSubmit {
-  name: string;
-  species: string;
-  breed: string;
-  dateOfBirth: Date;
-  gender: string;
-  weight: number;
-  microchipNumber?: string;
-  medicalHistory?: string;
-  isNeutered: boolean;
-}
+// Using PetFormData from UnifiedPetForm instead of custom interface
 
 const SUBMIT_TIMEOUT = 30000;
 
@@ -72,7 +62,7 @@ const NuevaMascotaPage = () => {
     handleSearch();
   }, [debouncedSearch]);
 
-  const handleSubmit = async (petData: PetDataForSubmit) => {
+  const handleSubmit = async (petData: PetFormData) => {
     if (isSubmitting || !selectedUserId) return;
 
     setIsSubmitting(true);
@@ -86,13 +76,31 @@ const NuevaMascotaPage = () => {
     }, SUBMIT_TIMEOUT);
 
     try {
-      const result = await addPet(selectedUserId, petData);
+      // Convert PetFormData to the format expected by addPet action
+      const petPayload = {
+        ...petData,
+        dateOfBirth: petData.dateOfBirth instanceof Date 
+          ? petData.dateOfBirth 
+          : new Date(petData.dateOfBirth),
+        weight: typeof petData.weight === 'string' 
+          ? parseFloat(petData.weight) 
+          : petData.weight,
+      };
+
+      const result = await addPet(selectedUserId, petPayload);
       if (result.success) {
         toast({
           title: 'Mascota agregada',
           description: 'La mascota se ha registrado correctamente',
         });
-        router.push(`/admin/clientes/${selectedUserId}`);
+        
+        // Refresco forzado antes de la redirección
+        router.refresh();
+        
+        // Pequeño delay para asegurar que los datos se actualicen
+        setTimeout(() => {
+          router.push(`/admin/clientes/${selectedUserId}`);
+        }, 100);
       } else {
         throw new Error(result.error || 'Error al registrar la mascota');
       }
@@ -183,11 +191,19 @@ const NuevaMascotaPage = () => {
               </CardContent>
             </Card>
           ) : (
-            <AddPetForm
+            <UnifiedPetForm
               onSubmit={handleSubmit}
               onCancel={handleCancel}
               userId={selectedUserId}
               isSubmitting={isSubmitting}
+              showInternalId={true}
+              showMedicalHistory={true}
+              showDeceasedToggle={true}
+              showAsCard={true}
+              title="Agregar Nueva Mascota"
+              submitButtonText="Registrar Mascota"
+              cancelButtonText="Cancelar"
+              className="max-w-4xl"
             />
           )}
         </div>

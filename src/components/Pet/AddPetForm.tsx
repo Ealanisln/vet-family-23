@@ -61,9 +61,24 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isSubmitting) {
-      // Ya no pasamos el userId aquí porque lo manejará el componente padre
       await onSubmit(petData);
     }
+  };
+
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Solo actualizar si es un número válido o una cadena vacía
+    if (value === "" || !isNaN(parseFloat(value))) {
+      setPetData({ 
+        ...petData, 
+        weight: value === "" ? 0 : parseFloat(value) 
+      });
+    }
+  };
+
+  const handleInternalIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPetData({ ...petData, internalId: value });
   };
 
   const isFormValid = () => {
@@ -72,7 +87,8 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
       petData.species.trim() !== "" &&
       petData.breed.trim() !== "" &&
       petData.gender.trim() !== "" &&
-      petData.weight > 0
+      petData.weight > 0 &&
+      !isNaN(petData.weight)
     );
   };
 
@@ -174,10 +190,12 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                 id="weight"
                 type="number"
                 step="0.1"
-                value={petData.weight}
-                onChange={(e) => setPetData({ ...petData, weight: parseFloat(e.target.value) })}
+                min="0.1"
+                value={petData.weight || ""}
+                onChange={handleWeightChange}
                 disabled={isSubmitting}
                 required
+                placeholder="0.0"
               />
             </div>
 
@@ -188,6 +206,7 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                 value={petData.microchipNumber || ""}
                 onChange={(e) => setPetData({ ...petData, microchipNumber: e.target.value })}
                 disabled={isSubmitting}
+                placeholder="Opcional"
               />
             </div>
 
@@ -199,6 +218,7 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                 onChange={(e) => setPetData({ ...petData, medicalHistory: e.target.value })}
                 disabled={isSubmitting}
                 rows={4}
+                placeholder="Información médica relevante (opcional)"
               />
             </div>
 
@@ -231,9 +251,15 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
               <Input
                 id="internalId"
                 value={petData.internalId || ""}
-                onChange={(e) => setPetData({ ...petData, internalId: e.target.value })}
+                onChange={handleInternalIdChange}
                 disabled={isSubmitting}
+                placeholder="Opcional - debe ser único"
               />
+              {petData.internalId && petData.internalId.trim() !== "" && (
+                <p className="text-sm text-gray-600">
+                  Este ID debe ser único. Si se deja vacío, no se asignará ningún ID interno.
+                </p>
+              )}
             </div>
           </div>
         </CardContent>

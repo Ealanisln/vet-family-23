@@ -80,6 +80,16 @@ const PetForm: React.FC<PetFormProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    
+    // Manejo especial para el campo weight
+    if (name === "weight") {
+      // Solo actualizar si es un número válido o una cadena vacía
+      if (value === "" || !isNaN(parseFloat(value))) {
+        setPet((prevState) => ({ ...prevState, [name]: value }));
+      }
+      return;
+    }
+    
     setPet((prevState) => ({ ...prevState, [name]: value }));
   };
 
@@ -101,11 +111,19 @@ const PetForm: React.FC<PetFormProps> = ({
       return;
     }
 
+    // Validar peso antes de enviar
+    const weightValue = parseFloat(pet.weight);
+    if (isNaN(weightValue) || weightValue <= 0) {
+      console.error("Peso inválido");
+      return;
+    }
+
     const petData = {
       ...pet,
-      internalId: pet.internalId || undefined,
+      // Procesar internalId: convertir cadena vacía a undefined para evitar conflictos
+      internalId: pet.internalId && pet.internalId.trim() !== "" ? pet.internalId.trim() : undefined,
       dateOfBirth: new Date(pet.dateOfBirth),
-      weight: parseFloat(pet.weight),
+      weight: weightValue,
       isNeutered: pet.isNeutered,
       isDeceased: pet.isDeceased,
     };
@@ -140,10 +158,15 @@ const PetForm: React.FC<PetFormProps> = ({
               name="internalId"
               value={pet.internalId || ""}
               onChange={handleInputChange}
-              placeholder="ID Interno (opcional)"
+              placeholder="ID Interno (opcional - debe ser único)"
               className="pl-3 pr-10 py-2 w-full border rounded-lg focus:ring-2 focus:ring-primary/20"
             />
           </div>
+          {pet.internalId && pet.internalId.trim() !== "" && (
+            <p className="text-xs text-gray-600">
+              Este ID debe ser único. Si se deja vacío, no se asignará ningún ID interno.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -221,16 +244,20 @@ const PetForm: React.FC<PetFormProps> = ({
           <Label htmlFor="weight" className="text-sm font-medium text-gray-700">
             Peso (kg) <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="weight"
-            name="weight"
-            type="number"
-            step="0.1"
-            value={pet.weight}
-            onChange={handleInputChange}
-            required
-            className="pl-3 pr-10 py-2 w-full border rounded-lg focus:ring-2 focus:ring-primary/20"
-          />
+          <div className="relative">
+            <Input
+              id="weight"
+              name="weight"
+              type="number"
+              step="0.1"
+              min="0.1"
+              value={pet.weight || ""}
+              onChange={handleInputChange}
+              required
+              className="pl-3 pr-10 py-2 w-full border rounded-lg focus:ring-2 focus:ring-primary/20"
+              placeholder="0.0"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">

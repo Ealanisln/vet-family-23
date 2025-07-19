@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react"; // Import useCallback
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"; // Import useCallback
 import { Search, X, Loader2, PawPrint } from "lucide-react";
 import { Button } from "@/components/ui/button"; // Asume que usas Button también para el trigger seleccionado
 import { Input } from "@/components/ui/input"; // Necesario para el trigger cuando no hay selección
@@ -47,14 +47,16 @@ export function PetSearch({
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [pets, setPets] = useState<Pet[]>([]); // Mascotas del cliente actual
+  const isLoadingRef = useRef(false);
 
   // Estado para controlar si se debe deshabilitar (más específico)
   const isDisabled = disabled || !userId; // Deshabilitado si prop `disabled` es true O no hay `userId`
 
   // Cargar mascotas cuando cambia el userId y el popover está abierto o se abre
   const loadPets = useCallback(async () => {
-    if (!userId || isLoading) return;
+    if (!userId || isLoadingRef.current) return;
 
+    isLoadingRef.current = true;
     setIsLoading(true);
     setPets([]);
     try {
@@ -130,6 +132,7 @@ export function PetSearch({
       setPets([]);
     } finally {
       setIsLoading(false);
+      isLoadingRef.current = false;
     }
   }, [userId]); // REMOVE isLoading from dependencies
 
@@ -139,6 +142,10 @@ export function PetSearch({
       // Cargar si hay userId y está abierto
       loadPets();
     }
+  }, [userId, open, loadPets]);
+
+  // Efecto separado para limpiar cuando no hay userId
+  useEffect(() => {
     if (!userId) {
       // Limpiar si se quita el cliente
       setPets([]);
@@ -148,7 +155,7 @@ export function PetSearch({
         onSelect(null);
       }
     }
-  }, [userId, open, loadPets, selectedPet, onSelect]); // Añadir selectedPet y onSelect como dependencias
+  }, [userId]); // Solo depende de userId, no de selectedPet u onSelect
 
   // Filtrar mascotas localmente (ya que `pets` solo contiene las del cliente actual)
   const filteredPets = useMemo(() => {

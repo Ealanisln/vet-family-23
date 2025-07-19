@@ -72,10 +72,10 @@ export async function addPet(
     };
   }
 
-  if (isNaN(petData.weight)) {
+  if (isNaN(petData.weight) || petData.weight <= 0) {
     return {
       success: false,
-      error: "Invalid weight value provided",
+      error: "El peso debe ser un número válido mayor que 0",
     };
   }
 
@@ -90,6 +90,11 @@ export async function addPet(
         error: "User not found",
       };
     }
+
+    // Procesar internalId: convertir cadena vacía a null para evitar conflictos de unicidad
+    const processedInternalId = petData.internalId && petData.internalId.trim() !== "" 
+      ? petData.internalId.trim() 
+      : null;
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const petId = uuidv4();
@@ -106,7 +111,7 @@ export async function addPet(
           microchipNumber: petData.microchipNumber || null,
           isNeutered: petData.isNeutered,
           isDeceased: false,
-          internalId: petData.internalId || null,
+          internalId: processedInternalId,
           User: {
             connect: {
               id: userId
@@ -137,6 +142,12 @@ export async function addPet(
     });
 
     revalidatePath(`/admin/clientes/${userId}`);
+    revalidatePath(`/admin/clientes/${userId}/mascotas`);
+    revalidatePath(`/admin/mascotas`);
+    revalidatePath('/admin/mascotas');
+    // También revalidar la API route de mascotas del cliente
+    revalidatePath(`/api/clients/${userId}/pets`);
+    
     return { success: true, pet: result as PetWithMedicalHistory };
   } catch (error: unknown) {
     return handlePrismaError(error, "addPet");
@@ -155,7 +166,19 @@ export async function updatePet(
     };
   }
 
+  if (isNaN(petData.weight) || petData.weight <= 0) {
+    return {
+      success: false,
+      error: "El peso debe ser un número válido mayor que 0",
+    };
+  }
+
   try {
+    // Procesar internalId: convertir cadena vacía a null para evitar conflictos de unicidad
+    const processedInternalId = petData.internalId && petData.internalId.trim() !== "" 
+      ? petData.internalId.trim() 
+      : null;
+
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const existingPet = await tx.pet.findFirst({
         where: {
@@ -180,7 +203,7 @@ export async function updatePet(
           microchipNumber: petData.microchipNumber || null,
           isNeutered: petData.isNeutered ?? existingPet.isNeutered,
           isDeceased: petData.isDeceased ?? existingPet.isDeceased,
-          internalId: petData.internalId || null,
+          internalId: processedInternalId,
         },
         include: {
           MedicalHistory: {

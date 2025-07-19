@@ -91,7 +91,7 @@ export function ClientSearch({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]); // Dependencia de isLoading para evitar cargas paralelas
+  }, []); // Removido isLoading para evitar bucles infinitos
 
   // Efecto para cargar clientes al abrir si no se han cargado
   useEffect(() => {

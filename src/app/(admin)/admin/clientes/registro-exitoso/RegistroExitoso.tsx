@@ -2,20 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import AddPetForm from "@/components/Pet/AddPetForm";
+import UnifiedPetForm, { PetFormData } from "@/components/ui/UnifiedPetForm";
 import { addPet } from "@/app/actions/add-edit-pet";
-
-interface PetDataForSubmit {
-  name: string;
-  species: string;
-  breed: string;
-  dateOfBirth: Date;
-  gender: string;
-  weight: number;
-  microchipNumber?: string;
-  medicalHistory?: string;
-  isNeutered: boolean;
-}
 
 const RegistroExitoso: React.FC = () => {
   const router = useRouter();
@@ -32,7 +20,7 @@ const RegistroExitoso: React.FC = () => {
     }
   }, [searchParams]);
 
-  const handleSubmit = async (petData: PetDataForSubmit) => {
+  const handleSubmit = async (petData: PetFormData) => {
     if (!userId) {
       console.error("No se proporcionó userId");
       return;
@@ -40,7 +28,18 @@ const RegistroExitoso: React.FC = () => {
     
     setIsSubmitting(true); // Activamos el estado de carga
     try {
-      const result = await addPet(userId, petData);
+      // Convert PetFormData to the format expected by addPet action
+      const petPayload = {
+        ...petData,
+        dateOfBirth: petData.dateOfBirth instanceof Date 
+          ? petData.dateOfBirth 
+          : new Date(petData.dateOfBirth),
+        weight: typeof petData.weight === 'string' 
+          ? parseFloat(petData.weight) 
+          : petData.weight,
+      };
+
+      const result = await addPet(userId, petPayload);
       if (result.success) {
         router.push(`/admin/clientes/${userId}`);
       } else {
@@ -76,11 +75,19 @@ const RegistroExitoso: React.FC = () => {
         <p className="mb-4">
           ¡El usuario ha sido registrado con éxito! Ahora puedes agregar una mascota.
         </p>
-        <AddPetForm
+        <UnifiedPetForm
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           userId={userId}
-          isSubmitting={isSubmitting} // Pasamos el estado de carga
+          isSubmitting={isSubmitting}
+          showInternalId={true}
+          showMedicalHistory={true}
+          showDeceasedToggle={false}
+          showAsCard={true}
+          title="Agregar Primera Mascota"
+          submitButtonText="Guardar Mascota"
+          cancelButtonText="Ir a Clientes"
+          className="max-w-4xl mx-auto"
         />
       </div>
     </div>

@@ -110,14 +110,21 @@ export default function ClientsTable() {
     // Función de filtro global
     globalFilterFn: (row, columnId, filterValue) => {
       const searchValue = filterValue.toLowerCase();
-      const searchableColumns = ["firstName", "lastName", "email"];
+      const searchableColumns = ["firstName", "email", "phone"]; // Removido "lastName" ya que no existe como accessorKey
       
       return searchableColumns.some((column) => {
         const value = row.getValue(column);
         return value
           ? String(value).toLowerCase().includes(searchValue)
           : false;
-      });
+      }) || 
+      // Búsqueda adicional en el nombre completo mostrado
+      (() => {
+        const firstName = row.getValue("firstName") as string | null;
+        const lastName = row.original.lastName as string | null;
+        const fullName = [firstName, lastName].filter(Boolean).join(" ");
+        return fullName.toLowerCase().includes(searchValue);
+      })();
     },
     onGlobalFilterChange: (updater) => {
       if (isMounted) {

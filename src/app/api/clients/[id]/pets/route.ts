@@ -20,6 +20,9 @@ export async function GET(
       () => prisma.pet.findMany({
         where: {
           userId: id,
+          isArchived: false, // Solo mostrar mascotas activas (no archivadas)
+          // Opcional: también filtrar mascotas fallecidas si se desea
+          // isDeceased: false,
         },
         select: {
           id: true,
@@ -33,6 +36,7 @@ export async function GET(
           internalId: true,
           isNeutered: true,
           isDeceased: true,
+          isArchived: true, // Incluir para mostrar badges si es necesario
         },
         orderBy: {
           name: 'asc',

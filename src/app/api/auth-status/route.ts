@@ -73,7 +73,7 @@ export async function GET(_req: NextRequest) {
 
         // Update roles only if they've changed
         if (dbUser) {
-          const currentRoles = dbUser.userRoles.map((ur) => ur.role.key);
+          const currentRoles = dbUser.UserRole.map((ur) => ur.Role.key);
           const newRoles = userRoles.filter(
             (role) => !currentRoles.includes(role.key)
           );
@@ -125,10 +125,10 @@ export async function GET(_req: NextRequest) {
     }
 
     const response = {
-      user: { ...user, roles: dbUser?.userRoles.map((ur) => ur.role) || [] },
+      user: { ...user, roles: dbUser?.UserRole.map((ur) => ur.Role) || [] },
       isAuthenticated: authStatus,
       dbUser,
-      roles: dbUser?.userRoles.map((ur) => ur.role) || [],
+      roles: dbUser?.UserRole.map((ur) => ur.Role) || [],
     };
     console.log("API response:", response);
 

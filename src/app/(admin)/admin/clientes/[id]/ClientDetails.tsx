@@ -24,8 +24,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import PetForm from "@/components/Admin/ui/PetForm";
+import { PetTableSkeleton } from "@/components/ui/pet-table-skeleton";
 
 interface Pet {
   id: string | number;
@@ -66,29 +67,78 @@ const formatPhoneNumber = (phone: string | null): string => {
 export default function ClientDetails({ user }: { user: User }) {
   const router = useRouter();
   const [pets, setPets] = useState<Pet[]>(user.pets || []);
+  const [isLoadingPets, setIsLoadingPets] = useState(false);
+  const isRefreshingRef = useRef(false);
 
   const refreshPets = useCallback(async () => {
+    if (isRefreshingRef.current) return; // Evitar múltiples llamadas simultáneas
+    
     try {
+      isRefreshingRef.current = true;
+      setIsLoadingPets(true);
       // Fetch updated user data to get the latest pets
-      const response = await fetch(`/api/clients/${user.id}/pets`);
+      const response = await fetch(`/api/clients/${user.id}/pets`, {
+        cache: 'no-store', // Forzar una nueva consulta
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+      
       if (response.ok) {
         const updatedPets = await response.json();
         setPets(updatedPets);
+        console.log(`Refreshed pets for user ${user.id}:`, updatedPets);
+      } else {
+        console.error('Failed to refresh pets:', response.status, response.statusText);
+        // Fallback to router.refresh if API call fails
+        router.refresh();
       }
     } catch (error) {
       console.error("Error refreshing pets:", error);
       // Fallback to router.refresh if API call fails
       router.refresh();
+    } finally {
+      isRefreshingRef.current = false;
+      setIsLoadingPets(false);
     }
   }, [user.id, router]);
 
+  // Auto-refresh pets when component mounts only
+  useEffect(() => {
+    // Pequeño delay para permitir que la base de datos se actualice después de la redirección
+    const timeoutId = setTimeout(() => {
+      refreshPets();
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   const formatPetForForm = (pet: Pet) => {
+    // Manejar dateOfBirth que puede venir como string del API
+    let dateOfBirthString = "";
+    if (pet.dateOfBirth) {
+      try {
+        // Si dateOfBirth es un string, convertirlo a Date primero
+        const date = typeof pet.dateOfBirth === 'string' 
+          ? new Date(pet.dateOfBirth) 
+          : pet.dateOfBirth;
+        
+        // Verificar que la fecha sea válida
+        if (date instanceof Date && !isNaN(date.getTime())) {
+          dateOfBirthString = date.toISOString().split('T')[0];
+        }
+      } catch (error) {
+        console.error('Error formatting dateOfBirth:', error);
+        dateOfBirthString = "";
+      }
+    }
+
     return {
       id: pet.id?.toString(),
       name: pet.name,
       species: pet.species,
       breed: pet.breed || "",
-      dateOfBirth: pet.dateOfBirth ? pet.dateOfBirth.toISOString().split('T')[0] : "",
+      dateOfBirth: dateOfBirthString,
       gender: pet.gender || "",
       weight: pet.weight?.toString() || "",
       microchipNumber: pet.microchipNumber || "",
@@ -235,7 +285,9 @@ export default function ClientDetails({ user }: { user: User }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {pets.length > 0 ? (
+            {isLoadingPets ? (
+              <PetTableSkeleton rows={3} />
+            ) : pets.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>

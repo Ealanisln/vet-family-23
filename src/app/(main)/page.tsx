@@ -4,7 +4,6 @@ import Reviews from "../../components/Reviews/index";
 import Servicios from "../../components/Servicios/index";
 import Business from "../../components/Business/index";
 import HomeDelivery from "../../components/HomeDelivery/index";
-import Location from "../../components/Location/";
 import Contact from "../../components/Contact";
 import GaleriaFotos from "@/components/GaleriaFotos/GaleriaFotos";
 import FloatingWhatsApp from "@/components/FloatingWhatsapp/FloatingWhatsapp";
@@ -79,7 +78,7 @@ export default async function Home() {
       <Business />
       <HomeDelivery />
       <Contact />
-      <Location />
+      {/* <Location /> */}
     </>
   );
 }

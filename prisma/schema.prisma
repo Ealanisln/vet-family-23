@@ -70,7 +70,7 @@ model VisitHistory {
 
 model Pet {
   id                  String                @id
-  internalId          String?
+  internalId          String?               @unique
   userId              String
   name                String
   species             String
@@ -96,6 +96,7 @@ model Pet {
 
   @@index([userId])
   @@index([isArchived])
+  @@index([userId, isArchived]) // Composite index for better query performance
 }
 
 model MedicalHistory {

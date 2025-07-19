@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Output configuration for deployment
+  output: 'standalone',
+  
+  // Skip trailing slash and optimization for build
+  trailingSlash: false,
+  
   // ESLint configuration
   eslint: {
     dirs: [

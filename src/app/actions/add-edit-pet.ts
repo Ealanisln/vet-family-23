@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 
 import { prisma } from "@/lib/prismaDB";
+import { handlePrismaError } from "@/lib/error-handling";
 
 interface PetDataForSubmit {
   name: string;
@@ -140,25 +141,7 @@ export async function addPet(
     revalidatePath(`/admin/clientes/${userId}`);
     return { success: true, pet: result as PetWithMedicalHistory };
   } catch (error: unknown) {
-    if (error instanceof PrismaClientKnownRequestError) {
-      switch (error.code) {
-        case "P2002":
-          return {
-            success: false,
-            error: "A pet with this information already exists",
-          };
-        case "P2003":
-          return { success: false, error: "Invalid reference to related data" };
-        default:
-          return { success: false, error: `Database error: ${error.code}` };
-      }
-    }
-
-    const errorMessage = error instanceof Error ? error.message : "Failed to add pet";
-    return {
-      success: false,
-      error: errorMessage,
-    };
+    return handlePrismaError(error, "addPet");
   }
 }
 

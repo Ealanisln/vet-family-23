@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prismaDB";
 import { NextResponse } from "next/server";
+import { createErrorResponse, createSuccessResponse, logError } from "@/lib/error-handling";
 
 export const dynamic = 'force-dynamic'
 
@@ -10,17 +11,26 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
 
-    if (!query) {
-      return NextResponse.json({ success: false, error: "Query parameter is required" }, { status: 400 });
+    if (!query || query.trim() === "") {
+      const errorResponse = createErrorResponse("El parámetro de búsqueda es requerido");
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
+    // Sanitize query to prevent potential issues
+    const sanitizedQuery = query.trim();
+    
+    if (sanitizedQuery.length < 2) {
+      const errorResponse = createErrorResponse("La búsqueda debe tener al menos 2 caracteres");
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
     const clients = await prisma.user.findMany({
       where: {
         OR: [
-          { firstName: { contains: query, mode: "insensitive" } },
-          { lastName: { contains: query, mode: "insensitive" } },
-          { email: { contains: query, mode: "insensitive" } },
-          { phone: { contains: query, mode: "insensitive" } },
+          { firstName: { contains: sanitizedQuery, mode: "insensitive" } },
+          { lastName: { contains: sanitizedQuery, mode: "insensitive" } },
+          { email: { contains: sanitizedQuery, mode: "insensitive" } },
+          { phone: { contains: sanitizedQuery, mode: "insensitive" } },
         ],
       },
       select: {
@@ -33,12 +43,11 @@ export async function GET(request: Request) {
       take: 10,
     });
 
-    return NextResponse.json({ success: true, clients });
+    const successResponse = createSuccessResponse({ clients, total: clients.length });
+    return NextResponse.json(successResponse);
   } catch (error) {
-    console.error("Error searching clients:", error);
-    return NextResponse.json(
-      { success: false, error: "Error searching clients" },
-      { status: 500 }
-    );
+    logError(error, "client-search", { query: request.url });
+    const errorResponse = createErrorResponse("Error al buscar clientes");
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 } 

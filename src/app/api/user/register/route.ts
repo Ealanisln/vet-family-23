@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { validateEmail, validatePhoneNumber, createErrorResponse, logError } from "@/lib/error-handling";
 
 interface KindeUserData {
   profile: {
@@ -76,6 +77,9 @@ async function getKindeToken() {
   }
 }
 
+// Helper function for exponential backoff
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function createOrUpdateUser(
   user: {
     id: string;
@@ -85,7 +89,7 @@ async function createOrUpdateUser(
     family_name: string;
     roles?: string[];
   },
-  maxRetries = 5
+  maxRetries = 3 // Reduced from 5 to 3
 ) {
   console.log(
     "Starting createOrUpdateUser with user data:",
@@ -94,110 +98,80 @@ async function createOrUpdateUser(
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // Run the upsert and verification within a transaction
-      const dbUser = await prisma.$transaction(async (prisma) => {
-        const upsertedUser = await prisma.user.upsert({
-          where: { kindeId: user.id },
-          update: {
-            email: user.email,
-            phone: user.phone,
-            firstName: user.given_name,
-            lastName: user.family_name,
-            name: `${user.given_name} ${user.family_name}`.trim(),
-            userRoles: {
-              deleteMany: {}, // Remove existing roles
-              create: (user.roles || ["user"]).map((role: string) => ({
-                role: {
-                  connectOrCreate: {
-                    where: { key: role },
-                    create: { key: role, name: role },
-                  },
+      // Simplified transaction - removed redundant verification
+      const dbUser = await prisma.user.upsert({
+        where: { kindeId: user.id },
+        update: {
+          email: user.email,
+          phone: user.phone,
+          firstName: user.given_name,
+          lastName: user.family_name,
+          name: `${user.given_name} ${user.family_name}`.trim(),
+          userRoles: {
+            deleteMany: {}, // Remove existing roles
+            create: (user.roles || ["user"]).map((role: string) => ({
+              role: {
+                connectOrCreate: {
+                  where: { key: role },
+                  create: { key: role, name: role },
                 },
-              })),
-            },
-          },
-          create: {
-            id: user.id,  // Added this line to fix the error
-            kindeId: user.id,
-            email: user.email,
-            phone: user.phone,
-            firstName: user.given_name,
-            lastName: user.family_name,
-            name: `${user.given_name} ${user.family_name}`.trim(),
-            visits: 0,
-            nextVisitFree: false,
-            userRoles: {
-              create: (user.roles || ["user"]).map((role: string) => ({
-                role: {
-                  connectOrCreate: {
-                    where: { key: role },
-                    create: { key: role, name: role },
-                  },
-                },
-              })),
-            },
-          },
-          include: {
-            userRoles: {
-              include: {
-                role: true,
               },
+            })),
+          },
+        },
+        create: {
+          id: user.id,
+          kindeId: user.id,
+          email: user.email,
+          phone: user.phone,
+          firstName: user.given_name,
+          lastName: user.family_name,
+          name: `${user.given_name} ${user.family_name}`.trim(),
+          visits: 0,
+          nextVisitFree: false,
+          userRoles: {
+            create: (user.roles || ["user"]).map((role: string) => ({
+              role: {
+                connectOrCreate: {
+                  where: { key: role },
+                  create: { key: role, name: role },
+                },
+              },
+            })),
+          },
+        },
+        include: {
+          userRoles: {
+            include: {
+              role: true,
             },
           },
-        });
-
-        console.log(
-          `Attempt ${attempt}: User operation completed. Returned user data:`,
-          JSON.stringify(upsertedUser, null, 2) // Log the upserted user
-        );
-
-        // Immediate verification within the transaction
-        if (
-          !upsertedUser || // Check the result of upsert
-          upsertedUser.firstName !== user.given_name ||
-          upsertedUser.lastName !== user.family_name ||
-          !upsertedUser.userRoles.some((ur) =>
-            (user.roles || ["user"]).includes(ur.role.key)
-          )
-        ) {
-          console.error("Verification failed inside transaction:", upsertedUser);
-          throw new Error("User data not saved correctly within transaction");
-        }
-
-        // If verification passes, return the user from the transaction
-        return upsertedUser;
+        },
       });
 
-      // Final verification outside the transaction (using the result `dbUser`)
       console.log(
-        `Attempt ${attempt}: Final verified user data (after transaction):`,
-        JSON.stringify(dbUser, null, 2) // Log the user returned from transaction
+        `Attempt ${attempt}: User operation completed successfully`
       );
-      if (
-        !dbUser || // Check the user returned from transaction
-        dbUser.firstName !== user.given_name ||
-        dbUser.lastName !== user.family_name ||
-        !dbUser.userRoles.some((ur) =>
-          (user.roles || ["user"]).includes(ur.role.key)
-        )
-      ) {
-        console.error("Final verification failed after transaction:", dbUser);
-        throw new Error("User data not consistent after final verification");
-      }
-
-      // If all checks pass, return the verified user data
+      
       return dbUser;
+
     } catch (dbError) {
       console.error(
         `Attempt ${attempt}: Error in createOrUpdateUser:`,
         dbError
       );
+      
       if (attempt === maxRetries) {
         throw dbError;
       }
-      // No delay between retries
+      
+      // Exponential backoff: 100ms, 200ms, 400ms
+      const delayMs = Math.pow(2, attempt) * 100;
+      console.log(`Retrying in ${delayMs}ms...`);
+      await delay(delayMs);
     }
   }
+  
   throw new Error("Failed to create or update user after max retries");
 }
 
@@ -212,9 +186,42 @@ export async function POST(req: NextRequest) {
     const phone = userData.identities[0]?.details?.phone;
 
     if (!email && !phone) {
+      const errorResponse = createErrorResponse("Se debe proporcionar correo electrónico o teléfono");
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
+    // Validate email format if provided
+    if (email && !validateEmail(email)) {
+      const errorResponse = createErrorResponse("El formato del correo electrónico no es válido");
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
+    // Validate phone format if provided
+    if (phone && !validatePhoneNumber(phone)) {
+      const errorResponse = createErrorResponse("El formato del número de teléfono no es válido");
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
+    // 🚀 NEW: Pre-check for existing users to prevent unnecessary Kinde API calls
+    const formattedPhone = phone ? formatPhoneNumber(phone) : null;
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          ...(email ? [{ email: email }] : []),
+          ...(formattedPhone ? [{ phone: formattedPhone }] : []),
+        ],
+      },
+      select: { id: true, email: true, phone: true },
+    });
+
+    if (existingUser) {
+      console.warn("Duplicate user detected in local database:", {
+        email: existingUser.email,
+        phone: existingUser.phone,
+      });
       return NextResponse.json(
-        { error: "Se debe proporcionar correo electrónico o teléfono" },
-        { status: 400 }
+        { error: "Ya existe un usuario con este correo electrónico o teléfono." },
+        { status: 409 } // Conflict
       );
     }
 
@@ -267,7 +274,7 @@ export async function POST(req: NextRequest) {
     console.log("User registration process completed successfully");
     return NextResponse.json({ kindeUser: registeredUser, dbUser: dbUser });
   } catch (error) {
-    console.error("Error during user registration:", error);
+    logError(error, "user-registration");
     // Check if it's the duplicate user error we threw earlier
     if (error instanceof Error && error.message === "User with this email or phone already exists.") {
       return NextResponse.json({ error: "Ya existe un usuario con este correo electrónico o teléfono." }, { status: 409 });

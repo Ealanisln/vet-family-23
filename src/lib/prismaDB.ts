@@ -10,11 +10,28 @@ import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined }
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+// Initialize Prisma with error handling for build time
+let prismaInstance: PrismaClient | undefined;
+
+try {
+  prismaInstance = globalForPrisma.prisma ?? new PrismaClient({
     log: ['warn', 'error'],
-  })
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
+  });
+} catch (error) {
+  // During build time, Prisma might not initialize properly
+  // This is expected and we'll handle it gracefully
+  console.warn('Prisma initialization warning during build:', error);
+  prismaInstance = globalForPrisma.prisma ?? new PrismaClient({
+    log: ['warn', 'error'],
+  });
+}
+
+export const prisma = prismaInstance;
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma

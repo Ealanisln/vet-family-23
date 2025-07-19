@@ -51,7 +51,7 @@ type PrismaPetData = {
   weight: number | null;
   microchipNumber: string | null;
   isNeutered: boolean | null;
-  user: { // Puede ser null si la relación es opcional
+  User: { // Puede ser null si la relación es opcional
     firstName: string | null;
     lastName: string | null;
   } | null;
@@ -82,8 +82,8 @@ function formatPrismaPet(prismaPet: PrismaPetData): Pet {
       // return { id: '', name: 'Invalid Pet Data', ... } as Pet;
   }
 
-  const ownerName = prismaPet.user
-    ? formatOwnerName(prismaPet.user.firstName, prismaPet.user.lastName)
+  const ownerName = prismaPet.User
+    ? formatOwnerName(prismaPet.User.firstName, prismaPet.User.lastName)
     : 'N/A';
 
   return {
@@ -124,7 +124,7 @@ export async function getPets(): Promise<GetPetsResult> {
         weight: true,
         microchipNumber: true,
         isNeutered: true,
-        user: {
+        User: {
           select: {
             firstName: true,
             lastName: true,
@@ -186,7 +186,7 @@ export async function getPetsByUserId(userId: string): Promise<GetPetsResult> {
         weight: true,
         microchipNumber: true,
         isNeutered: true,
-        user: {
+        User: {
           select: {
             firstName: true,
             lastName: true,

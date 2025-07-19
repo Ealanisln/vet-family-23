@@ -2,6 +2,7 @@
 
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { v4 as uuidv4 } from "uuid";
 import { prisma } from "@/lib/prismaDB";
 
 export interface PetForMedicalRecord {
@@ -22,7 +23,7 @@ type PetWithUser = {
   isDeceased: boolean;
   isArchived: boolean;
   userId: string;
-  user: {
+  User: {
     firstName: string | null;
     lastName: string | null;
   } | null;
@@ -55,7 +56,7 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
         isDeceased: true,
         isArchived: true,
         userId: true,
-        user: {
+        User: {
           select: {
             firstName: true,
             lastName: true,
@@ -76,7 +77,7 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
       id: pet.id,
       name: pet.name,
       species: pet.species,
-      ownerName: [pet.user?.firstName, pet.user?.lastName]
+      ownerName: [pet.User?.firstName, pet.User?.lastName]
         .filter(Boolean)
         .join(' ') || 'N/A',
       isDeceased: pet.isDeceased,
@@ -142,6 +143,7 @@ export async function addMedicalHistory(
       
       const newRecord = await tx.medicalHistory.create({
         data: {
+          id: uuidv4(),
           petId,
           visitDate: data.visitDate,
           reasonForVisit: data.reasonForVisit,

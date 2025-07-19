@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { prisma } from "@/lib/prismaDB";
+import { getPrismaClient } from "@/lib/prismaDB";
 import crypto from 'crypto';
 
 export const dynamic = "force-dynamic";
-
-// const prisma = new PrismaClient(); // Replaced with import from lib
 
 // Define a type for Kinde roles based on usage
 interface KindeRole {
@@ -29,16 +27,19 @@ export async function GET(_req: NextRequest) {
       authStatus = (await isAuthenticated()) ?? false;
 
       if (user && user.id) {
+        // Get Prisma client lazily
+        const prisma = getPrismaClient();
+        
         dbUser = await prisma.user.findUnique({
           where: { kindeId: user.id },
-          include: { userRoles: { include: { role: true } } },
+          include: { UserRole: { include: { Role: true } } },
         });
 
         if (!dbUser && user.email) {
           console.log("Checking if user exists with email");
           dbUser = await prisma.user.findFirst({
             where: { email: user.email },
-            include: { userRoles: { include: { role: true } } },
+            include: { UserRole: { include: { Role: true } } },
           });
 
           if (!dbUser) {
@@ -48,15 +49,16 @@ export async function GET(_req: NextRequest) {
                 id: crypto.randomUUID(),  // Generate UUID for new user
                 kindeId: user.id,
                 email: user.email,
+                updatedAt: new Date(),
               },
-              include: { userRoles: { include: { role: true } } },
+              include: { UserRole: { include: { Role: true } } },
             });
           } else {
             console.log("Updating existing user with new kindeId");
             dbUser = await prisma.user.update({
               where: { id: dbUser.id },
               data: { kindeId: user.id },
-              include: { userRoles: { include: { role: true } } },
+              include: { UserRole: { include: { Role: true } } },
             });
           }
         }
@@ -84,13 +86,14 @@ export async function GET(_req: NextRequest) {
               await prisma.role.upsert({
                 where: { key: role.key },
                 update: {},
-                create: { key: role.key, name: role.name },
+                create: { id: crypto.randomUUID(), key: role.key, name: role.name },
               });
 
               await prisma.userRole.create({
                 data: {
-                  user: { connect: { id: dbUser.id } },
-                  role: { connect: { key: role.key } },
+                  id: crypto.randomUUID(),
+                  User: { connect: { id: dbUser.id } },
+                  Role: { connect: { key: role.key } },
                 },
               });
             }
@@ -109,10 +112,13 @@ export async function GET(_req: NextRequest) {
             // Fetch updated user data
             dbUser = await prisma.user.findUnique({
               where: { id: dbUser.id },
-              include: { userRoles: { include: { role: true } } },
+              include: { UserRole: { include: { Role: true } } },
             });
           }
         }
+
+        // Disconnect Prisma client
+        await prisma.$disconnect();
       }
     } catch (error) {
       console.error("Error in auth process:", error);
@@ -136,7 +142,5 @@ export async function GET(_req: NextRequest) {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

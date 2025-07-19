@@ -156,7 +156,7 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ selectedItem }) => {
               </div>
               {movement.user?.name && (
                 <span className="text-sm text-gray-600">
-                  por {movement.user.name}
+                                            por {movement.user.name}
                 </span>
               )}
             </div>

@@ -93,8 +93,8 @@ export function PetSearch({
             ...p, // Copia las propiedades existentes que vienen de la acción
 
             // --- Asigna directamente los valores por defecto ---
-            medicalHistory: [], // Asigna directamente un array vacío
-            vaccinations: [], // Asigna directamente un array vacío
+            MedicalHistory: [], // Asigna directamente un array vacío
+            Vaccination: [], // Asigna directamente un array vacío
 
             // --- Asigna los valores por defecto o los de 'p' si existen ---
             // (Usando ?? por si vienen como null desde la DB/acción)

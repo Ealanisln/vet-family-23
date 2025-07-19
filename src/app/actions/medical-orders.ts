@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 
 // The status field and related logic will be removed
 interface CreateMedicalOrderInput {
@@ -41,6 +43,7 @@ export async function createMedicalOrder(data: CreateMedicalOrderInput) {
     // Create the medical order
     const order = await prisma.medicalOrder.create({
       data: {
+        id: randomUUID(),
         petId: data.petId,
         userId: data.userId,
         visitDate: data.visitDate,
@@ -48,19 +51,22 @@ export async function createMedicalOrder(data: CreateMedicalOrderInput) {
         treatment: data.treatment,
         prescriptions: data.prescriptions,
         notes: data.notes,
-        products: {
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        MedicalOrderProduct: {
           create: data.products.map(product => ({
+            id: randomUUID(),
             productId: product.productId,
             quantity: product.quantity,
             unitPrice: product.unitPrice,
             notes: product.notes
           }))
         }
-      },
+      } satisfies Prisma.MedicalOrderUncheckedCreateInput,
       include: {
-        products: true,
-        pet: true,
-        user: true
+        MedicalOrderProduct: true,
+        Pet: true,
+        User: true
       }
     });
 

@@ -4,7 +4,6 @@
 const InventoryStatus = {
   ACTIVE: 'ACTIVE' as const,
   INACTIVE: 'INACTIVE' as const,
-  DISCONTINUED: 'DISCONTINUED' as const,
   OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
   LOW_STOCK: 'LOW_STOCK' as const,
   EXPIRED: 'EXPIRED' as const,
@@ -15,7 +14,10 @@ const MovementType = {
   OUT: 'OUT' as const,
   ADJUSTMENT: 'ADJUSTMENT' as const,
   RETURN: 'RETURN' as const,
+  EXPIRED: 'EXPIRED' as const,
 };
+
+export type MovementType = typeof MovementType[keyof typeof MovementType];
 
 // Enums y Types Base
 export type InventoryCategory =

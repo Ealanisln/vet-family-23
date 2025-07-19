@@ -46,8 +46,8 @@ interface Pet {
   weight: number;
   isNeutered: boolean;
   microchipNumber: string | null;
-  medicalHistory: MedicalHistory[];
-  vaccinations: Vaccination[];
+  MedicalHistory: MedicalHistory[];
+  Vaccination: Vaccination[];
 }
 
 export default function PetDetailsView({ pet }: { pet: Pet }) {
@@ -55,7 +55,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
   const params = useParams();
 
   const formatPetForForm = (pet: Pet) => {
-    const { medicalHistory, vaccinations, ...petData } = pet;
+    const { MedicalHistory, Vaccination, ...petData } = pet;
     return {
       ...petData,
       dateOfBirth: pet.dateOfBirth.toISOString().split("T")[0],
@@ -128,7 +128,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
           <CardTitle>Historial Médico</CardTitle>
         </CardHeader>
         <CardContent>
-          {pet.medicalHistory.length > 0 ? (
+          {pet.MedicalHistory.length > 0 ? (
             <div className="overflow-x-auto -mx-4 sm:-mx-6">
               <div className="inline-block min-w-full align-middle">
                 <Table>
@@ -142,7 +142,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pet.medicalHistory.map((record) => (
+                    {pet.MedicalHistory.map((record) => (
                       <TableRow key={record.id}>
                         <TableCell className="font-medium">
                           {record.visitDate.toLocaleDateString()}

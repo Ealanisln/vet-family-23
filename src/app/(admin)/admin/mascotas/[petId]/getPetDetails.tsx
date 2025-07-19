@@ -4,9 +4,9 @@ export async function getPetDetails(petId: string) {
   const pet = await prisma.pet.findUnique({
     where: { id: petId },
     include: {
-      medicalHistory: true,
-      vaccinations: true,
-      user: true, 
+      MedicalHistory: true,
+      Vaccination: true,
+      User: true, 
     },
   });
 

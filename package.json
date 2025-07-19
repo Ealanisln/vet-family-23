@@ -26,6 +26,7 @@
     "deploy:dev": "node scripts/deploy.js development",
     "deploy:prod": "node scripts/deploy.js production",
     "env:check": "node -e \"console.log('Environment:', process.env.NODE_ENV); console.log('Site URL:', process.env.NEXT_PUBLIC_SITE_URL);\"",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -39,7 +40,12 @@
     "test:auth": "jest --testPathPattern=__tests__/auth",
     "test:db": "jest --testPathPattern=__tests__/database",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "db:push": "dotenv -e .env.local -- npx prisma db push",
+    "db:generate": "dotenv -e .env.local -- npx prisma generate",
+    "db:migrate": "dotenv -e .env.local -- npx prisma migrate deploy",
+    "db:studio": "dotenv -e .env.local -- npx prisma studio",
+    "db:reset": "dotenv -e .env.local -- npx prisma migrate reset"
   },
   "dependencies": {
     "@cloudinary/react": "^1.13.1",

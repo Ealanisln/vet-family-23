@@ -26,8 +26,8 @@ export async function getPetDetails(userId: string, petId: string) {
         microchipNumber: true,
         isNeutered: true,
         isDeceased: true,
-        medicalHistory: true,
-        vaccinations: true,
+        MedicalHistory: true,
+        Vaccination: true,
         Deworming: true,
       },
     });

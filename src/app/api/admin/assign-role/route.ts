@@ -1,5 +1,7 @@
 import { prisma, safePrismaOperation } from "@/lib/prismaDB";
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 
 export async function POST() {
   try {
@@ -9,9 +11,10 @@ export async function POST() {
     const userRole = await safePrismaOperation(
       () => prisma.userRole.create({
         data: {
+          id: randomUUID(),
           userId: userId,
-          roleId: adminRoleId
-        }
+          roleId: adminRoleId,
+        } satisfies Prisma.UserRoleUncheckedCreateInput,
       }),
       null // fallback value for build time
     );

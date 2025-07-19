@@ -28,9 +28,9 @@ export async function PATCH(
       () => prisma.user.findUnique({
         where: { kindeId: user.id },
         include: {
-          userRoles: {
+          UserRole: {
             include: {
-              role: true
+              Role: true
             }
           }
         }
@@ -57,19 +57,21 @@ export async function PATCH(
             firstName: user.given_name,
             lastName: user.family_name,
             name: `${user.given_name || ''} ${user.family_name || ''}`.trim(),
+            updatedAt: new Date(),
             // Si es el primer usuario, le asignamos el rol de admin automáticamente
             ...(isFirstUser && {
-              userRoles: {
+              UserRole: {
                 create: {
+                  id: randomUUID(),
                   roleId: "cd032a8a-4499-471e-a201-56c384afef7b" // ID del rol admin
                 }
               }
             })
           },
           include: {
-            userRoles: {
+            UserRole: {
               include: {
-                role: true
+                Role: true
               }
             }
           }
@@ -84,16 +86,16 @@ export async function PATCH(
       }
     }
 
-    const isAdmin = dbUser.userRoles.some(ur => 
-      ur.role.key === "admin" || ur.role.key === "ADMIN" || 
-      ur.role.key === "superadmin" || ur.role.key === "SUPERADMIN"
+    const isAdmin = dbUser.UserRole.some(ur => 
+      ur.Role.key === "admin" || ur.Role.key === "ADMIN" || 
+      ur.Role.key === "superadmin" || ur.Role.key === "SUPERADMIN"
     );
 
     if (!isAdmin) {
-      console.log('Access denied. User roles:', dbUser.userRoles.map(ur => ({
+      console.log('Access denied. User roles:', dbUser.UserRole.map(ur => ({
         roleId: ur.roleId,
-        roleKey: ur.role.key,
-        roleName: ur.role.name
+        roleKey: ur.Role.key,
+        roleName: ur.Role.name
       })));
       return new NextResponse("Forbidden - User does not have admin privileges. Please contact your system administrator.", { status: 403 });
     }

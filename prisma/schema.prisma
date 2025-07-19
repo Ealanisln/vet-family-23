@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -175,6 +174,7 @@ model Pet {
   microchipNumber     String?
   isNeutered          Boolean               @default(false)
   isDeceased          Boolean               @default(false)
+  isArchived          Boolean               @default(false)
   Appointment         Appointment[]
   Billing             Billing[]
   Deworming           Deworming[]
@@ -187,6 +187,8 @@ model Pet {
   VaccinationSchedule VaccinationSchedule[]
 
   @@index([userId])
+  @@index([isArchived])
+  @@index([userId, isArchived])
 }
 
 model Reminder {

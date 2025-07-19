@@ -86,8 +86,8 @@ interface Pet {
   microchipNumber: string | null;
   isNeutered: boolean;
   isDeceased: boolean;
-  medicalHistory: MedicalHistory[];
-  vaccinations: Vaccination[];
+  MedicalHistory: MedicalHistory[];
+  Vaccination: Vaccination[];
   Deworming: Deworming[];
 }
 
@@ -181,7 +181,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       isNeutered: pet.isNeutered,
       isDeceased: pet.isDeceased,
       medicalHistory:
-        pet.medicalHistory.length > 0 ? pet.medicalHistory[0].notes || "" : "",
+        pet.MedicalHistory.length > 0 ? pet.MedicalHistory[0].notes || "" : "",
     };
   };
 
@@ -399,7 +399,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
             </div>
           </CardHeader>
           <CardContent>
-            {pet.medicalHistory.length > 0 ? (
+            {pet.MedicalHistory.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -413,7 +413,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pet.medicalHistory.map((record, index) => (
+                    {pet.MedicalHistory.map((record, index) => (
                       <TableRow key={record.id} className={index % 2 === 0 ? "bg-gray-50/50" : ""}>
                         <TableCell className="font-medium">
                           {record.visitDate.toLocaleDateString()}
@@ -465,7 +465,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
           <VaccinationContainer
             petId={pet.id}
             petSpecies={pet.species}
-            vaccinations={pet.vaccinations}
+            vaccinations={pet.Vaccination}
           />
 
           <DewormingContainer 

@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";
 import { cache } from 'react';
+import crypto from 'crypto';
 import { prisma } from "@/lib/prismaDB";
 
 // Define return type for better type safety
@@ -53,7 +54,7 @@ export const getClientData = cache(async (): Promise<ClientData> => {
           address: true,
           visits: true,
           nextVisitFree: true,
-          pets: {
+          Pet: {
             select: {
               id: true,
               name: true,
@@ -63,7 +64,7 @@ export const getClientData = cache(async (): Promise<ClientData> => {
               isDeceased: false, // Only get active pets by default
             },
           },
-          appointments: {
+          Appointment: {
             select: {
               id: true,
               dateTime: true,
@@ -79,9 +80,9 @@ export const getClientData = cache(async (): Promise<ClientData> => {
             },
             take: 10, // Limit to next 10 appointments for performance
           },
-          userRoles: {
+          UserRole: {
             select: {
-              role: {
+              Role: {
                 select: {
                   key: true,
                 },
@@ -95,7 +96,7 @@ export const getClientData = cache(async (): Promise<ClientData> => {
         // Create new user with optimized query
         user = await tx.user.create({
           data: {
-            id: crypto.randomUUID(), // Generate UUID for PostgreSQL
+            id: crypto.randomUUID(),
             kindeId: kindeUser.id,
             email: kindeUser.email ?? "",
             firstName: kindeUser.given_name ?? null,
@@ -103,9 +104,11 @@ export const getClientData = cache(async (): Promise<ClientData> => {
             name: kindeUser.given_name && kindeUser.family_name
               ? `${kindeUser.given_name} ${kindeUser.family_name}`
               : null,
-            userRoles: {
+            updatedAt: new Date(),
+            UserRole: {
               create: (permissions?.permissions || ["user"]).map((permission) => ({
-                role: {
+                id: crypto.randomUUID(),
+                Role: {
                   connectOrCreate: {
                     where: { key: permission },
                     create: { 
@@ -127,23 +130,26 @@ export const getClientData = cache(async (): Promise<ClientData> => {
             address: true,
             visits: true,
             nextVisitFree: true,
-            pets: {
+            Pet: {
               select: {
                 id: true,
                 name: true,
                 species: true,
               },
+              where: {
+                isDeceased: false,
+              },
             },
-            appointments: {
+            Appointment: {
               select: {
                 id: true,
                 dateTime: true,
                 reason: true,
               },
             },
-            userRoles: {
+            UserRole: {
               select: {
-                role: {
+                Role: {
                   select: {
                     key: true,
                   },
@@ -163,10 +169,11 @@ export const getClientData = cache(async (): Promise<ClientData> => {
             name: kindeUser.given_name && kindeUser.family_name
               ? `${kindeUser.given_name} ${kindeUser.family_name}`
               : undefined,
-            userRoles: {
+            UserRole: {
               deleteMany: {},
               create: (permissions?.permissions || []).map((permission) => ({
-                role: {
+                id: crypto.randomUUID(),
+                Role: {
                   connectOrCreate: {
                     where: { key: permission },
                     create: {
@@ -188,7 +195,7 @@ export const getClientData = cache(async (): Promise<ClientData> => {
             address: true,
             visits: true,
             nextVisitFree: true,
-            pets: {
+            Pet: {
               select: {
                 id: true,
                 name: true,
@@ -198,7 +205,7 @@ export const getClientData = cache(async (): Promise<ClientData> => {
                 isDeceased: false,
               },
             },
-            appointments: {
+            Appointment: {
               select: {
                 id: true,
                 dateTime: true,
@@ -214,9 +221,9 @@ export const getClientData = cache(async (): Promise<ClientData> => {
               },
               take: 10,
             },
-            userRoles: {
+            UserRole: {
               select: {
-                role: {
+                Role: {
                   select: {
                     key: true,
                   },
@@ -240,19 +247,19 @@ export const getClientData = cache(async (): Promise<ClientData> => {
       address: user.address ?? "",
       visits: user.visits,
       nextVisitFree: user.nextVisitFree,
-      pets: user.pets.map((pet: { id: string; name: string; species: string }) => ({
+      pets: user.Pet.map((pet: { id: string; name: string; species: string }) => ({
         id: pet.id,
         name: pet.name,
         species: pet.species,
       })),
-      appointments: user.appointments.map((appointment: { id: string; dateTime: Date; reason: string }) => ({
+      appointments: user.Appointment.map((appointment: { id: string; dateTime: Date; reason: string }) => ({
         id: appointment.id,
         dateTime: appointment.dateTime.toISOString(),
         reason: appointment.reason,
       })),
-      roles: user.userRoles.map((userRole: { role: { key: string } }) => userRole.role.key),
+      roles: user.UserRole.map((userRole: { Role: { key: string } }) => userRole.Role.key),
     };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Error fetching client data:", error);
     
     if (error && typeof error === 'object' && 'code' in error) {

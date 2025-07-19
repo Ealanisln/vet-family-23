@@ -242,7 +242,7 @@ export default function Medicine() {
             </span>
             {lastMovement.user?.name && (
               <span className="text-gray-400 ml-1">
-                por {lastMovement.user.name}
+                                            por {lastMovement.user.name}
               </span>
             )}
           </div>

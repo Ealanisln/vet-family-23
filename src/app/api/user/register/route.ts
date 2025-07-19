@@ -107,13 +107,14 @@ async function createOrUpdateUser(
           firstName: user.given_name,
           lastName: user.family_name,
           name: `${user.given_name} ${user.family_name}`.trim(),
-          userRoles: {
+          UserRole: {
             deleteMany: {}, // Remove existing roles
             create: (user.roles || ["user"]).map((role: string) => ({
-              role: {
+              id: crypto.randomUUID(),
+              Role: {
                 connectOrCreate: {
                   where: { key: role },
-                  create: { key: role, name: role },
+                  create: { id: crypto.randomUUID(), key: role, name: role },
                 },
               },
             })),
@@ -129,21 +130,23 @@ async function createOrUpdateUser(
           name: `${user.given_name} ${user.family_name}`.trim(),
           visits: 0,
           nextVisitFree: false,
-          userRoles: {
+          updatedAt: new Date(),
+          UserRole: {
             create: (user.roles || ["user"]).map((role: string) => ({
-              role: {
+              id: crypto.randomUUID(),
+              Role: {
                 connectOrCreate: {
                   where: { key: role },
-                  create: { key: role, name: role },
+                  create: { id: crypto.randomUUID(), key: role, name: role },
                 },
               },
             })),
           },
         },
         include: {
-          userRoles: {
+          UserRole: {
             include: {
-              role: true,
+              Role: true,
             },
           },
         },

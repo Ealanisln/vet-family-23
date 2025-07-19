@@ -1,7 +1,7 @@
 "use server";
 
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import type { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 
@@ -56,13 +56,10 @@ type Pet = {
 };
 
 type PetWithMedicalHistory = Pet & {
-  medicalHistory: MedicalHistory[];
+  MedicalHistory: MedicalHistory[];
 };
 
-type TransactionClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
+
 
 export async function addPet(
   userId: string,
@@ -94,7 +91,7 @@ export async function addPet(
       };
     }
 
-    const result = await prisma.$transaction(async (tx: TransactionClient) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const petId = uuidv4();
 
       const newPet = await tx.pet.create({
@@ -110,27 +107,28 @@ export async function addPet(
           isNeutered: petData.isNeutered,
           isDeceased: false,
           internalId: petData.internalId || null,
-          user: {
+          User: {
             connect: {
               id: userId
             }
           }
         },
         include: {
-          medicalHistory: true,
+          MedicalHistory: true,
         },
       });
 
       if (petData.medicalHistory) {
         await tx.medicalHistory.create({
           data: {
+            id: uuidv4(),
             petId: newPet.id,
             visitDate: new Date(),
             reasonForVisit: "Initial check-up",
             diagnosis: "N/A",
             treatment: "N/A",
             notes: petData.medicalHistory,
-            prescriptions: [],
+            prescriptions: [] as string[],
           },
         });
       }
@@ -158,7 +156,7 @@ export async function updatePet(
   }
 
   try {
-    const result = await prisma.$transaction(async (tx: TransactionClient) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const existingPet = await tx.pet.findFirst({
         where: {
           id: petId,
@@ -185,7 +183,7 @@ export async function updatePet(
           internalId: petData.internalId || null,
         },
         include: {
-          medicalHistory: {
+          MedicalHistory: {
             orderBy: {
               visitDate: "desc",
             },
@@ -195,7 +193,7 @@ export async function updatePet(
       });
 
       if (petData.medicalHistory) {
-        const latestHistory = updatedPet.medicalHistory[0];
+        const latestHistory = updatedPet.MedicalHistory[0];
 
         if (latestHistory) {
           await tx.medicalHistory.update({
@@ -207,13 +205,14 @@ export async function updatePet(
         } else {
           await tx.medicalHistory.create({
             data: {
+              id: uuidv4(),
               petId: updatedPet.id,
               visitDate: new Date(),
               reasonForVisit: "Update information",
               diagnosis: "N/A",
               treatment: "N/A",
               notes: petData.medicalHistory,
-              prescriptions: [],
+              prescriptions: [] as string[],
             },
           });
         }

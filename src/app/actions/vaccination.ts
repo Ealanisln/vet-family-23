@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
 import { IVaccinationInput } from "@/components/Vaccination/VaccinationDialogCard";
+import { randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 
 export async function addVaccination(petId: string, data: IVaccinationInput) {
   try {
@@ -15,6 +17,7 @@ export async function addVaccination(petId: string, data: IVaccinationInput) {
 
     const vaccination = await prisma.vaccination.create({
       data: {
+        id: randomUUID(),
         petId,
         vaccineType: data.vaccineType,
         stage: data.stage,
@@ -25,7 +28,9 @@ export async function addVaccination(petId: string, data: IVaccinationInput) {
         manufacturer: data.manufacturer || null,
         veterinarianName: data.veterinarianName || null,
         notes: data.notes || null,
-      }
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } satisfies Prisma.VaccinationUncheckedCreateInput,
     });
     
     revalidatePath(`/admin/mascotas/${petId}`);

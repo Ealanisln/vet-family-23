@@ -3,6 +3,7 @@ import jwksClient from "jwks-rsa";
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 // import { PrismaClient } from "@prisma/client"; // Replaced with prisma from lib
+import { randomUUID } from "crypto";
 
 import { prisma, safePrismaOperation } from "@/lib/prismaDB";
 const client = jwksClient({
@@ -46,7 +47,7 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
           async (role: string) => {
             return prisma.role.upsert({
               where: { key: role },
-              create: { key: role, name: role },
+              create: { id: randomUUID(), key: role, name: role },
               update: { name: role },
             });
           }
@@ -69,9 +70,10 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
             name:
               `${user.given_name || ""} ${user.family_name || ""}`.trim() ||
               null,
-            userRoles: {
+            UserRole: {
               deleteMany: {}, // Remove existing roles
               create: roles.map((role) => ({
+                id: randomUUID(),
                 roleId: role.id,
               })),
             },
@@ -88,16 +90,18 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
               null,
             visits: 0,
             nextVisitFree: false,
-            userRoles: {
+            updatedAt: new Date(),
+            UserRole: {
               create: roles.map((role) => ({
+                id: randomUUID(),
                 roleId: role.id,
               })),
             },
           },
           include: {
-            userRoles: {
+            UserRole: {
               include: {
-                role: true,
+                Role: true,
               },
             },
           },

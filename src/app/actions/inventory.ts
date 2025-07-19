@@ -4,6 +4,7 @@
 
 import { prisma } from "@/lib/prismaDB";
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
 
 // Using string literals instead of importing enums due to type generation issues
 type InventoryCategory = 'MEDICINE' | 'SURGICAL_MATERIAL' | 'VACCINE' | 'FOOD' | 'ACCESSORY' | 'CONSUMABLE' | 'ANTI_INFLAMMATORY_ANALGESICS' | 'ANTIBIOTIC' | 'ANTIFUNGAL' | 'DEWORMERS' | 'GASTROPROTECTORS_GASTROENTEROLOGY' | 'CARDIOLOGY' | 'DERMATOLOGY' | 'ENDOCRINOLOGY_HORMONAL' | 'ANESTHETICS_SEDATIVES' | 'OTIC' | 'OINTMENTS' | 'RESPIRATORY' | 'OPHTHALMIC' | 'DRY_FOOD' | 'WET_FOOD' | 'CHIPS' | 'ANTI_EMETIC' | 'ANTISEPTICS_HEALING' | 'NEPHROLOGY' | 'ANTAGONISTS' | 'IMMUNOSTIMULANT' | 'APPETITE_STIMULANTS_HEMATOPOIESIS' | 'SUPPLEMENTS_OTHERS' | 'LAXATIVES' | 'ANTIDIARRHEAL' | 'ANTIHISTAMINE' | 'MEDICATED_SHAMPOO' | 'CORTICOSTEROIDS' | 'EXPECTORANT' | 'BRONCHODILATOR';
@@ -16,6 +17,7 @@ import {
   InventoryItem,
   CreateInventoryResponse,
 } from "@/types/inventory";
+import { MovementType, Prisma } from "@prisma/client";
 
 interface SearchInventoryParams {
   searchTerm?: string;
@@ -51,13 +53,13 @@ export async function searchInventoryItems({
       take: limit,
       skip: offset,
       include: {
-        movements: {
+        InventoryMovement: {
           orderBy: {
             date: "desc",
           },
           take: 1,
           include: {
-            user: {
+            User: {
               select: {
                 name: true,
               },
@@ -72,9 +74,10 @@ export async function searchInventoryItems({
       expirationDate: item.expirationDate?.toISOString() || null,
       createdAt: item.createdAt.toISOString(),
       updatedAt: item.updatedAt.toISOString(),
-      movements: item.movements.map((movement) => ({
+      movements: item.InventoryMovement.map((movement) => ({
         ...movement,
         date: movement.date.toISOString(),
+        user: movement.User,
       })),
     }));
   } catch (error) {
@@ -90,13 +93,13 @@ export async function getInventory(): Promise<GetInventoryResponse> {
         updatedAt: "desc",
       },
       include: {
-        movements: {
+        InventoryMovement: {
           orderBy: {
             date: "desc",
           },
           take: 1,
           include: {
-            user: {
+            User: {
               select: {
                 name: true,
               },
@@ -109,9 +112,10 @@ export async function getInventory(): Promise<GetInventoryResponse> {
     const serializedItems = items.map((item) => ({
       ...item,
       expirationDate: item.expirationDate?.toISOString() || null,
-      movements: item.movements.map((movement) => ({
+      movements: item.InventoryMovement.map((movement) => ({
         ...movement,
         date: movement.date.toISOString(),
+        user: movement.User,
       })),
       createdAt: item.createdAt.toISOString(),
       updatedAt: item.updatedAt.toISOString(),
@@ -167,15 +171,16 @@ export async function updateInventoryItem(
       ) {
         await tx.inventoryMovement.create({
           data: {
+            id: randomUUID(),
             itemId: id,
             type:
               data.quantity > currentItem.quantity
-                ? "IN"
-                : "OUT",
+                ? MovementType.IN
+                : MovementType.OUT,
             quantity: Math.abs(data.quantity - currentItem.quantity),
             reason: reason || "Manual adjustment",
             date: new Date(),
-          },
+          } satisfies Prisma.InventoryMovementUncheckedCreateInput,
         });
       }
 
@@ -227,6 +232,7 @@ export async function createInventoryItem(
 
     const newItem = await prisma.inventoryItem.create({
       data: {
+        id: randomUUID(),
         name: data.name.trim(),
         category: data.category,
         description: data.description?.trim() || null,
@@ -248,18 +254,21 @@ export async function createInventoryItem(
             : data.quantity === 0
               ? ("OUT_OF_STOCK" as InventoryStatus)
               : ("ACTIVE" as InventoryStatus),
-      },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } satisfies Prisma.InventoryItemUncheckedCreateInput,
     });
 
     if (data.quantity > 0) {
       await prisma.inventoryMovement.create({
         data: {
+          id: randomUUID(),
           itemId: newItem.id,
-          type: "IN",
+          type: MovementType.IN,
           quantity: data.quantity,
           reason: reason || "Initial stock",
           date: new Date(),
-        },
+        } satisfies Prisma.InventoryMovementUncheckedCreateInput,
       });
     }
 

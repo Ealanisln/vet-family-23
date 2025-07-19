@@ -6,19 +6,19 @@ async function isUserAdmin(userId: string) {
   const dbUser = await prisma.user.findUnique({
     where: { kindeId: userId },
     include: {
-      userRoles: {
+      UserRole: {
         include: {
-          role: true
+          Role: true
         }
       }
     }
   });
 
-  return dbUser?.userRoles.some(ur => 
-    ur.role.key === "admin" || 
-    ur.role.key === "ADMIN" || 
-    ur.role.key === "superadmin" || 
-    ur.role.key === "SUPERADMIN"
+  return dbUser?.UserRole.some(ur => 
+    ur.Role.key === "admin" || 
+    ur.Role.key === "ADMIN" || 
+    ur.Role.key === "superadmin" || 
+    ur.Role.key === "SUPERADMIN"
   ) ?? false;
 }
 
@@ -38,9 +38,9 @@ export async function GET() {
 
     const users = await prisma.user.findMany({
       include: {
-        userRoles: {
+        UserRole: {
           include: {
-            role: true
+            Role: true
           }
         }
       },
@@ -57,10 +57,10 @@ export async function GET() {
         name: user.name,
         firstName: user.firstName,
         lastName: user.lastName,
-        roles: user.userRoles.map(ur => ({
-          id: ur.role.id,
-          key: ur.role.key,
-          name: ur.role.name
+        roles: user.UserRole.map(ur => ({
+          id: ur.Role.id,
+          key: ur.Role.key,
+          name: ur.Role.name
         }))
       }))
     });
@@ -113,11 +113,12 @@ export async function POST(req: Request) {
     // Asignar el rol
     const userRole = await prisma.userRole.create({
       data: {
+        id: crypto.randomUUID(),
         userId: userId,
         roleId: role.id
       },
       include: {
-        role: true
+        Role: true
       }
     });
 
@@ -126,7 +127,7 @@ export async function POST(req: Request) {
       userRole: {
         userId: userRole.userId,
         roleId: userRole.roleId,
-        roleName: userRole.role.name
+        roleName: userRole.Role.name
       }
     });
   } catch (error) {

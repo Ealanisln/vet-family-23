@@ -31,10 +31,10 @@ export default async function PetDetailsPage({
   const pet = await prisma.pet.findUnique({
     where: { id: petId },
     include: {
-      user: true,
-      vaccinations: true,
+      User: true,
+      Vaccination: true,
       Deworming: true,
-      medicalHistory: {
+      MedicalHistory: {
         orderBy: {
           visitDate: 'desc'
         }
@@ -63,7 +63,7 @@ export default async function PetDetailsPage({
     internalId: pet.internalId || undefined,
     isNeutered: pet.isNeutered,
     isDeceased: pet.isDeceased,
-    medicalHistory: pet.medicalHistory.length > 0 ? pet.medicalHistory[0].notes || "" : "",
+    medicalHistory: pet.MedicalHistory.length > 0 ? pet.MedicalHistory[0].notes || "" : "",
   };
 
   return (
@@ -161,20 +161,20 @@ export default async function PetDetailsPage({
                 <div>
                   <p className="text-sm font-medium text-gray-500">Nombre</p>
                   <p className="mt-1">
-                    {pet.user.firstName} {pet.user.lastName}
+                    {pet.User.firstName} {pet.User.lastName}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Email</p>
-                  <p className="mt-1">{pet.user.email}</p>
+                  <p className="mt-1">{pet.User.email}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Teléfono</p>
-                  <p className="mt-1">{pet.user.phone || "No registrado"}</p>
+                  <p className="mt-1">{pet.User.phone || "No registrado"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Dirección</p>
-                  <p className="mt-1">{pet.user.address || "No registrada"}</p>
+                  <p className="mt-1">{pet.User.address || "No registrada"}</p>
                 </div>
               </div>
             </CardContent>
@@ -188,7 +188,7 @@ export default async function PetDetailsPage({
               </div>
             </CardHeader>
             <CardContent>
-              {pet.medicalHistory.length > 0 ? (
+              {pet.MedicalHistory.length > 0 ? (
                 <div className="overflow-x-auto -mx-4 sm:-mx-6">
                   <div className="inline-block min-w-full align-middle">
                     <Table>
@@ -204,7 +204,7 @@ export default async function PetDetailsPage({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {pet.medicalHistory.map((record: any) => {
+                        {pet.MedicalHistory.map((record) => {
                           console.log("Medical Record Data:", JSON.stringify(record, null, 2));
                           return (
                             <TableRow key={record.id}>
@@ -261,7 +261,7 @@ export default async function PetDetailsPage({
           <VaccinationContainer
             petId={pet.id}
             petSpecies={pet.species}
-            vaccinations={pet.vaccinations}
+            vaccinations={pet.Vaccination}
           />
 
           <DewormingContainer

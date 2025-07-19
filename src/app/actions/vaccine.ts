@@ -6,7 +6,6 @@ import { revalidatePath } from "next/cache";
 const InventoryStatus = {
   ACTIVE: 'ACTIVE' as const,
   INACTIVE: 'INACTIVE' as const,
-  DISCONTINUED: 'DISCONTINUED' as const,
   OUT_OF_STOCK: 'OUT_OF_STOCK' as const,
   LOW_STOCK: 'LOW_STOCK' as const,
 };
@@ -112,13 +111,13 @@ export async function getVaccines() {
         updatedAt: 'desc'
       },
       include: {
-        movements: {
+        InventoryMovement: {
           orderBy: {
             date: 'desc'
           },
           take: 1,
           include: {
-            user: {
+            User: {
               select: {
                 name: true
               }
@@ -199,13 +198,15 @@ export async function updateVaccine(
         ? [
             prisma.inventoryMovement.create({
               data: {
+                id: crypto.randomUUID(),
                 itemId: id,
                 type: data.quantity > (currentItem.quantity || 0) 
                   ? MovementType.IN 
                   : MovementType.OUT,
                 quantity: Math.abs(data.quantity - (currentItem.quantity || 0)),
                 userId,
-                reason: reason || 'Manual adjustment'
+                reason: reason || 'Manual adjustment',
+                date: new Date(),
               }
             })
           ]

@@ -55,8 +55,8 @@ export interface Pet {
   microchipNumber: string | null;
   isDeceased: boolean;
   isArchived: boolean;
-  medicalHistory: MedicalHistory[];
-  vaccinations: PrismaVaccination[];
+  MedicalHistory: MedicalHistory[];
+  Vaccination: PrismaVaccination[];
 }
 
 export interface TablePet {

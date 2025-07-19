@@ -52,6 +52,27 @@ const nextConfig = {
     ],
   },
 
+  // Build configuration for API routes  
+  webpack: (config, { isServer, dev, webpack }) => {
+    if (isServer && !dev) {
+      // During build, replace problematic Prisma operations
+      config.plugins.push(
+        new webpack.DefinePlugin({
+          'process.env.IS_BUILD_TIME': JSON.stringify('true')
+        })
+      );
+    }
+    return config;
+  },
+
+  // Skip static optimization for dynamic API routes
+  onDemandEntries: {
+    // Period (in ms) where the server will keep pages in the buffer
+    maxInactiveAge: 25 * 1000,
+    // Number of pages that should be kept simultaneously without being disposed
+    pagesBufferLength: 2,
+  },
+
   // Cache control (your existing config is good)
   async headers() {
     return [

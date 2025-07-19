@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { userHasPOSPermission } from "@/utils/pos-helpers";
-import { prisma } from "@/lib/prismaDB";
+import { prisma, safePrismaOperation } from "@/lib/prismaDB";
 import { Prisma } from "@prisma/client";
 
 // Manual type definitions due to Prisma client export issues

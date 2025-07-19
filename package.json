@@ -6,6 +6,7 @@
     "dev": "dotenv -e .env.local next dev",
     "dev:staging": "dotenv -e .env.development next dev",
     "build": "pnpm prisma generate && next build",
+    "build:safe": "IS_BUILD_TIME=true pnpm prisma generate && IS_BUILD_TIME=true next build",
     "build:development": "dotenv -e .env.development pnpm prisma generate && dotenv -e .env.development next build",
     "build:production": "dotenv -e .env.production pnpm prisma generate && dotenv -e .env.production next build",
     "start": "dotenv -e .env.production next start",

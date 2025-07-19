@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prismaDB";
+import { prisma, safePrismaOperation } from "@/lib/prismaDB";
 import { NextResponse } from "next/server";
 
 export async function POST() {
@@ -6,12 +6,15 @@ export async function POST() {
     const userId = "kp_1a482619303c4830a0d4bc31c5930b14";
     const adminRoleId = "cd032a8a-4499-471e-a201-56c384afef7b";
 
-    const userRole = await prisma.userRole.create({
-      data: {
-        userId: userId,
-        roleId: adminRoleId
-      }
-    });
+    const userRole = await safePrismaOperation(
+      () => prisma.userRole.create({
+        data: {
+          userId: userId,
+          roleId: adminRoleId
+        }
+      }),
+      null // fallback value for build time
+    );
 
     return NextResponse.json({ 
       success: true, 

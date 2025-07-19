@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import jwksClient from "jwks-rsa";
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client"; // Replaced with prisma from lib
 
-import { prisma } from "@/lib/prismaDB";
+import { prisma, safePrismaOperation } from "@/lib/prismaDB";
 const client = jwksClient({
   jwksUri: `${process.env.KINDE_ISSUER_URL}/.well-known/jwks.json`,
 });
@@ -39,7 +39,8 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const result = await prisma.$transaction(async (prisma) => {
+      const result = await safePrismaOperation(
+        () => prisma.$transaction(async (prisma) => {
         // First, ensure roles exist
         const rolePromises = (user.roles || ["user"]).map(
           async (role: string) => {
@@ -157,7 +158,9 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
         }
 
         return dbUser;
-      });
+        }),
+        null // fallback value for build time
+      );
 
       return result;
     } catch (dbError) {

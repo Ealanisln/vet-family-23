@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prismaDB";
+import { prisma, safePrismaOperation } from "@/lib/prismaDB";
 
 export async function GET(
   request: NextRequest,
@@ -15,28 +15,31 @@ export async function GET(
       );
     }
 
-    // Fetch the client's pets
-    const pets = await prisma.pet.findMany({
-      where: {
-        userId: id,
-      },
-      select: {
-        id: true,
-        name: true,
-        species: true,
-        breed: true,
-        dateOfBirth: true,
-        gender: true,
-        weight: true,
-        microchipNumber: true,
-        internalId: true,
-        isNeutered: true,
-        isDeceased: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
+    // Fetch the client's pets with safe operation
+    const pets = await safePrismaOperation(
+      () => prisma.pet.findMany({
+        where: {
+          userId: id,
+        },
+        select: {
+          id: true,
+          name: true,
+          species: true,
+          breed: true,
+          dateOfBirth: true,
+          gender: true,
+          weight: true,
+          microchipNumber: true,
+          internalId: true,
+          isNeutered: true,
+          isDeceased: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      }),
+      [] // fallback empty array for build time
+    );
 
     return NextResponse.json(pets);
   } catch (error) {

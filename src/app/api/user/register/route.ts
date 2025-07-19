@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prismaDB";
 import { validateEmail, validatePhoneNumber, createErrorResponse, logError } from "@/lib/error-handling";
 
 interface KindeUserData {
@@ -32,7 +32,7 @@ interface KindePayload {
   }>;
 }
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient(); // Replaced with import from lib
 
 async function getKindeToken() {
   const baseUrl =

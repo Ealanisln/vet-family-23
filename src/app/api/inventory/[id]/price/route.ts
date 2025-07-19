@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { prisma } from "@/lib/prismaDB";
+import { prisma, safePrismaOperation } from "@/lib/prismaDB";
 import { randomUUID } from "crypto";
 
 export async function PATCH(
@@ -24,41 +24,9 @@ export async function PATCH(
     });
 
     // Primero, asegurarnos de que el usuario existe en la base de datos local
-    let dbUser = await prisma.user.findUnique({
-      where: { kindeId: user.id },
-      include: {
-        userRoles: {
-          include: {
-            role: true
-          }
-        }
-      }
-    });
-
-    // Si el usuario no existe en la base de datos local, lo creamos
-    if (!dbUser) {
-      // Verificar si es el primer usuario en el sistema
-      const usersCount = await prisma.user.count();
-      const isFirstUser = usersCount === 0;
-
-      console.log('Creating local user for Kinde user:', user.id);
-      dbUser = await prisma.user.create({
-        data: {
-          id: randomUUID(),
-          kindeId: user.id,
-          email: user.email || `kinde_${user.id}@placeholder.email`,
-          firstName: user.given_name,
-          lastName: user.family_name,
-          name: `${user.given_name || ''} ${user.family_name || ''}`.trim(),
-          // Si es el primer usuario, le asignamos el rol de admin automáticamente
-          ...(isFirstUser && {
-            userRoles: {
-              create: {
-                roleId: "cd032a8a-4499-471e-a201-56c384afef7b" // ID del rol admin
-              }
-            }
-          })
-        },
+    let dbUser = await safePrismaOperation(
+      () => prisma.user.findUnique({
+        where: { kindeId: user.id },
         include: {
           userRoles: {
             include: {
@@ -66,7 +34,48 @@ export async function PATCH(
             }
           }
         }
-      });
+      }),
+      null // fallback for build time
+    );
+
+    // Si el usuario no existe en la base de datos local, lo creamos
+    if (!dbUser) {
+      // Verificar si es el primer usuario en el sistema
+      const usersCount = await safePrismaOperation(
+        () => prisma.user.count(),
+        0 // fallback for build time
+      );
+      const isFirstUser = usersCount === 0;
+
+      console.log('Creating local user for Kinde user:', user.id);
+      dbUser = await safePrismaOperation(
+        () => prisma.user.create({
+          data: {
+            id: randomUUID(),
+            kindeId: user.id,
+            email: user.email || `kinde_${user.id}@placeholder.email`,
+            firstName: user.given_name,
+            lastName: user.family_name,
+            name: `${user.given_name || ''} ${user.family_name || ''}`.trim(),
+            // Si es el primer usuario, le asignamos el rol de admin automáticamente
+            ...(isFirstUser && {
+              userRoles: {
+                create: {
+                  roleId: "cd032a8a-4499-471e-a201-56c384afef7b" // ID del rol admin
+                }
+              }
+            })
+          },
+          include: {
+            userRoles: {
+              include: {
+                role: true
+              }
+            }
+          }
+        }),
+        null // fallback for build time
+      );
       
       if (isFirstUser) {
         console.log('First user in system - assigned admin role automatically');
@@ -102,13 +111,16 @@ export async function PATCH(
     }
 
     // Actualizar el producto
-    const updatedProduct = await prisma.inventoryItem.update({
-      where: { id },
-      data: {
-        price,
-        cost,
-      },
-    });
+    const updatedProduct = await safePrismaOperation(
+      () => prisma.inventoryItem.update({
+        where: { id },
+        data: {
+          price,
+          cost,
+        },
+      }),
+      null // fallback for build time
+    );
 
     return NextResponse.json(updatedProduct);
   } catch (error) {

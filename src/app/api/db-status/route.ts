@@ -1,14 +1,18 @@
-import { prisma } from '@/lib/prismaDB';
+import { prisma, safePrismaOperation } from '@/lib/prismaDB';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // Test the database connection
-    await prisma.$queryRaw`SELECT 1`;
+    // Test the database connection with safe operation
+    const result = await safePrismaOperation(
+      () => prisma.$queryRaw`SELECT 1`,
+      null // fallback for build time
+    );
     
     return NextResponse.json({
-      status: 'success',
-      environment: process.env.NODE_ENV
+      status: result ? 'success' : 'build-time',
+      environment: process.env.NODE_ENV,
+      buildTime: result === null
     });
   } catch (error) {
     console.error('Database connection error:', error);

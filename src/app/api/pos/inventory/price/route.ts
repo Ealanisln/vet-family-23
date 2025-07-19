@@ -1,18 +1,7 @@
 // src/app/api/pos/inventory/price/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
-import { PrismaClient } from '@prisma/client';
-
-// Implementación del patrón singleton para PrismaClient
-const prismaClientSingleton = () => {
-  return new PrismaClient();
-};
-
-declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
-}
-
-const prisma = globalThis.prisma ?? prismaClientSingleton();
+import { prisma } from '@/lib/prismaDB';
 
 if (process.env.NODE_ENV !== 'production') {
   globalThis.prisma = prisma;

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prismaDB";
 import crypto from 'crypto';
 
 export const dynamic = "force-dynamic";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient(); // Replaced with import from lib
 
 // Define a type for Kinde roles based on usage
 interface KindeRole {

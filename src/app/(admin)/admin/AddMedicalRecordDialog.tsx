@@ -43,7 +43,7 @@ import {
 } from "@/app/actions/add-medical-record";
 import { useToast } from "@/components/ui/use-toast";
 import { EditIcon, PlusCircle, Search, X, Loader2 } from "lucide-react";
-import { searchInventory } from "@/app/actions/pos/inventory";
+import { searchInventoryItems } from "@/app/actions/inventory";
 type InventoryCategory = "MEDICATION" | "FOOD" | "ACCESSORIES" | "HYGIENE" | "TOYS" | "SUPPLEMENTS" | "EQUIPMENT" | "CONSUMABLES" | "OTHER";
 type InventoryStatus = "ACTIVE" | "INACTIVE" | "DISCONTINUED";
 
@@ -201,7 +201,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
 
       try {
         console.log('Iniciando búsqueda para:', searchTerm);
-        const results = await searchInventory({
+        const results = await searchInventoryItems({
           searchTerm,
           limit: 10,
         });

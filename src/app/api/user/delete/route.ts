@@ -1,9 +1,7 @@
 // app/api/user/delete/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prismaDB";
 
 interface KindeApiError {
   errors: Array<{ code: string; message: string }>;

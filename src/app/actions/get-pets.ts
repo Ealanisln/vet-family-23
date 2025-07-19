@@ -2,7 +2,7 @@
 
 'use server'
 
-import { PrismaClient } from '@prisma/client'
+import { prisma } from "@/lib/prismaDB";
 
 // Type guard for Prisma errors
 function isPrismaError(error: unknown): error is { code: string } {
@@ -16,18 +16,6 @@ class ServerActionError extends Error {
     this.name = 'ServerActionError';
   }
 }
-
-// Implement singleton pattern for PrismaClient
-const prismaClientSingleton = () => {
-  return new PrismaClient();
-};
-
-declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
-}
-
-const prisma = globalThis.prisma ?? prismaClientSingleton();
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;
 
 // --- Definición de la interfaz Pet (resultado final) ---
 export interface Pet {

@@ -11,9 +11,6 @@ import {
   Package,
   Pill,
   Syringe,
-  /* Temporarily removed for POS functionality
-  CircleDollarSign,
-  */
   Settings,
   LogOut,
   LayoutDashboard,
@@ -80,30 +77,6 @@ const data = {
         },
       ],
     },
-    /* Temporarily removed POS functionality
-    {
-      title: "Punto de Venta",
-      url: "/admin/pos",
-      icon: CircleDollarSign,
-      items: [
-        {
-          title: "Panel POS",
-          url: "/admin/pos",
-          icon: LayoutDashboard,
-        },
-        {
-          title: "Nueva Venta",
-          url: "/admin/pos/ventas/nueva",
-          icon: CircleDollarSign,
-        },
-        {
-          title: "Historial de Ventas",
-          url: "/admin/pos/ventas",
-          icon: History,
-        },
-      ],
-    },
-    */
     {
       title: "Inventario",
       url: "/admin/inventario",

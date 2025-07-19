@@ -1,8 +1,6 @@
 // File: app/(admin)/admin/clientes/[id]/mascotas/[petId]/getPetDetails.ts
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prismaDB';
 
 export async function getPetDetails(userId: string, petId: string) {
   if (!userId || !petId) {

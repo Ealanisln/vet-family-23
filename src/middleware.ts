@@ -32,11 +32,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Bypass para rutas de API de POS (usaremos autenticación alternativa)
-  if (pathname.startsWith('/api/pos/')) {
-    return NextResponse.next();
-  }
-
   // Para rutas protegidas (/admin/*)
   if (pathname.startsWith('/admin')) {
     try {

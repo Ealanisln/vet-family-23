@@ -1,6 +1,6 @@
 "use client"
 
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 import {
@@ -40,15 +40,7 @@ export function NavMain({
   }[]
 }) {
   const pathname = usePathname()
-  const router = useRouter()
   const [openSections, setOpenSections] = useState<string[]>([])
-
-  // Redirect to admin dashboard if on a POS page (since POS functionality is disabled)
-  useEffect(() => {
-    if (pathname.startsWith('/admin/pos')) {
-      router.replace('/admin')
-    }
-  }, [pathname, router])
 
   // Inicializar las secciones abiertas basado en la ruta actual
   useEffect(() => {

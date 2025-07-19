@@ -1,7 +1,7 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import type { PrismaClient } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 

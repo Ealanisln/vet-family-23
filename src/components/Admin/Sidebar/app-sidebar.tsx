@@ -11,7 +11,6 @@ import {
   Package,
   Pill,
   Syringe,
-  Settings,
   LogOut,
   LayoutDashboard,
   ShieldCheck,
@@ -35,11 +34,6 @@ import {
 import { MedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
 
 const data = {
-  user: {
-    name: "Admin",
-    email: "admin@example.com",
-    avatar: "/avatars/admin.jpg",
-  },
   teams: [
     {
       name: "Vet Family",
@@ -172,7 +166,16 @@ const NewPetButton = React.forwardRef<
 ));
 NewPetButton.displayName = "NewPetButton";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ 
+  user, 
+  ...props 
+}: React.ComponentProps<typeof Sidebar> & {
+  user?: {
+    name: string;
+    email: string;
+    avatar: string;
+  };
+}) {
   return (
     <Sidebar 
       collapsible="icon" 
@@ -215,20 +218,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter className="border-t border-[#47b3b6]/20">
         <SidebarMenu className="px-2">
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Configuración"
-              className="group-data-[collapsible=icon]:justify-center hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200"
-            >
-              <Link href="/admin/configuracion">
-                <Settings className="h-4 w-4" />
-                <span className="group-data-[collapsible=icon]:hidden">
-                  Configuración
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
@@ -258,8 +248,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        {/* Removemos la prop className del NavUser */}
-        <NavUser user={data.user} />
+        {/* Usamos datos reales del usuario o fallback */}
+        <NavUser user={user || {
+          name: "Admin",
+          email: "admin@example.com", 
+          avatar: "/avatars/admin.jpg"
+        }} />
       </SidebarFooter>
       <SidebarRail className="bg-[#47b3b6]/5" />
     </Sidebar>

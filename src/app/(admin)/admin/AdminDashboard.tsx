@@ -46,6 +46,7 @@ interface SectionProps {
 interface AdminDashboardProps {
   username: string;
   isAdmin: boolean;
+  userEmail?: string;
 }
 
 // Componente MenuOption mejorado
@@ -123,6 +124,7 @@ const Section: React.FC<SectionProps> = ({ icon: Icon, title, children }) => (
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   username,
+  userEmail,
 }) => {
   const [openMedicalRecord, setOpenMedicalRecord] = useState(false);
 
@@ -235,6 +237,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 Bienvenido
               </span>
               <span className="text-lg text-white font-medium">{username}</span>
+              {userEmail && (
+                <span className="text-xs text-white/60 font-light">
+                  {userEmail}
+                </span>
+              )}
             </div>
           </div>
         </div>

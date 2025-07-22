@@ -20,5 +20,5 @@ export default async function Component() {
 
   const username = user?.given_name || 'Usuario';
 
-  return <AdminDashboard username={username} isAdmin={isAdmin} />;
+  return <AdminDashboard username={username} isAdmin={isAdmin} userEmail={user?.email} />;
 }

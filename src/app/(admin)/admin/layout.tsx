@@ -1,48 +1,31 @@
-"use client";
-
 import React from "react";
-import { usePathname } from "next/navigation";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/Admin/Sidebar/app-sidebar";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { DatabaseIndicator } from "@/components/Admin/DatabaseIndicator";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { redirect } from "next/navigation";
+import AdminLayoutClient from "./AdminLayoutClient";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const isHomePage = pathname === "/admin";
+  const { getUser, getRoles } = getKindeServerSession();
+  const user = await getUser();
+  const roles = await getRoles();
 
-  return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        {" "}
-        {/* Added w-full */}
-        {!isHomePage && (
-          <AppSidebar>
-          </AppSidebar>
-        )}
-        <div className="flex-1 w-full">
-          {" "}
-          {/* Added w-full */}
-          {!isHomePage && (
-            <header className="sticky top-0 z-10 border-b bg-background px-4 py-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <SidebarTrigger />
-                  <DatabaseIndicator />
-                </div>
-                {/* Add any other header content here */}
-              </div>
-            </header>
-          )}
-          <main className={`${isHomePage ? "p-0" : "p-4 sm:p-6 lg:p-8"}`}>
-            {children}
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
-  );
+  const isAdmin = roles?.some((role) => role.key === "admin");
+
+  if (!isAdmin) {
+    redirect("/cliente");
+  }
+
+  // Preparar datos del usuario para el sidebar
+  const userData = {
+    name: user?.given_name && user?.family_name 
+      ? `${user.given_name} ${user.family_name}`
+      : user?.given_name || user?.email || "Admin",
+    email: user?.email || "admin@example.com",
+    avatar: user?.picture || "/avatars/admin.jpg",
+  };
+
+  return <AdminLayoutClient userData={userData}>{children}</AdminLayoutClient>;
 }

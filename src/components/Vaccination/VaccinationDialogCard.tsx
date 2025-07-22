@@ -330,7 +330,7 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
                 type="date"
                 className="col-span-3"
                 value={
-                  vaccination.administrationDate?.toISOString().split("T")[0]
+                  vaccination.administrationDate?.toISOString().split("T")[0] || ""
                 }
                 onChange={(e) =>
                   setVaccination((prev) => ({
@@ -347,7 +347,7 @@ const VaccinationDialog: React.FC<VaccinationDialogProps> = ({
                 id="nextDoseDate"
                 type="date"
                 className="col-span-3"
-                value={vaccination.nextDoseDate?.toISOString().split("T")[0]}
+                value={vaccination.nextDoseDate?.toISOString().split("T")[0] || ""}
                 min={
                   vaccination.administrationDate
                     ? new Date(

@@ -11,8 +11,8 @@ import { PrismaClient } from '@prisma/client'
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined }
 
 // Check if we're in build time
-const isBuildTime = process.env.IS_BUILD_TIME === 'true' || 
-                   (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) ||
+// Only consider build-time if explicitly set, not based on production + missing DATABASE_URL
+const isBuildTime = process.env.IS_BUILD_TIME === 'true' ||
                    typeof window !== 'undefined'; // Client-side
 
 // Create a function to get or create the Prisma client

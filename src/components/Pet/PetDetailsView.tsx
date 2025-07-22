@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,12 @@ import {
   PawPrintIcon, 
   CalendarIcon, 
   ScaleIcon,
-  MapPinIcon,
   IdCardIcon,
   HeartIcon,
   SyringeIcon,
   ShieldCheckIcon,
-  FileTextIcon
+  FileTextIcon,
+  ZapIcon
 } from "lucide-react";
 import Link from "next/link";
 import PetForm from "@/components/Admin/ui/PetForm";
@@ -104,67 +104,47 @@ const calculateAge = (dateOfBirth: Date): string => {
     age--;
   }
 
-  if (age < 1) {
-    const months = monthDifference < 0 ? monthDifference + 12 : monthDifference;
-    return `${months} ${months === 1 ? "mes" : "meses"}`;
+  if (age === 0) {
+    const months =
+      today.getMonth() -
+      birthDate.getMonth() +
+      12 * (today.getFullYear() - birthDate.getFullYear());
+    return months <= 1 ? "Menos de 1 mes" : `${months} meses`;
   }
 
-  return `${age} ${age === 1 ? "año" : "años"}`;
+  return `${age} año${age !== 1 ? "s" : ""}`;
 };
 
 export default function PetDetailsView({ pet }: { pet: Pet }) {
-  const [isNeutered, setIsNeutered] = useState(pet.isNeutered);
-  const [isDeceased, setIsDeceased] = useState(pet.isDeceased);
+  const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
-  const router = useRouter();
+  const [isNeutered, setIsNeutered] = useState(pet.isNeutered);
+  const [isDeceased, setIsDeceased] = useState(pet.isDeceased);
 
-  // Update local state when pet prop changes
-  useEffect(() => {
-    setIsNeutered(pet.isNeutered);
-    setIsDeceased(pet.isDeceased);
-  }, [pet.isNeutered, pet.isDeceased]);
-
-  const handlePetUpdated = useCallback(() => {
-    // Use Next.js router to refresh the page data
-    router.refresh();
-  }, [router]);
-
-  const handleNeuteredChange = async (checked: boolean) => {
+  const handleNeuteredChange = useCallback(async (checked: boolean) => {
     setIsNeutered(checked);
-    const result = await updatePetNeuteredStatus(
-      params.id as string,
-      pet.id,
-      checked
-    );
-    if (result.success) {
-      console.log("Estado de esterilización actualizado correctamente");
-    } else {
-      console.error(
-        "Error al actualizar el estado de esterilización:",
-        result.error
-      );
+    try {
+      await updatePetNeuteredStatus(pet.userId, pet.id, checked);
+    } catch (error) {
+      console.error("Error updating neutered status:", error);
       setIsNeutered(!checked);
     }
-  };
+  }, [pet.id, pet.userId]);
 
-  const handleDeceasedChange = async (checked: boolean) => {
+  const handleDeceasedChange = useCallback(async (checked: boolean) => {
     setIsDeceased(checked);
-    const result = await updatePetDeceasedStatus(
-      params.id as string,
-      pet.id,
-      checked
-    );
-    if (result.success) {
-      console.log("Estado de fallecimiento actualizado correctamente");
-    } else {
-      console.error(
-        "Error al actualizar el estado de fallecimiento:",
-        result.error
-      );
+    try {
+      await updatePetDeceasedStatus(pet.userId, pet.id, checked);
+    } catch (error) {
+      console.error("Error updating deceased status:", error);
       setIsDeceased(!checked);
     }
-  };
+  }, [pet.id, pet.userId]);
+
+  const handlePetUpdated = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   const formatPetForForm = (pet: Pet) => {
     return {
@@ -198,97 +178,114 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       label: "Especie", 
       value: pet.species, 
       icon: PawPrintIcon,
-      color: "text-blue-600"
+      gradient: "from-purple-50 to-purple-100/50",
+      iconBg: "bg-purple-200",
+      textColor: "text-purple-700"
     },
     { 
       label: "Raza", 
       value: pet.breed, 
       icon: PawPrintIcon,
-      color: "text-purple-600"
+      gradient: "from-green-50 to-green-100/50",
+      iconBg: "bg-green-200",
+      textColor: "text-green-700"
     },
     {
       label: "Fecha de Nacimiento",
       value: pet.dateOfBirth.toLocaleDateString(),
       icon: CalendarIcon,
-      color: "text-green-600"
+      gradient: "from-amber-50 to-amber-100/50",
+      iconBg: "bg-amber-200",
+      textColor: "text-amber-700"
     },
     { 
       label: "Edad", 
       value: calculateAge(pet.dateOfBirth), 
       icon: CalendarIcon,
-      color: "text-amber-600"
+      gradient: "from-blue-50 to-blue-100/50",
+      iconBg: "bg-blue-200",
+      textColor: "text-blue-700"
     },
     { 
       label: "Género", 
       value: pet.gender, 
       icon: HeartIcon,
-      color: "text-pink-600"
+      gradient: "from-pink-50 to-pink-100/50",
+      iconBg: "bg-pink-200",
+      textColor: "text-pink-700"
     },
     { 
       label: "Peso", 
       value: `${pet.weight} kg`, 
       icon: ScaleIcon,
-      color: "text-indigo-600"
+      gradient: "from-indigo-50 to-indigo-100/50",
+      iconBg: "bg-indigo-200",
+      textColor: "text-indigo-700"
     },
     { 
       label: "Número de Microchip", 
       value: pet.microchipNumber || "N/A", 
-      icon: MapPinIcon,
-      color: "text-orange-600"
+      icon: ZapIcon,
+      gradient: "from-orange-50 to-orange-100/50",
+      iconBg: "bg-orange-200",
+      textColor: "text-orange-700"
     },
     { 
       label: "ID Interno", 
       value: pet.internalId || "N/A", 
       icon: IdCardIcon,
-      color: "text-teal-600"
+      gradient: "from-teal-50 to-teal-100/50",
+      iconBg: "bg-teal-200",
+      textColor: "text-teal-700"
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+      <div className="container mx-auto px-6 py-8 max-w-7xl space-y-8">
         {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-            <div className="space-y-4">
-              <Link href={getBackLink()}>
-                <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-shadow">
-                  <ArrowLeftIcon className="mr-2 h-4 w-4" /> 
-                  Volver
-                </Button>
-              </Link>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {pet.name}
-                  </h1>
-                  <div className="flex gap-2">
-                    {isDeceased && (
-                      <Badge variant="secondary" className="bg-gray-100 text-gray-700">
-                        Finado
-                      </Badge>
-                    )}
-                    {isNeutered && (
-                      <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
-                        <ShieldCheckIcon className="w-3 h-3 mr-1" />
-                        Esterilizado
-                      </Badge>
-                    )}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div className="space-y-4">
+            <Link href={getBackLink()}>
+              <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-shadow">
+                <ArrowLeftIcon className="mr-2 h-4 w-4" /> 
+                Volver
+              </Button>
+            </Link>
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                  <div className="p-2 bg-emerald-600 rounded-xl">
+                    <PawPrintIcon className="h-6 w-6 text-white" />
                   </div>
+                  {pet.name}
+                </h1>
+                <div className="flex gap-2">
+                  {isDeceased && (
+                    <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                      Finado
+                    </Badge>
+                  )}
+                  {isNeutered && (
+                    <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
+                      <ShieldCheckIcon className="w-3 h-3 mr-1" />
+                      Esterilizado
+                    </Badge>
+                  )}
                 </div>
-                <p className="text-gray-600 text-lg">
-                  {pet.species} • {pet.breed} • {calculateAge(pet.dateOfBirth)}
-                </p>
               </div>
+              <p className="text-gray-600 text-lg">
+                {pet.species} • {pet.breed} • {calculateAge(pet.dateOfBirth)}
+              </p>
             </div>
-            <div className="w-full lg:w-auto">
-              <PetForm
-                isEditing={true}
-                initialPet={formatPetForForm(pet)}
-                userId={pet.userId}
-                onPetUpdated={handlePetUpdated}
-              />
-            </div>
+          </div>
+          <div className="w-full lg:w-auto">
+            <PetForm
+              isEditing={true}
+              initialPet={formatPetForForm(pet)}
+              userId={pet.userId}
+              onPetUpdated={handlePetUpdated}
+            />
           </div>
         </div>
 
@@ -297,90 +294,91 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
           {/* Left Column - Pet Information */}
           <div className="lg:col-span-3 space-y-8">
             {/* Basic Information Card */}
-            <Card className="shadow-sm border-0 bg-white">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <FileTextIcon className="w-5 h-5 text-blue-600" />
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <FileTextIcon className="w-5 h-5 text-emerald-600" />
+                  </div>
                   Información Básica
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {infoItems.map(({ label, value, icon: Icon, color }, index) => (
-                    <div key={index} className="group hover:bg-gray-50 p-4 rounded-lg transition-colors">
-                      <div className="flex items-start gap-3">
-                        <div className={`mt-0.5 ${color}`}>
-                          <Icon className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-600 mb-1">
-                            {label}
-                          </p>
-                          <p className="text-base font-semibold text-gray-900 break-words">
-                            {value}
-                          </p>
-                        </div>
+                  {infoItems.map(({ label, value, icon: Icon, gradient, iconBg, textColor }, index) => (
+                    <div key={index} className={`flex items-center gap-3 p-4 bg-gradient-to-r ${gradient} rounded-lg hover:scale-[1.02] transition-transform`}>
+                      <div className={`p-2 ${iconBg} rounded-lg`}>
+                        <Icon className={`w-4 h-4 ${textColor}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${textColor} mb-1`}>
+                          {label}
+                        </p>
+                        <p className="text-lg font-semibold text-gray-900 break-words">
+                          {value}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-
-
           </div>
 
           {/* Right Column - Status Controls */}
-          <div className="space-y-8">
-            <Card className="shadow-sm border-0 bg-white">
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Estado de la Mascota</CardTitle>
+                <CardTitle className="flex items-center gap-3 text-lg">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <ShieldCheckIcon className="w-4 h-4 text-blue-600" />
+                  </div>
+                  Estado de la Mascota
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <ShieldCheckIcon className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <label
-                          htmlFor="isNeutered"
-                          className="text-sm font-medium text-gray-900 cursor-pointer"
-                        >
-                          Esterilizado/a
-                        </label>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Indica si la mascota ha sido esterilizada o castrada.
-                        </p>
-                      </div>
+                <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <ShieldCheckIcon className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <label
+                        htmlFor="isNeutered"
+                        className="text-sm font-medium text-gray-900 cursor-pointer"
+                      >
+                        Esterilizado/a
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Indica si la mascota está esterilizada.
+                      </p>
                     </div>
-                    <Switch
-                      id="isNeutered"
-                      checked={isNeutered}
-                      onCheckedChange={handleNeuteredChange}
-                    />
                   </div>
-                  
-                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-red-300 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <HeartIcon className="w-5 h-5 text-red-600" />
-                      <div>
-                        <label
-                          htmlFor="isDeceased"
-                          className="text-sm font-medium text-gray-900 cursor-pointer"
-                        >
-                          Fallecido/a
-                        </label>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Marca si la mascota ha fallecido.
-                        </p>
-                      </div>
+                  <Switch
+                    id="isNeutered"
+                    checked={isNeutered}
+                    onCheckedChange={handleNeuteredChange}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-red-300 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <HeartIcon className="w-5 h-5 text-red-600" />
+                    <div>
+                      <label
+                        htmlFor="isDeceased"
+                        className="text-sm font-medium text-gray-900 cursor-pointer"
+                      >
+                        Fallecido/a
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Marca si la mascota ha fallecido.
+                      </p>
                     </div>
-                    <Switch
-                      id="isDeceased"
-                      checked={isDeceased}
-                      onCheckedChange={handleDeceasedChange}
-                    />
                   </div>
+                  <Switch
+                    id="isDeceased"
+                    checked={isDeceased}
+                    onCheckedChange={handleDeceasedChange}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -388,11 +386,13 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         </div>
 
         {/* Medical History - Full Width */}
-        <Card className="shadow-sm border-0 bg-white">
+        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="pb-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <SyringeIcon className="w-5 h-5 text-red-600" />
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <SyringeIcon className="w-5 h-5 text-red-600" />
+                </div>
                 Historial Médico
               </CardTitle>
               <MedicalRecordDialog petId={pet.id} />
@@ -461,7 +461,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
         </Card>
 
         {/* Vaccination and Deworming Sections - Full Width */}
-        <div className="mt-8 space-y-8">
+        <div className="space-y-8">
           <VaccinationContainer
             petId={pet.id}
             petSpecies={pet.species}

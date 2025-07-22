@@ -1,38 +1,29 @@
 import { NextResponse } from "next/server";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";import { prisma } from "@/lib/prismaDB";
 
-// Verificar si el usuario es admin
-async function isUserAdmin(userId: string) {
-  const dbUser = await prisma.user.findUnique({
-    where: { kindeId: userId },
-    include: {
-      UserRole: {
-        include: {
-          Role: true
-        }
-      }
-    }
-  });
 
-  return dbUser?.UserRole.some(ur => 
-    ur.Role.key === "admin" || 
-    ur.Role.key === "ADMIN" || 
-    ur.Role.key === "superadmin" || 
-    ur.Role.key === "SUPERADMIN"
-  ) ?? false;
-}
 
 // GET - Listar usuarios
 export async function GET() {
   try {
-    const { getUser } = getKindeServerSession();
+    const { getUser, getRoles } = getKindeServerSession();
     const user = await getUser();
+    const roles = await getRoles();
+
+    console.log("[USERS_GET] Debug - User:", { id: user?.id, email: user?.email });
+    console.log("[USERS_GET] Debug - Roles:", roles?.map(r => r.key));
 
     if (!user?.id) {
+      console.log("[USERS_GET] No user ID found");
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    if (!await isUserAdmin(user.id)) {
+    // Verificar permisos de admin usando roles de Kinde (igual que en el layout)
+    const isAdmin = roles?.some((role) => role.key === "admin");
+    console.log("[USERS_GET] Debug - isAdmin:", isAdmin);
+    
+    if (!isAdmin) {
+      console.log("[USERS_GET] Access denied - not admin");
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
     }
 
@@ -73,14 +64,17 @@ export async function GET() {
 // POST - Asignar rol a usuario
 export async function POST(req: Request) {
   try {
-    const { getUser } = getKindeServerSession();
+    const { getUser, getRoles } = getKindeServerSession();
     const currentUser = await getUser();
+    const roles = await getRoles();
 
     if (!currentUser?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    if (!await isUserAdmin(currentUser.id)) {
+    // Verificar permisos de admin usando roles de Kinde (igual que en el layout)
+    const isAdmin = roles?.some((role) => role.key === "admin");
+    if (!isAdmin) {
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
     }
 

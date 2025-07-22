@@ -19,14 +19,56 @@ interface User {
 async function getUsers(): Promise<User[]> {
   const { getUser, getRoles } = getKindeServerSession();
   const user = await getUser();
-  const roles = await getRoles();
 
   if (!user?.id) {
     redirect("/api/auth/login");
   }
 
-  // Verificar permisos de admin usando roles de Kinde
-  const isAdmin = roles?.some((role) => role.key === "admin");
+  // Verificar permisos de admin con fallback robusto
+  let isAdmin = false;
+  
+  try {
+    const roles = await getRoles();
+    isAdmin = roles?.some((role) => role.key === "admin") || false;
+    
+    // Si no tenemos roles de Kinde, verificar en la base de datos
+    if (!isAdmin && (!roles || roles.length === 0)) {
+      const dbUser = await prisma.user.findUnique({
+        where: { kindeId: user.id },
+        include: {
+          UserRole: {
+            include: {
+              Role: true
+            }
+          }
+        }
+      });
+      
+      isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
+    }
+  } catch (error) {
+    console.error("Error checking admin roles:", error);
+    // En caso de error, verificar solo en la base de datos
+    try {
+      const dbUser = await prisma.user.findUnique({
+        where: { kindeId: user.id },
+        include: {
+          UserRole: {
+            include: {
+              Role: true
+            }
+          }
+        }
+      });
+      
+      isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
+    } catch (dbError) {
+      console.error("Error checking admin roles in database:", dbError);
+      // Si todo falla, redirigir a cliente por seguridad
+      redirect("/cliente");
+    }
+  }
+
   if (!isAdmin) {
     redirect("/cliente");
   }

@@ -103,8 +103,16 @@ const ClientePetForm: React.FC<PetFormProps> = ({
 
     if (result.success) {
       if (onClose) onClose();
-      // Redirigir al admin de mascotas en lugar de al cliente específico
-      router.push('/admin/mascotas');
+      
+      // Detectar el contexto y redirigir apropiadamente
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('/admin/')) {
+        // Si estamos en contexto de admin, ir a admin/mascotas
+        router.push('/admin/mascotas');
+      } else {
+        // Si estamos en contexto de cliente, ir al perfil del cliente
+        router.push('/cliente');
+      }
     } else {
       console.error(result.error);
     }

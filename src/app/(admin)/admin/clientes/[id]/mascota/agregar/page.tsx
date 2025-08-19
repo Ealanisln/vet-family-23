@@ -2,68 +2,57 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import UnifiedPetForm, { PetFormData } from "@/components/ui/UnifiedPetForm";
+import { addPet } from "@/app/actions/add-edit-pet"; // Volver al Server Action
 
 export default function AddPetView() {
   const params = useParams();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleSubmit = async (petData: PetFormData) => {
     const userId = params.id as string;
     setIsSubmitting(true);
 
     try {
-      // Preparar payload
       const petPayload = {
         ...petData,
         dateOfBirth: petData.dateOfBirth instanceof Date 
-          ? petData.dateOfBirth.toISOString()
-          : new Date(petData.dateOfBirth).toISOString(),
+          ? petData.dateOfBirth 
+          : new Date(petData.dateOfBirth),
         weight: typeof petData.weight === 'string' 
           ? parseFloat(petData.weight) 
           : petData.weight,
       };
 
-      // Llamar a la API Route en lugar del Server Action
-      const response = await fetch('/api/pets/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          petData: petPayload
-        }),
-        // Importante: incluir credenciales para mantener la sesión
-        credentials: 'include'
-      });
-
-      const result = await response.json();
+      const result = await addPet(userId, petPayload);
       
       if (result.success) {
-        console.log('✅ [PET-FORM] Pet added successfully via API');
+        console.log('✅ [PET-FORM] Pet added successfully');
         
-        // Usar la URL de redirección de la respuesta
-        const redirectUrl = result.redirectUrl || `/admin/clientes/${userId}`;
-        
-        // Pequeño delay para asegurar que todo se procese
-        setTimeout(() => {
-          // Usar window.location para una navegación completa
-          // Esto asegura que las cookies de Kinde se mantengan
-          window.location.href = redirectUrl;
-        }, 100);
-        
+        // FIX CLAVE: Usar navegación completa del navegador
+        // Esto fuerza a recargar todo el contexto de autenticación
+        if (isClient) {
+          // Esperar un momento para que se complete la transacción
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Navegación completa del navegador
+          window.location.href = `/admin/clientes/${userId}`;
+        }
       } else {
-        console.error('❌ [PET-FORM] Error from API:', result.error);
-        // TODO: Mostrar error al usuario con toast
+        console.error('❌ [PET-FORM] Error:', result.error);
         alert(`Error: ${result.error}`);
       }
     } catch (error) {
-      console.error("❌ [PET-FORM] Error calling API:", error);
-      alert('Error al agregar mascota. Por favor intenta de nuevo.');
+      console.error("❌ [PET-FORM] Error:", error);
+      alert('Error al agregar mascota');
     } finally {
       setIsSubmitting(false);
     }

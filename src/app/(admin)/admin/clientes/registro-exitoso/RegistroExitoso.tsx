@@ -43,8 +43,10 @@ const RegistroExitoso: React.FC = () => {
       if (result.success) {
         // Verificar si realmente es admin antes de redirigir
         try {
-          const authResponse = await fetch('/api/auth-status');
+          const authResponse = await fetch('/api/admin-check');
           const authData = await authResponse.json();
+          
+          console.log('Auth check result:', authData);
           
           if (authData.isAdmin) {
             router.push('/admin/mascotas');

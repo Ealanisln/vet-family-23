@@ -106,8 +106,10 @@ const ClientePetForm: React.FC<PetFormProps> = ({
       
       // Verificar el estado de autenticación real antes de redirigir
       try {
-        const authResponse = await fetch('/api/auth-status');
+        const authResponse = await fetch('/api/admin-check');
         const authData = await authResponse.json();
+        
+        console.log('Auth check result:', authData);
         
         const currentPath = window.location.pathname;
         if (currentPath.includes('/admin/') && authData.isAdmin) {

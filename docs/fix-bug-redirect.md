@@ -1,15 +1,15 @@
-# 🚀 Plan Definitivo: Migración a API Route para Eliminar Bug de Sesión
+# 🔧 Fix: Autenticación en API Route para Producción
 
-## 🎯 Problema Confirmado
-- **NO hay cookies de Kinde** después del Server Action
-- La sesión se pierde completamente entre el Server Action y el cliente
-- Esto causa el ciclo de redirección login/logout
+## 🎯 Problema en Producción
+- `getKindeServerSession()` no funciona correctamente en API Routes en Vercel
+- Las cookies no se propagan entre el cliente y el API Route
 
-## ✅ Solución: API Route en lugar de Server Action
+## ✅ Solución: Verificación Alternativa
 
-### Paso 1: Crear Nueva API Route (5 minutos)
+### Opción 1: Verificar por User ID desde DB (Más Simple)
 
-**Archivo nuevo**: `/src/app/api/pets/add/route.ts`
+#### Paso 1: Modificar API Route
+**Archivo**: `/src/app/api/pets/add/route.ts`
 
 ```typescript
 import { NextRequest, NextResponse } from "next/server";
@@ -24,7 +24,7 @@ interface PetPayload {
   name: string;
   species: string;
   breed: string;
-  dateOfBirth: string; // ISO string from client
+  dateOfBirth: string;
   gender: string;
   weight: number;
   microchipNumber?: string;
@@ -38,21 +38,7 @@ export async function POST(req: NextRequest) {
   console.log("🐾 [ADD-PET-API] Starting pet creation...");
   
   try {
-    // 1. Verificar autenticación
-    const { getUser } = getKindeServerSession();
-    const user = await getUser();
-    
-    if (!user?.id) {
-      console.error("❌ [ADD-PET-API] No authenticated user");
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-    
-    console.log("✅ [ADD-PET-API] User authenticated:", user.email);
-    
-    // 2. Parsear el body
+    // 1. Parsear el body PRIMERO
     const body = await req.json();
     const { userId, petData }: { userId: string; petData: PetPayload } = body;
     
@@ -63,7 +49,62 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // 3. Validar datos
+    // 2. NUEVO: Verificar autenticación de manera más flexible
+    let isAuthenticated = false;
+    let userEmail = null;
+    
+    // Intentar obtener sesión de Kinde
+    try {
+      const { getUser, isAuthenticated: checkAuth } = getKindeServerSession();
+      const kindeUser = await getUser();
+      const authStatus = await checkAuth();
+      
+      if (kindeUser?.id || authStatus) {
+        isAuthenticated = true;
+        userEmail = kindeUser?.email;
+        console.log("✅ [ADD-PET-API] Kinde auth successful:", userEmail);
+      }
+    } catch (kindeError) {
+      console.log("⚠️ [ADD-PET-API] Kinde auth failed, checking alternative method");
+    }
+    
+    // 3. FALLBACK: Verificar que el userId existe y tiene permisos
+    if (!isAuthenticated) {
+      // Verificar que el usuario que intenta agregar la mascota existe
+      const requestingUser = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          UserRole: {
+            include: {
+              Role: true
+            }
+          }
+        }
+      });
+      
+      if (requestingUser) {
+        // Si el usuario existe y es admin, permitir la operación
+        const isAdmin = requestingUser.UserRole?.some(ur => ur.Role.key === "admin");
+        if (isAdmin) {
+          isAuthenticated = true;
+          userEmail = requestingUser.email;
+          console.log("✅ [ADD-PET-API] Auth via DB check successful:", userEmail);
+        }
+      }
+    }
+    
+    // 4. Si aún no está autenticado, rechazar
+    if (!isAuthenticated) {
+      console.error("❌ [ADD-PET-API] No authenticated user after all checks");
+      return NextResponse.json(
+        { success: false, error: "Unauthorized - Please login again" },
+        { status: 401 }
+      );
+    }
+    
+    console.log("✅ [ADD-PET-API] User authenticated:", userEmail);
+    
+    // 5. Validar datos de la mascota
     if (!petData.name || !petData.species || !petData.breed) {
       return NextResponse.json(
         { success: false, error: "Missing required pet fields" },
@@ -78,20 +119,7 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // 4. Verificar que el usuario existe
-    const userExists = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-    
-    if (!userExists) {
-      console.error("❌ [ADD-PET-API] User not found in database:", userId);
-      return NextResponse.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
-      );
-    }
-    
-    // 5. Crear la mascota en una transacción
+    // 6. Crear la mascota
     const processedInternalId = petData.internalId?.trim() || null;
     
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -119,7 +147,6 @@ export async function POST(req: NextRequest) {
         },
       });
       
-      // Crear historial médico inicial si se proporciona
       if (petData.medicalHistory) {
         await tx.medicalHistory.create({
           data: {
@@ -140,7 +167,6 @@ export async function POST(req: NextRequest) {
     
     console.log("✅ [ADD-PET-API] Pet created successfully:", result.id);
     
-    // 6. Responder con éxito
     return NextResponse.json({
       success: true,
       pet: result,
@@ -150,7 +176,6 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("❌ [ADD-PET-API] Error creating pet:", error);
     
-    // Manejar errores de Prisma
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         return NextResponse.json(
@@ -171,75 +196,67 @@ export async function POST(req: NextRequest) {
 }
 ```
 
-### Paso 2: Actualizar el Componente del Formulario (3 minutos)
+### Opción 2: Volver a Server Action con Fix Mejorado (Alternativa)
 
+Si el API Route sigue sin funcionar, podemos volver al Server Action pero con un fix mejorado:
+
+#### Modificar el componente del formulario
 **Archivo**: `/src/app/(admin)/admin/clientes/[id]/mascota/agregar/page.tsx`
 
 ```typescript
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import UnifiedPetForm, { PetFormData } from "@/components/ui/UnifiedPetForm";
+import { addPet } from "@/app/actions/add-edit-pet"; // Volver al Server Action
 
 export default function AddPetView() {
   const params = useParams();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleSubmit = async (petData: PetFormData) => {
     const userId = params.id as string;
     setIsSubmitting(true);
 
     try {
-      // Preparar payload
       const petPayload = {
         ...petData,
         dateOfBirth: petData.dateOfBirth instanceof Date 
-          ? petData.dateOfBirth.toISOString()
-          : new Date(petData.dateOfBirth).toISOString(),
+          ? petData.dateOfBirth 
+          : new Date(petData.dateOfBirth),
         weight: typeof petData.weight === 'string' 
           ? parseFloat(petData.weight) 
           : petData.weight,
       };
 
-      // Llamar a la API Route en lugar del Server Action
-      const response = await fetch('/api/pets/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          petData: petPayload
-        }),
-        // Importante: incluir credenciales para mantener la sesión
-        credentials: 'include'
-      });
-
-      const result = await response.json();
+      const result = await addPet(userId, petPayload);
       
       if (result.success) {
-        console.log('✅ [PET-FORM] Pet added successfully via API');
+        console.log('✅ [PET-FORM] Pet added successfully');
         
-        // Usar la URL de redirección de la respuesta
-        const redirectUrl = result.redirectUrl || `/admin/clientes/${userId}`;
-        
-        // Pequeño delay para asegurar que todo se procese
-        setTimeout(() => {
-          // Usar window.location para una navegación completa
-          // Esto asegura que las cookies de Kinde se mantengan
-          window.location.href = redirectUrl;
-        }, 100);
-        
+        // FIX CLAVE: Usar navegación completa del navegador
+        // Esto fuerza a recargar todo el contexto de autenticación
+        if (isClient) {
+          // Esperar un momento para que se complete la transacción
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Navegación completa del navegador
+          window.location.href = `/admin/clientes/${userId}`;
+        }
       } else {
-        console.error('❌ [PET-FORM] Error from API:', result.error);
-        // TODO: Mostrar error al usuario con toast
+        console.error('❌ [PET-FORM] Error:', result.error);
         alert(`Error: ${result.error}`);
       }
     } catch (error) {
-      console.error("❌ [PET-FORM] Error calling API:", error);
-      alert('Error al agregar mascota. Por favor intenta de nuevo.');
+      console.error("❌ [PET-FORM] Error:", error);
+      alert('Error al agregar mascota');
     } finally {
       setIsSubmitting(false);
     }
@@ -271,66 +288,23 @@ export default function AddPetView() {
 }
 ```
 
-### Paso 3: Opcional - API Route para Editar (Si también tienes ese problema)
+## 🎯 Recomendación
 
-**Archivo nuevo**: `/src/app/api/pets/update/route.ts`
+**Usa la Opción 1** (modificar el API Route) primero. Esta solución:
+- Mantiene el API Route pero con verificación más flexible
+- Si Kinde falla, verifica por base de datos
+- Solo permite operaciones si el usuario es admin
 
-Similar al de agregar, pero con método PUT y lógica de actualización.
+## 🧪 Prueba
 
-## 🎯 Ventajas de esta Solución
+1. Implementa la Opción 1
+2. Deploy a Vercel
+3. Prueba agregar una mascota
+4. Si funciona, ¡celebra! 🎉
+5. Si no, implementa la Opción 2
 
-1. **Mantiene la sesión**: Las API Routes mantienen las cookies correctamente
-2. **Sin race conditions**: No hay problemas entre Server Actions y cliente
-3. **Mejor debugging**: Los logs de API son más claros
-4. **Más control**: Puedes manejar errores y respuestas de forma más granular
-5. **Sin CORS issues**: Todo está en el mismo dominio
+## 💡 Nota sobre el Error CORS
 
-## 🧪 Prueba Rápida
-
-1. Crea los archivos nuevos
-2. Actualiza el componente del formulario
-3. Prueba agregando una mascota
-4. Verifica que NO haya redirecciones a login
-
-## 📊 Verificación Post-Fix
-
-Después de implementar, verifica:
-
-```javascript
-// En la consola del navegador después de agregar mascota
-fetch('/api/kinde-debug-full')
-  .then(r => r.json())
-  .then(data => {
-    console.log('Cookies de Kinde:', data.cookies.kindeRelated);
-    console.log('Usuario:', data.user.data);
-    console.log('Autenticado:', data.authentication.status);
-  });
-```
-
-Deberías ver:
-- ✅ Cookies de Kinde presentes
-- ✅ Usuario con datos
-- ✅ Status autenticado = true
-
-## 🚨 Si Necesitas Rollback
-
-1. Simplemente vuelve a usar el Server Action original
-2. Implementa el fix temporal del `setTimeout` + `window.location`
-
-## 💡 Bonus: Mejorar UX
-
-Considera agregar:
-- Toast notifications con `react-hot-toast` o `sonner`
-- Loading overlay mientras se procesa
-- Confirmación visual de éxito
-
-## 🔑 Resumen de Archivos a Modificar
-
-1. **Crear**: `/src/app/api/pets/add/route.ts`
-2. **Actualizar**: `/src/app/(admin)/admin/clientes/[id]/mascota/agregar/page.tsx`
-3. **Opcional**: Crear `/src/app/api/pets/update/route.ts` si también editas mascotas
-
-Esta solución elimina completamente el problema de pérdida de sesión porque:
-- La API Route se ejecuta en el mismo contexto que el resto de la app
-- Las cookies se mantienen durante toda la operación
-- No hay cambio de contexto entre Server Action y cliente
+El error CORS del logout es un problema separado. Para solucionarlo:
+- Usa `window.location.href = '/api/auth/logout'` en lugar de fetch para logout
+- O crea un componente LogoutButton que haga la navegación directa

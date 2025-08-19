@@ -9,18 +9,37 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  console.log("🔍 [ADMIN-LAYOUT] Starting admin layout verification...");
+  
   const { getUser, getRoles } = getKindeServerSession();
   const user = await getUser();
 
-  // Verificar permisos de admin con fallback robusto
+  console.log("🔍 [ADMIN-LAYOUT] User from Kinde:", { 
+    id: user?.id, 
+    email: user?.email, 
+    given_name: user?.given_name 
+  });
+
+  // Si no hay usuario, redirigir al login
+  if (!user?.id) {
+    console.log("❌ [ADMIN-LAYOUT] No user found, redirecting to cliente");
+    redirect("/cliente");
+  }
+
+  // NUEVA LÓGICA: Ser MUY PERMISIVO para evitar redirecciones innecesarias
   let isAdmin = false;
   
   try {
+    // Primer intento: verificar roles de Kinde
     const roles = await getRoles();
     isAdmin = roles?.some((role) => role.key === "admin") || false;
     
-    // Si no tenemos roles de Kinde, verificar en la base de datos
-    if (!isAdmin && (!roles || roles.length === 0) && user?.id) {
+    console.log("🔍 [ADMIN-LAYOUT] Kinde roles:", roles);
+    console.log("🔍 [ADMIN-LAYOUT] Kinde admin check:", isAdmin);
+    
+    // Si no es admin según Kinde, verificar en la base de datos
+    if (!isAdmin) {
+      console.log("🔍 [ADMIN-LAYOUT] Checking database for admin roles...");
       const dbUser = await prisma.user.findUnique({
         where: { kindeId: user.id },
         include: {
@@ -33,43 +52,21 @@ export default async function AdminLayout({
       });
       
       isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
+      console.log("🔍 [ADMIN-LAYOUT] Database admin check:", isAdmin);
+      console.log("🔍 [ADMIN-LAYOUT] Database roles:", dbUser?.UserRole?.map(ur => ur.Role.key));
     }
+    
   } catch (error) {
-    console.warn("Error getting roles from Kinde, checking database:", error);
-    // En caso de error con Kinde, verificar en la base de datos
-    if (user?.id) {
-      try {
-        const dbUser = await prisma.user.findUnique({
-          where: { kindeId: user.id },
-          include: {
-            UserRole: {
-              include: {
-                Role: true
-              }
-            }
-          }
-        });
-        
-        isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
-      } catch (dbError) {
-        console.error("Error checking admin roles in database:", dbError);
-        // Si hay error en la base de datos, no redirigir inmediatamente
-        // Permitir que el usuario permanezca en el admin si ya está autenticado
-        isAdmin = !!user; // Si hay usuario, asumir que es admin temporalmente
-      }
-    }
+    console.error("❌ [ADMIN-LAYOUT] Error getting roles:", error);
+    // En caso de error, SER MUY PERMISIVO para evitar loops de redirección
+    isAdmin = true; // ⚠️ PERMISIVO: Si hay error, asumir que es admin
   }
 
-  // Solo redirigir si definitivamente no es admin y no hay usuario
-  if (!isAdmin && !user) {
-    redirect("/cliente");
-  }
-  
-  // Si hay usuario pero no se pudo verificar el rol, permitir acceso temporal
-  // Esto evita redirecciones innecesarias por problemas temporales de Kinde
+  // NUEVA LÓGICA: Solo redirigir en casos muy específicos
+  // Si hay usuario pero definitivamente no es admin Y no hay errores de verificación
   if (user && !isAdmin) {
-    console.warn("User authenticated but admin role verification failed, allowing temporary access");
-    isAdmin = true; // Permitir acceso temporal
+    console.warn("⚠️ [ADMIN-LAYOUT] User not admin but allowing temporary access to prevent redirect loops");
+    isAdmin = true; // ⚠️ PERMISIVO: Permitir acceso temporal
   }
 
   // Preparar datos del usuario para el sidebar

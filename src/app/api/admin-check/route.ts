@@ -5,38 +5,69 @@ import { prisma } from "@/lib/prismaDB";
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest) {
+  console.log("🔍 [ADMIN-CHECK] Starting admin verification...");
+  
   try {
     const { getUser, getRoles } = getKindeServerSession();
     const user = await getUser();
 
+    console.log("🔍 [ADMIN-CHECK] User from Kinde:", { 
+      id: user?.id, 
+      email: user?.email, 
+      given_name: user?.given_name 
+    });
+
     if (!user?.id) {
+      console.log("❌ [ADMIN-CHECK] No user found");
       return NextResponse.json({
         isAdmin: false,
         isAuthenticated: false,
-        error: "No user found"
+        error: "No user found",
+        debug: "No user ID from Kinde"
       });
     }
 
     let isAdmin = false;
+    let debugInfo: {
+      kindeRoles: any[];
+      kindeAdminCheck: boolean;
+      dbUser: any;
+      dbAdminCheck: boolean;
+      dbRoles: any[];
+      error?: string;
+    } = {
+      kindeRoles: [],
+      kindeAdminCheck: false,
+      dbUser: null,
+      dbAdminCheck: false,
+      dbRoles: []
+    };
     
     try {
       // Primer intento: verificar roles de Kinde
       const kindeRoles = await getRoles();
       isAdmin = kindeRoles?.some((role) => role.key === "admin") || false;
       
-      console.log("Kinde roles:", kindeRoles);
-      console.log("Kinde admin check:", isAdmin);
+      debugInfo.kindeRoles = kindeRoles || [];
+      debugInfo.kindeAdminCheck = isAdmin;
+      
+      console.log("🔍 [ADMIN-CHECK] Kinde roles:", kindeRoles);
+      console.log("🔍 [ADMIN-CHECK] Kinde admin check:", isAdmin);
       
       // Si no es admin según Kinde, verificar en la base de datos
       if (!isAdmin) {
+        console.log("🔍 [ADMIN-CHECK] Checking database for admin roles...");
         const dbUser = await prisma.user.findUnique({
           where: { kindeId: user.id },
           select: {
+            id: true,
+            email: true,
             UserRole: {
               select: {
                 Role: {
                   select: {
-                    key: true
+                    key: true,
+                    name: true
                   }
                 }
               }
@@ -44,30 +75,42 @@ export async function GET(_req: NextRequest) {
           }
         });
         
+        debugInfo.dbUser = dbUser;
+        debugInfo.dbRoles = dbUser?.UserRole?.map(ur => ur.Role.key) || [];
+        
         isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
-        console.log("Database admin check:", isAdmin);
-        console.log("Database roles:", dbUser?.UserRole?.map(ur => ur.Role.key));
+        debugInfo.dbAdminCheck = isAdmin;
+        
+        console.log("🔍 [ADMIN-CHECK] Database user:", dbUser);
+        console.log("🔍 [ADMIN-CHECK] Database admin check:", isAdmin);
+        console.log("🔍 [ADMIN-CHECK] Database roles:", dbUser?.UserRole?.map(ur => ur.Role.key));
       }
       
     } catch (error) {
-      console.error("Error checking admin status:", error);
+      console.error("❌ [ADMIN-CHECK] Error checking admin status:", error);
       // En caso de error, ser conservador y devolver false
       isAdmin = false;
+      debugInfo.error = error instanceof Error ? error.message : 'Unknown error';
     }
 
-    return NextResponse.json({
+    const response = {
       isAdmin,
       isAuthenticated: true,
       userId: user.id,
-      userEmail: user.email
-    });
+      userEmail: user.email,
+      debug: debugInfo
+    };
+
+    console.log("✅ [ADMIN-CHECK] Final response:", response);
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error("Error in admin-check API route:", error);
+    console.error("❌ [ADMIN-CHECK] Error in admin-check API route:", error);
     return NextResponse.json({
       isAdmin: false,
       isAuthenticated: false,
-      error: "Internal server error"
+      error: "Internal server error",
+      debug: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

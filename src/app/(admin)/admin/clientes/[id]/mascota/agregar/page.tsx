@@ -32,20 +32,25 @@ export default function AddPetView() {
       
       if (result.success) {
         // Verificar si realmente es admin antes de redirigir
+        console.log('🔄 [PET-FORM] Starting admin verification...');
         try {
           const authResponse = await fetch('/api/admin-check');
           const authData = await authResponse.json();
           
-          console.log('Auth check result:', authData);
+          console.log('✅ [PET-FORM] Auth check result:', authData);
+          console.log('🔍 [PET-FORM] Debug info:', authData.debug);
           
           if (authData.isAdmin) {
+            console.log('✅ [PET-FORM] User is admin, redirecting to /admin/mascotas');
             router.push('/admin/mascotas');
           } else {
-            // Si no es admin, redirigir al cliente específico
+            console.log('❌ [PET-FORM] User is NOT admin, redirecting to client specific page');
+            console.log('🔍 [PET-FORM] Redirect target:', `/admin/clientes/${userId}`);
             router.push(`/admin/clientes/${userId}`);
           }
         } catch (error) {
-          console.error('Error verificando estado de admin:', error);
+          console.error('❌ [PET-FORM] Error verificando estado de admin:', error);
+          console.log('🔄 [PET-FORM] Using fallback redirect to client specific page');
           // Fallback seguro: redirigir al cliente específico
           router.push(`/admin/clientes/${userId}`);
         }

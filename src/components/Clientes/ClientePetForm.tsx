@@ -105,30 +105,37 @@ const ClientePetForm: React.FC<PetFormProps> = ({
       if (onClose) onClose();
       
       // Verificar el estado de autenticación real antes de redirigir
+      console.log('🔄 [CLIENT-PET-FORM] Starting admin verification...');
+      const currentPath = window.location.pathname;
+      console.log('🔍 [CLIENT-PET-FORM] Current path:', currentPath);
+      
       try {
         const authResponse = await fetch('/api/admin-check');
         const authData = await authResponse.json();
         
-        console.log('Auth check result:', authData);
+        console.log('✅ [CLIENT-PET-FORM] Auth check result:', authData);
+        console.log('🔍 [CLIENT-PET-FORM] Debug info:', authData.debug);
         
-        const currentPath = window.location.pathname;
         if (currentPath.includes('/admin/') && authData.isAdmin) {
-          // Si estamos en contexto de admin Y es admin, ir a admin/mascotas
+          console.log('✅ [CLIENT-PET-FORM] Admin in admin context, redirecting to /admin/mascotas');
           router.push('/admin/mascotas');
         } else if (currentPath.includes('/admin/')) {
-          // Si estamos en admin pero no es admin, ir al cliente específico
+          console.log('❌ [CLIENT-PET-FORM] Non-admin in admin context, redirecting to client specific');
+          console.log('🔍 [CLIENT-PET-FORM] Redirect target:', `/admin/clientes/${userId}`);
           router.push(`/admin/clientes/${userId}`);
         } else {
-          // Si estamos en contexto de cliente, ir al perfil del cliente
+          console.log('🔄 [CLIENT-PET-FORM] Client context, redirecting to /cliente');
           router.push('/cliente');
         }
       } catch (error) {
-        console.error('Error verificando estado de admin:', error);
+        console.error('❌ [CLIENT-PET-FORM] Error verificando estado de admin:', error);
+        console.log('🔄 [CLIENT-PET-FORM] Using fallback redirect based on path');
         // Fallback seguro basado en el path
-        const currentPath = window.location.pathname;
         if (currentPath.includes('/admin/')) {
+          console.log('🔍 [CLIENT-PET-FORM] Fallback target:', `/admin/clientes/${userId}`);
           router.push(`/admin/clientes/${userId}`);
         } else {
+          console.log('🔍 [CLIENT-PET-FORM] Fallback target: /cliente');
           router.push('/cliente');
         }
       }

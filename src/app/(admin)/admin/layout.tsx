@@ -9,37 +9,32 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.log("🔍 [ADMIN-LAYOUT] Starting admin layout verification...");
-  
   const { getUser, getRoles } = getKindeServerSession();
-  const user = await getUser();
-
-  console.log("🔍 [ADMIN-LAYOUT] User from Kinde:", { 
-    id: user?.id, 
-    email: user?.email, 
-    given_name: user?.given_name 
-  });
-
-  // Si no hay usuario, redirigir al login
-  if (!user?.id) {
-    console.log("❌ [ADMIN-LAYOUT] No user found, redirecting to cliente");
-    redirect("/cliente");
-  }
-
-  // NUEVA LÓGICA: Ser MUY PERMISIVO para evitar redirecciones innecesarias
-  let isAdmin = false;
+  
+  // FIX: Usar try-catch para manejar errores de sesión
+  let user = null;
+  let roles = null;
   
   try {
-    // Primer intento: verificar roles de Kinde
-    const roles = await getRoles();
-    isAdmin = roles?.some((role) => role.key === "admin") || false;
-    
-    console.log("🔍 [ADMIN-LAYOUT] Kinde roles:", roles);
-    console.log("🔍 [ADMIN-LAYOUT] Kinde admin check:", isAdmin);
-    
-    // Si no es admin según Kinde, verificar en la base de datos
-    if (!isAdmin) {
-      console.log("🔍 [ADMIN-LAYOUT] Checking database for admin roles...");
+    user = await getUser();
+    roles = await getRoles();
+  } catch (error) {
+    console.error("❌ [ADMIN-LAYOUT] Error getting Kinde session:", error);
+    redirect("/api/auth/login");
+  }
+
+  // Verificar que hay usuario
+  if (!user?.id) {
+    console.log("❌ [ADMIN-LAYOUT] No user found, redirecting to login");
+    redirect("/api/auth/login");
+  }
+
+  // Verificar roles
+  let isAdmin = roles?.some((role) => role.key === "admin") || false;
+  
+  // Si no es admin según Kinde, verificar en DB
+  if (!isAdmin) {
+    try {
       const dbUser = await prisma.user.findUnique({
         where: { kindeId: user.id },
         include: {
@@ -52,24 +47,17 @@ export default async function AdminLayout({
       });
       
       isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
-      console.log("🔍 [ADMIN-LAYOUT] Database admin check:", isAdmin);
-      console.log("🔍 [ADMIN-LAYOUT] Database roles:", dbUser?.UserRole?.map(ur => ur.Role.key));
+    } catch (error) {
+      console.error("❌ [ADMIN-LAYOUT] Error checking DB roles:", error);
     }
-    
-  } catch (error) {
-    console.error("❌ [ADMIN-LAYOUT] Error getting roles:", error);
-    // En caso de error, SER MUY PERMISIVO para evitar loops de redirección
-    isAdmin = true; // ⚠️ PERMISIVO: Si hay error, asumir que es admin
   }
 
-  // NUEVA LÓGICA: Solo redirigir en casos muy específicos
-  // Si hay usuario pero definitivamente no es admin Y no hay errores de verificación
-  if (user && !isAdmin) {
-    console.warn("⚠️ [ADMIN-LAYOUT] User not admin but allowing temporary access to prevent redirect loops");
-    isAdmin = true; // ⚠️ PERMISIVO: Permitir acceso temporal
+  // Si no es admin, redirigir a cliente
+  if (!isAdmin) {
+    console.log("⚠️ [ADMIN-LAYOUT] User is not admin, redirecting to /cliente");
+    redirect("/cliente");
   }
 
-  // Preparar datos del usuario para el sidebar
   const userData = {
     name: user?.given_name && user?.family_name 
       ? `${user.given_name} ${user.family_name}`

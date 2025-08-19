@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { MedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
+import LogoutButton from "@/components/Admin/LogoutButton";
 
 const data = {
   teams: [
@@ -234,18 +235,7 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Cerrar Sesión"
-              className="group-data-[collapsible=icon]:justify-center hover:bg-red-100 hover:text-red-600 transition-colors duration-200"
-            >
-              <Link href="/api/auth/logout">
-                <LogOut className="h-4 w-4" />
-                <span className="group-data-[collapsible=icon]:hidden">
-                  Cerrar Sesión
-                </span>
-              </Link>
-            </SidebarMenuButton>
+            <LogoutButton />
           </SidebarMenuItem>
         </SidebarMenu>
         {/* Usamos datos reales del usuario o fallback */}

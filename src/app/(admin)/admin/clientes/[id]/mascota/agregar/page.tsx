@@ -31,29 +31,13 @@ export default function AddPetView() {
       const result = await addPet(userId, petPayload);
       
       if (result.success) {
-        // Verificar si realmente es admin antes de redirigir
-        console.log('🔄 [PET-FORM] Starting admin verification...');
-        try {
-          const authResponse = await fetch('/api/admin-check');
-          const authData = await authResponse.json();
-          
-          console.log('✅ [PET-FORM] Auth check result:', authData);
-          console.log('🔍 [PET-FORM] Debug info:', authData.debug);
-          
-          if (authData.isAdmin) {
-            console.log('✅ [PET-FORM] User is admin, redirecting to /admin/mascotas');
-            router.push('/admin/mascotas');
-          } else {
-            console.log('❌ [PET-FORM] User is NOT admin, redirecting to client specific page');
-            console.log('🔍 [PET-FORM] Redirect target:', `/admin/clientes/${userId}`);
-            router.push(`/admin/clientes/${userId}`);
-          }
-        } catch (error) {
-          console.error('❌ [PET-FORM] Error verificando estado de admin:', error);
-          console.log('🔄 [PET-FORM] Using fallback redirect to client specific page');
-          // Fallback seguro: redirigir al cliente específico
-          router.push(`/admin/clientes/${userId}`);
-        }
+        // FIX: Simplificar - el usuario ya está en contexto admin
+        // No necesitamos verificar nuevamente, solo redirigir
+        console.log('✅ [PET-FORM] Pet added successfully, redirecting to client details');
+        
+        // Usar replace para evitar problemas de historial del navegador
+        // Esto también evita el race condition con la verificación de admin
+        router.replace(`/admin/clientes/${userId}`);
       } else {
         console.error(result.error);
         // TODO: Show error toast/message to user

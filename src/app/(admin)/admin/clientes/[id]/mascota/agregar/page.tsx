@@ -5,7 +5,6 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import UnifiedPetForm, { PetFormData } from "@/components/ui/UnifiedPetForm";
-import { addPet } from "@/app/actions/add-edit-pet";
 
 export default function AddPetView() {
   const params = useParams();
@@ -17,34 +16,54 @@ export default function AddPetView() {
     setIsSubmitting(true);
 
     try {
-      // Convert to the format expected by addPet action
+      // Preparar payload
       const petPayload = {
         ...petData,
         dateOfBirth: petData.dateOfBirth instanceof Date 
-          ? petData.dateOfBirth 
-          : new Date(petData.dateOfBirth),
+          ? petData.dateOfBirth.toISOString()
+          : new Date(petData.dateOfBirth).toISOString(),
         weight: typeof petData.weight === 'string' 
           ? parseFloat(petData.weight) 
           : petData.weight,
       };
 
-      const result = await addPet(userId, petPayload);
+      // Llamar a la API Route en lugar del Server Action
+      const response = await fetch('/api/pets/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          petData: petPayload
+        }),
+        // Importante: incluir credenciales para mantener la sesión
+        credentials: 'include'
+      });
+
+      const result = await response.json();
       
       if (result.success) {
-        // FIX: Simplificar - el usuario ya está en contexto admin
-        // No necesitamos verificar nuevamente, solo redirigir
-        console.log('✅ [PET-FORM] Pet added successfully, redirecting to client details');
+        console.log('✅ [PET-FORM] Pet added successfully via API');
         
-        // Usar replace para evitar problemas de historial del navegador
-        // Esto también evita el race condition con la verificación de admin
-        router.replace(`/admin/clientes/${userId}`);
+        // Usar la URL de redirección de la respuesta
+        const redirectUrl = result.redirectUrl || `/admin/clientes/${userId}`;
+        
+        // Pequeño delay para asegurar que todo se procese
+        setTimeout(() => {
+          // Usar window.location para una navegación completa
+          // Esto asegura que las cookies de Kinde se mantengan
+          window.location.href = redirectUrl;
+        }, 100);
+        
       } else {
-        console.error(result.error);
-        // TODO: Show error toast/message to user
+        console.error('❌ [PET-FORM] Error from API:', result.error);
+        // TODO: Mostrar error al usuario con toast
+        alert(`Error: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error al agregar mascota:", error);
-      // TODO: Show error toast/message to user
+      console.error("❌ [PET-FORM] Error calling API:", error);
+      alert('Error al agregar mascota. Por favor intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
     }

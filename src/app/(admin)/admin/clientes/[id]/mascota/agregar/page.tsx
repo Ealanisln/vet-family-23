@@ -31,8 +31,22 @@ export default function AddPetView() {
       const result = await addPet(userId, petPayload);
       
       if (result.success) {
-        // Redirigir al admin de mascotas en lugar de al cliente específico
-        router.push('/admin/mascotas');
+        // Verificar si realmente es admin antes de redirigir
+        try {
+          const authResponse = await fetch('/api/auth-status');
+          const authData = await authResponse.json();
+          
+          if (authData.isAdmin) {
+            router.push('/admin/mascotas');
+          } else {
+            // Si no es admin, redirigir al cliente específico
+            router.push(`/admin/clientes/${userId}`);
+          }
+        } catch (error) {
+          console.error('Error verificando estado de admin:', error);
+          // Fallback seguro: redirigir al cliente específico
+          router.push(`/admin/clientes/${userId}`);
+        }
       } else {
         console.error(result.error);
         // TODO: Show error toast/message to user

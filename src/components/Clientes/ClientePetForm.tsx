@@ -104,14 +104,31 @@ const ClientePetForm: React.FC<PetFormProps> = ({
     if (result.success) {
       if (onClose) onClose();
       
-      // Detectar el contexto y redirigir apropiadamente
-      const currentPath = window.location.pathname;
-      if (currentPath.includes('/admin/')) {
-        // Si estamos en contexto de admin, ir a admin/mascotas
-        router.push('/admin/mascotas');
-      } else {
-        // Si estamos en contexto de cliente, ir al perfil del cliente
-        router.push('/cliente');
+      // Verificar el estado de autenticación real antes de redirigir
+      try {
+        const authResponse = await fetch('/api/auth-status');
+        const authData = await authResponse.json();
+        
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/admin/') && authData.isAdmin) {
+          // Si estamos en contexto de admin Y es admin, ir a admin/mascotas
+          router.push('/admin/mascotas');
+        } else if (currentPath.includes('/admin/')) {
+          // Si estamos en admin pero no es admin, ir al cliente específico
+          router.push(`/admin/clientes/${userId}`);
+        } else {
+          // Si estamos en contexto de cliente, ir al perfil del cliente
+          router.push('/cliente');
+        }
+      } catch (error) {
+        console.error('Error verificando estado de admin:', error);
+        // Fallback seguro basado en el path
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/admin/')) {
+          router.push(`/admin/clientes/${userId}`);
+        } else {
+          router.push('/cliente');
+        }
       }
     } else {
       console.error(result.error);

@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
           isAuthenticated = true;
           userEmail = requestingUser.email;
           console.log("✅ [ADD-PET-API] Auth via DB check successful:", userEmail);
-        }
+        }m
       }
     }
     

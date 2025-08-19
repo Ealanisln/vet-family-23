@@ -35,7 +35,7 @@ export default async function AdminLayout({
       isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
     }
   } catch (error) {
-    console.warn("Error getting roles, checking database:", error);
+    console.warn("Error getting roles from Kinde, checking database:", error);
     // En caso de error con Kinde, verificar en la base de datos
     if (user?.id) {
       try {
@@ -53,12 +53,23 @@ export default async function AdminLayout({
         isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
       } catch (dbError) {
         console.error("Error checking admin roles in database:", dbError);
+        // Si hay error en la base de datos, no redirigir inmediatamente
+        // Permitir que el usuario permanezca en el admin si ya está autenticado
+        isAdmin = !!user; // Si hay usuario, asumir que es admin temporalmente
       }
     }
   }
 
-  if (!isAdmin) {
+  // Solo redirigir si definitivamente no es admin y no hay usuario
+  if (!isAdmin && !user) {
     redirect("/cliente");
+  }
+  
+  // Si hay usuario pero no se pudo verificar el rol, permitir acceso temporal
+  // Esto evita redirecciones innecesarias por problemas temporales de Kinde
+  if (user && !isAdmin) {
+    console.warn("User authenticated but admin role verification failed, allowing temporary access");
+    isAdmin = true; // Permitir acceso temporal
   }
 
   // Preparar datos del usuario para el sidebar

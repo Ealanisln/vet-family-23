@@ -97,9 +97,9 @@ const NuevaMascotaPage = () => {
         // Refresco forzado antes de la redirección
         router.refresh();
         
-        // Pequeño delay para asegurar que los datos se actualicen
+        // Redirigir al admin de mascotas en lugar de al cliente específico
         setTimeout(() => {
-          router.push(`/admin/clientes/${selectedUserId}`);
+          router.push('/admin/mascotas');
         }, 100);
       } else {
         throw new Error(result.error || 'Error al registrar la mascota');

@@ -103,7 +103,8 @@ const ClientePetForm: React.FC<PetFormProps> = ({
 
     if (result.success) {
       if (onClose) onClose();
-      router.push(`/admin/clientes/${userId}`);
+      // Redirigir al admin de mascotas en lugar de al cliente específico
+      router.push('/admin/mascotas');
     } else {
       console.error(result.error);
     }

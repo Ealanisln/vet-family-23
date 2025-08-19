@@ -41,7 +41,8 @@ const RegistroExitoso: React.FC = () => {
 
       const result = await addPet(userId, petPayload);
       if (result.success) {
-        router.push(`/admin/clientes/${userId}`);
+        // Redirigir al admin de mascotas en lugar de al cliente específico
+        router.push('/admin/mascotas');
       } else {
         console.error(result.error);
       }

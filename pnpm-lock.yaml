@@ -354,6 +354,9 @@ importers:
       jest-environment-node:
         specifier: ^29.7.0
         version: 29.7.0
+      jest-mock-extended:
+        specifier: ^4.0.0
+        version: 4.0.0(@jest/globals@29.7.0)(jest@29.7.0(@types/node@22.16.4)(ts-node@10.9.2(@types/node@22.16.4)(typescript@5.1.6)))(typescript@5.1.6)
       msw:
         specifier: ^2.0.8
         version: 2.10.4(@types/node@22.16.4)(typescript@5.1.6)
@@ -6256,6 +6259,13 @@ packages:
     resolution: {integrity: sha512-GBEV4GRADeP+qtB2+6u61stea8mGcOT4mCtrYISZwfu9/ISHFJ/5zOMXYbpBE9RsS5+Gb63DW4FgmnKJ79Kf6w==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
+  jest-mock-extended@4.0.0:
+    resolution: {integrity: sha512-7BZpfuvLam+/HC+NxifIi9b+5VXj/utUDMPUqrDJehGWVuXPtLS9Jqlob2mJLrI/pg2k1S8DMfKDvEB88QNjaQ==}
+    peerDependencies:
+      '@jest/globals': ^28.0.0 || ^29.0.0 || ^30.0.0
+      jest: ^24.0.0 || ^25.0.0 || ^26.0.0 || ^27.0.0 || ^28.0.0 || ^29.0.0 || ^30.0.0
+      typescript: ^3.0.0 || ^4.0.0 || ^5.0.0
+
   jest-mock@29.7.0:
     resolution: {integrity: sha512-ITOMZn+UkYS4ZFh83xYAOzWStloNzJFO2s8DWrE4lhtGD+AorgnbkiKERe4wQVBydIGPx059g6riW5Btp6Llnw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -8461,6 +8471,14 @@ packages:
 
   ts-brand@0.2.0:
     resolution: {integrity: sha512-H5uo7OqMvd91D2EefFmltBP9oeNInNzWLAZUSt6coGDn8b814Eis6SnEtzyXORr9ccEb38PfzyiRVDacdkycSQ==}
+
+  ts-essentials@10.1.1:
+    resolution: {integrity: sha512-4aTB7KLHKmUvkjNj8V+EdnmuVTiECzn3K+zIbRthumvHu+j44x3w63xpfs0JL3NGIzGXqoQ7AV591xHO+XrOTw==}
+    peerDependencies:
+      typescript: '>=4.5.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
@@ -16082,6 +16100,13 @@ snapshots:
       slash: 3.0.0
       stack-utils: 2.0.6
 
+  jest-mock-extended@4.0.0(@jest/globals@29.7.0)(jest@29.7.0(@types/node@22.16.4)(ts-node@10.9.2(@types/node@22.16.4)(typescript@5.1.6)))(typescript@5.1.6):
+    dependencies:
+      '@jest/globals': 29.7.0
+      jest: 29.7.0(@types/node@22.16.4)(ts-node@10.9.2(@types/node@22.16.4)(typescript@5.1.6))
+      ts-essentials: 10.1.1(typescript@5.1.6)
+      typescript: 5.1.6
+
   jest-mock@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
@@ -18759,6 +18784,10 @@ snapshots:
       typescript: 5.1.6
 
   ts-brand@0.2.0: {}
+
+  ts-essentials@10.1.1(typescript@5.1.6):
+    optionalDependencies:
+      typescript: 5.1.6
 
   ts-interface-checker@0.1.13: {}
 

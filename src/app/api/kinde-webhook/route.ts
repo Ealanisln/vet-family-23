@@ -137,7 +137,7 @@ async function createOrUpdateUser(user: any, maxRetries = 5) {
           // Verify roles
           const expectedRoles = new Set(user.roles || ["user"]);
           const actualRoles = new Set(
-            dbUser.userRoles.map((ur: any) => ur.role.key)
+            dbUser.UserRole.map((ur: any) => ur.Role.key)
           );
 
           const missingRoles = [...expectedRoles].filter(

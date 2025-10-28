@@ -103,7 +103,42 @@ const ClientePetForm: React.FC<PetFormProps> = ({
 
     if (result.success) {
       if (onClose) onClose();
-      router.push(`/admin/clientes/${userId}`);
+      
+      // Verificar el estado de autenticación real antes de redirigir
+      console.log('🔄 [CLIENT-PET-FORM] Starting admin verification...');
+      const currentPath = window.location.pathname;
+      console.log('🔍 [CLIENT-PET-FORM] Current path:', currentPath);
+      
+      try {
+        const authResponse = await fetch('/api/admin-check');
+        const authData = await authResponse.json();
+        
+        console.log('✅ [CLIENT-PET-FORM] Auth check result:', authData);
+        console.log('🔍 [CLIENT-PET-FORM] Debug info:', authData.debug);
+        
+        if (currentPath.includes('/admin/') && authData.isAdmin) {
+          console.log('✅ [CLIENT-PET-FORM] Admin in admin context, redirecting to /admin/mascotas');
+          router.push('/admin/mascotas');
+        } else if (currentPath.includes('/admin/')) {
+          console.log('❌ [CLIENT-PET-FORM] Non-admin in admin context, redirecting to client specific');
+          console.log('🔍 [CLIENT-PET-FORM] Redirect target:', `/admin/clientes/${userId}`);
+          router.push(`/admin/clientes/${userId}`);
+        } else {
+          console.log('🔄 [CLIENT-PET-FORM] Client context, redirecting to /cliente');
+          router.push('/cliente');
+        }
+      } catch (error) {
+        console.error('❌ [CLIENT-PET-FORM] Error verificando estado de admin:', error);
+        console.log('🔄 [CLIENT-PET-FORM] Using fallback redirect based on path');
+        // Fallback seguro basado en el path
+        if (currentPath.includes('/admin/')) {
+          console.log('🔍 [CLIENT-PET-FORM] Fallback target:', `/admin/clientes/${userId}`);
+          router.push(`/admin/clientes/${userId}`);
+        } else {
+          console.log('🔍 [CLIENT-PET-FORM] Fallback target: /cliente');
+          router.push('/cliente');
+        }
+      }
     } else {
       console.error(result.error);
     }

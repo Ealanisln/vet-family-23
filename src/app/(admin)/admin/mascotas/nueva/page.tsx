@@ -97,10 +97,30 @@ const NuevaMascotaPage = () => {
         // Refresco forzado antes de la redirección
         router.refresh();
         
-        // Pequeño delay para asegurar que los datos se actualicen
-        setTimeout(() => {
-          router.push(`/admin/clientes/${selectedUserId}`);
-        }, 100);
+        // Verificar si realmente es admin antes de redirigir
+        try {
+          const authResponse = await fetch('/api/admin-check');
+          const authData = await authResponse.json();
+          
+          console.log('Auth check result:', authData);
+          
+          if (authData.isAdmin) {
+            setTimeout(() => {
+              router.push('/admin/mascotas');
+            }, 100);
+          } else {
+            // Si no es admin, redirigir al cliente específico
+            setTimeout(() => {
+              router.push(`/admin/clientes/${selectedUserId}`);
+            }, 100);
+          }
+        } catch (error) {
+          console.error('Error verificando estado de admin:', error);
+          // Fallback seguro: redirigir al cliente específico
+          setTimeout(() => {
+            router.push(`/admin/clientes/${selectedUserId}`);
+          }, 100);
+        }
       } else {
         throw new Error(result.error || 'Error al registrar la mascota');
       }

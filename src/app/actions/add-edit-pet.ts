@@ -141,12 +141,22 @@ export async function addPet(
       return newPet;
     });
 
-    revalidatePath(`/admin/clientes/${userId}`);
-    revalidatePath(`/admin/clientes/${userId}/mascotas`);
-    revalidatePath(`/admin/mascotas`);
-    revalidatePath('/admin/mascotas');
-    // También revalidar la API route de mascotas del cliente
-    revalidatePath(`/api/clients/${userId}/pets`);
+    // FIX: Asegurar que los revalidatePath funcionen correctamente
+    const paths = [
+      `/admin/clientes/${userId}`,
+      `/admin/clientes/${userId}/mascotas`,
+      `/admin/mascotas`,
+      `/api/clients/${userId}/pets`
+    ];
+    
+    // Revalidar todos los paths de manera secuencial
+    for (const path of paths) {
+      try {
+        revalidatePath(path);
+      } catch (e) {
+        console.warn(`Failed to revalidate path: ${path}`, e);
+      }
+    }
     
     return { success: true, pet: result as PetWithMedicalHistory };
   } catch (error: unknown) {

@@ -14,28 +14,15 @@ export const createMockUser = (overrides?: Partial<any>) => ({
   ...overrides,
 })
 
-export const createMockClient = (overrides?: Partial<any>) => ({
-  id: randomUUID(),
-  name: 'Test Client',
-  email: 'client@example.com',
-  phone: '123-456-7890',
-  address: '123 Test Street',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  ...overrides,
-})
-
-export const createMockPet = (clientId?: string, overrides?: Partial<any>) => ({
+export const createMockPet = (userId?: string, overrides?: Partial<any>) => ({
   id: randomUUID(),
   name: 'Test Pet',
   species: 'Dog',
   breed: 'Golden Retriever',
-  age: 3,
-  weight: 30.5,
+  dateOfBirth: new Date('2020-01-01'),
   gender: 'MALE',
-  clientId: clientId || randomUUID(),
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  weight: 30.5,
+  userId: userId || randomUUID(),
   ...overrides,
 })
 
@@ -43,65 +30,42 @@ export const createMockInventoryItem = (overrides?: Partial<any>) => ({
   id: randomUUID(),
   name: 'Test Medication',
   description: 'Test medication for pets',
-  category: 'MEDICATION',
-  stock: 50,
+  category: 'MEDICINE',
+  quantity: 50,
   minStock: 10,
-  maxStock: 100,
   price: 25.99,
   cost: 15.00,
-  supplier: 'Test Supplier',
-  createdAt: new Date(),
-  updatedAt: new Date(),
   ...overrides,
 })
 
-export const createMockSale = (clientId?: string, userId?: string, overrides?: Partial<any>) => ({
-  id: randomUUID(),
-  clientId: clientId || randomUUID(),
-  userId: userId || randomUUID(),
-  total: 100.00,
-  status: 'COMPLETED',
-  paymentMethod: 'CASH',
-  notes: 'Test sale',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  ...overrides,
-})
+// NOTE: Sale model removed from schema - replaced by MedicalOrder and Billing
 
 export const createMockAppointment = (
-  clientId?: string,
+  userId?: string,
   petId?: string,
-  vetId?: string,
   overrides?: Partial<any>
 ) => ({
   id: randomUUID(),
-  clientId: clientId || randomUUID(),
+  userId: userId || randomUUID(),
   petId: petId || randomUUID(),
-  vetId: vetId || randomUUID(),
   dateTime: new Date('2024-06-15T10:00:00Z'),
-  service: 'Routine Checkup',
+  reason: 'Routine Checkup',
   status: 'SCHEDULED',
-  notes: 'Test appointment',
-  createdAt: new Date(),
-  updatedAt: new Date(),
   ...overrides,
 })
 
-export const createMockMedicalRecord = (
+export const createMockMedicalHistory = (
   petId?: string,
-  vetId?: string,
   overrides?: Partial<any>
 ) => ({
   id: randomUUID(),
   petId: petId || randomUUID(),
-  vetId: vetId || randomUUID(),
-  type: 'CONSULTATION',
+  visitDate: new Date(),
+  reasonForVisit: 'Routine checkup',
   diagnosis: 'Healthy',
   treatment: 'No treatment needed',
+  prescriptions: [],
   notes: 'Pet is in good health',
-  date: new Date(),
-  createdAt: new Date(),
-  updatedAt: new Date(),
   ...overrides,
 })
 
@@ -130,13 +94,10 @@ export class TestDatabase {
   async cleanup() {
     // Clean up in reverse order of dependencies
     const deleteOperations = [
-      this.prisma.movementHistory.deleteMany(),
-      this.prisma.saleItem.deleteMany(),
-      this.prisma.sale.deleteMany(),
-      this.prisma.medicalRecord.deleteMany(),
+      this.prisma.inventoryMovement.deleteMany(),
+      this.prisma.medicalHistory.deleteMany(),
       this.prisma.appointment.deleteMany(),
       this.prisma.pet.deleteMany(),
-      this.prisma.client.deleteMany(),
       this.prisma.inventoryItem.deleteMany(),
       this.prisma.userRole.deleteMany(),
       this.prisma.role.deleteMany(),
@@ -195,57 +156,66 @@ export class TestDatabase {
       ],
     })
 
-    // Create test clients
-    const client1 = await this.prisma.client.create({
-      data: createMockClient({
-        name: 'John Doe',
+    // Create test pet owners (additional users)
+    const owner1 = await this.prisma.user.create({
+      data: createMockUser({
         email: 'john@example.com',
+        name: 'John Doe',
       }),
     })
 
-    const client2 = await this.prisma.client.create({
-      data: createMockClient({
-        name: 'Jane Smith',
+    const owner2 = await this.prisma.user.create({
+      data: createMockUser({
         email: 'jane@example.com',
+        name: 'Jane Smith',
       }),
     })
 
     // Create test pets
     const pet1 = await this.prisma.pet.create({
-      data: createMockPet(client1.id, {
+      data: createMockPet(owner1.id, {
         name: 'Buddy',
         species: 'Dog',
       }),
     })
 
     const pet2 = await this.prisma.pet.create({
-      data: createMockPet(client2.id, {
+      data: createMockPet(owner2.id, {
         name: 'Whiskers',
         species: 'Cat',
       }),
     })
 
     // Create test inventory items
+    const medicationData = createMockInventoryItem({
+      name: 'Dog Vaccination',
+      category: 'VACCINE',
+      price: 50.00,
+    })
     const medication = await this.prisma.inventoryItem.create({
-      data: createMockInventoryItem({
-        name: 'Dog Vaccination',
-        category: 'MEDICATION',
-        price: 50.00,
-      }),
+      data: {
+        ...medicationData,
+        category: 'VACCINE' as const,
+        updatedAt: new Date(),
+      },
     })
 
+    const equipmentData = createMockInventoryItem({
+      name: 'Stethoscope',
+      category: 'CONSUMABLE',
+      price: 150.00,
+    })
     const equipment = await this.prisma.inventoryItem.create({
-      data: createMockInventoryItem({
-        name: 'Stethoscope',
-        category: 'EQUIPMENT',
-        price: 150.00,
-      }),
+      data: {
+        ...equipmentData,
+        category: 'CONSUMABLE' as const,
+        updatedAt: new Date(),
+      },
     })
 
     return {
-      users: { admin: adminUser, vet: vetUser },
+      users: { admin: adminUser, vet: vetUser, owner1, owner2 },
       roles: { admin: adminRole, vet: vetRole },
-      clients: { client1, client2 },
       pets: { pet1, pet2 },
       inventory: { medication, equipment },
     }
@@ -258,11 +228,50 @@ export class TestDatabase {
 
 // Authentication test helpers
 export const createMockKindeSession = (user?: any, authenticated = true) => ({
+  // Core authentication methods
   getUser: jest.fn().mockResolvedValue(user),
   isAuthenticated: jest.fn().mockResolvedValue(authenticated),
-  getAccessToken: jest.fn().mockResolvedValue(authenticated ? 'mock-token' : null),
-  getPermissions: jest.fn().mockResolvedValue([]),
-  getOrganization: jest.fn().mockResolvedValue(null),
+
+  // Token methods
+  getAccessToken: jest.fn().mockResolvedValue(authenticated ? { accessToken: 'mock-access-token' } : null),
+  getIdToken: jest.fn().mockResolvedValue(authenticated ? 'mock-id-token' : null),
+  refreshTokens: jest.fn().mockResolvedValue({
+    access_token: 'mock-access-token',
+    expires_in: 3600,
+    id_token: 'mock-id-token',
+    refresh_token: 'mock-refresh-token',
+    scope: 'openid profile email',
+    token_type: 'Bearer',
+  }),
+
+  // Permissions and roles
+  getPermissions: jest.fn().mockResolvedValue({ permissions: [], orgCode: null }),
+  getPermission: jest.fn().mockResolvedValue({ isGranted: false, orgCode: null }),
+  getOrganization: jest.fn().mockResolvedValue({ orgCode: null }),
+  getUserOrganizations: jest.fn().mockResolvedValue({ orgCodes: [] }),
+
+  // Feature flags
+  getBooleanFlag: jest.fn().mockImplementation((code: string, defaultValue: boolean) =>
+    Promise.resolve({ code, value: defaultValue, is_default: true })
+  ),
+  getStringFlag: jest.fn().mockImplementation((code: string, defaultValue: string) =>
+    Promise.resolve({ code, value: defaultValue, is_default: true })
+  ),
+  getIntegerFlag: jest.fn().mockImplementation((code: string, defaultValue: number) =>
+    Promise.resolve({ code, value: defaultValue, is_default: true })
+  ),
+  getFlag: jest.fn().mockImplementation((code: string, defaultValue: any) =>
+    Promise.resolve({ code, value: defaultValue, is_default: true })
+  ),
+
+  // Claims
+  getClaim: jest.fn().mockResolvedValue(null),
+
+  // Entitlements
+  getEntitlements: jest.fn().mockResolvedValue({ entitlements: [] }),
+
+  // User profile
+  getUserProfile: jest.fn().mockResolvedValue(user),
 })
 
 export const createMockRequest = (
@@ -325,19 +334,19 @@ export const createDateInPast = (days: number) => {
 }
 
 // Mock data generators
-export const generateClients = (count: number) => {
+export const generateUsers = (count: number) => {
   return Array.from({ length: count }, (_, i) =>
-    createMockClient({
-      name: `Test Client ${i + 1}`,
-      email: `client${i + 1}@example.com`,
+    createMockUser({
+      name: `Test User ${i + 1}`,
+      email: `user${i + 1}@example.com`,
     })
   )
 }
 
-export const generatePets = (clientId: string, count: number) => {
+export const generatePets = (userId: string, count: number) => {
   const species = ['Dog', 'Cat', 'Bird', 'Rabbit']
   return Array.from({ length: count }, (_, i) =>
-    createMockPet(clientId, {
+    createMockPet(userId, {
       name: `Pet ${i + 1}`,
       species: species[i % species.length],
     })
@@ -345,7 +354,7 @@ export const generatePets = (clientId: string, count: number) => {
 }
 
 export const generateInventoryItems = (count: number) => {
-  const categories = ['MEDICATION', 'EQUIPMENT', 'SUPPLIES', 'FOOD']
+  const categories = ['MEDICINE', 'VACCINE', 'CONSUMABLE', 'FOOD']
   return Array.from({ length: count }, (_, i) =>
     createMockInventoryItem({
       name: `Item ${i + 1}`,
@@ -388,8 +397,14 @@ export const createValidationError = (field: string) => new Error(`Validation fa
 
 // Test environment setup
 export const setupTestEnvironment = () => {
-  // Set test environment variables
-  process.env.NODE_ENV = 'test'
+  // Set test environment variables (using Object.defineProperty to handle readonly properties)
+  if (process.env.NODE_ENV !== 'test') {
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'test',
+      writable: true,
+      configurable: true,
+    })
+  }
   process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://test:test@localhost:5432/test'
   process.env.KINDE_SITE_URL = 'http://localhost:3000'
   process.env.NEXT_PUBLIC_SITE_URL = 'http://localhost:3000'
@@ -405,12 +420,10 @@ export const testDb = new TestDatabase()
 
 export default {
   createMockUser,
-  createMockClient,
   createMockPet,
   createMockInventoryItem,
-  createMockSale,
   createMockAppointment,
-  createMockMedicalRecord,
+  createMockMedicalHistory,
   TestDatabase,
   testDb,
   createMockKindeSession,

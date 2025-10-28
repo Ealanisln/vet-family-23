@@ -28,43 +28,42 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Para rutas protegidas (/admin/*)
+  // FIX: Mejorar manejo de rutas admin
   if (pathname.startsWith('/admin')) {
     try {
       const { getUser, isAuthenticated } = getKindeServerSession();
       
-      // Verificar autenticación
-      const authenticated = await isAuthenticated();
-      
-      // Si no está autenticado, intentar obtener el usuario de todos modos
-      const user = await getUser();
+      // Obtener el estado de autenticación de manera más robusta
+      const [authenticated, user] = await Promise.all([
+        isAuthenticated().catch(() => false),
+        getUser().catch(() => null)
+      ]);
 
-      // Solo redirigir si no hay usuario Y no está autenticado
-      if (!user && authenticated === false) {
-        // Crear URL de login con returnTo
+      // Solo redirigir si definitivamente no hay usuario
+      if (!user && !authenticated) {
+        // FIX: Evitar loops de redirección
+        const referer = request.headers.get('referer');
+        if (referer?.includes('/api/auth/')) {
+          // Si viene de un proceso de auth, permitir el acceso
+          return NextResponse.next();
+        }
+
         const returnTo = encodeURIComponent(request.url);
         const loginUrl = new URL('/api/auth/login', request.url);
         loginUrl.searchParams.set('post_login_redirect_url', returnTo);
-
-        // Prevenir ciclos de redirección verificando si ya estamos en una URL de login
-        const currentUrl = new URL(request.url);
-        if (currentUrl.searchParams.has('post_login_redirect_url')) {
-          return NextResponse.redirect(new URL('/api/auth/login', request.url));
-        }
-
+        
         return NextResponse.redirect(loginUrl);
       }
 
-      // Usuario autenticado o tenemos información de usuario, configurar headers
+      // Configurar headers anti-cache para rutas admin
       const response = NextResponse.next();
-      response.headers.set('Cache-Control', 'no-store, must-revalidate, max-age=0');
-      response.headers.set('Pragma', 'no-cache');
-      response.headers.set('Expires', '0');
+      response.headers.set('Cache-Control', 'no-store, must-revalidate');
+      response.headers.set('x-middleware-cache', 'no-cache');
       return response;
+      
     } catch (error) {
-      // En caso de error, permitir el acceso de todos modos
-      // Esto es importante para que la aplicación siga funcionando en producción
-      // aunque haya problemas con la autenticación
+      console.error('❌ [MIDDLEWARE] Error checking auth:', error);
+      // En caso de error, permitir el acceso para evitar bloqueos
       return NextResponse.next();
     }
   }

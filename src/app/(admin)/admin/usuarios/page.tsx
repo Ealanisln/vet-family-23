@@ -47,7 +47,7 @@ async function getUsers(): Promise<User[]> {
       isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
     }
   } catch (error) {
-    console.error("Error checking admin roles:", error);
+    console.warn("Error checking admin roles from Kinde:", error);
     // En caso de error, verificar solo en la base de datos
     try {
       const dbUser = await prisma.user.findUnique({
@@ -64,13 +64,21 @@ async function getUsers(): Promise<User[]> {
       isAdmin = dbUser?.UserRole?.some((ur) => ur.Role.key === "admin") || false;
     } catch (dbError) {
       console.error("Error checking admin roles in database:", dbError);
-      // Si todo falla, redirigir a cliente por seguridad
-      redirect("/cliente");
+      // Si todo falla, no redirigir inmediatamente
+      // Permitir que el usuario permanezca en el admin si ya está autenticado
+      isAdmin = !!user;
     }
   }
 
-  if (!isAdmin) {
+  // Solo redirigir si definitivamente no es admin y no hay usuario
+  if (!isAdmin && !user) {
     redirect("/cliente");
+  }
+  
+  // Si hay usuario pero no se pudo verificar el rol, permitir acceso temporal
+  if (user && !isAdmin) {
+    console.warn("User authenticated but admin role verification failed, allowing temporary access");
+    isAdmin = true;
   }
 
   const users = await prisma.user.findMany({

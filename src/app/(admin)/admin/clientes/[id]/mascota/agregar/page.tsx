@@ -2,22 +2,26 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import UnifiedPetForm, { PetFormData } from "@/components/ui/UnifiedPetForm";
-import { addPet } from "@/app/actions/add-edit-pet";
+import { addPet } from "@/app/actions/add-edit-pet"; // Volver al Server Action
 
 export default function AddPetView() {
   const params = useParams();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleSubmit = async (petData: PetFormData) => {
     const userId = params.id as string;
     setIsSubmitting(true);
 
     try {
-      // Convert to the format expected by addPet action
       const petPayload = {
         ...petData,
         dateOfBirth: petData.dateOfBirth instanceof Date 
@@ -31,14 +35,24 @@ export default function AddPetView() {
       const result = await addPet(userId, petPayload);
       
       if (result.success) {
-        router.push(`/admin/clientes/${userId}`);
+        console.log('✅ [PET-FORM] Pet added successfully');
+        
+        // FIX CLAVE: Usar navegación completa del navegador
+        // Esto fuerza a recargar todo el contexto de autenticación
+        if (isClient) {
+          // Esperar un momento para que se complete la transacción
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Navegación completa del navegador
+          window.location.href = `/admin/clientes/${userId}`;
+        }
       } else {
-        console.error(result.error);
-        // TODO: Show error toast/message to user
+        console.error('❌ [PET-FORM] Error:', result.error);
+        alert(`Error: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error al agregar mascota:", error);
-      // TODO: Show error toast/message to user
+      console.error("❌ [PET-FORM] Error:", error);
+      alert('Error al agregar mascota');
     } finally {
       setIsSubmitting(false);
     }

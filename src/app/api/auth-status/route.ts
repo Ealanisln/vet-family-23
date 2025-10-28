@@ -99,8 +99,8 @@ export async function GET(_req: NextRequest) {
             }
 
             for (const roleKey of rolesToRemove) {
-              const roleToRemove = dbUser.userRoles.find(
-                (ur) => ur.role.key === roleKey
+              const roleToRemove = dbUser.UserRole.find(
+                (ur) => ur.Role.key === roleKey
               );
               if (roleToRemove) {
                 await prisma.userRole.delete({
@@ -129,6 +129,7 @@ export async function GET(_req: NextRequest) {
       isAuthenticated: authStatus,
       dbUser,
       roles: dbUser?.UserRole.map((ur) => ur.Role) || [],
+      isAdmin: dbUser?.UserRole.some((ur) => ur.Role.key === "admin") || false,
     };
     console.log("API response:", response);
 

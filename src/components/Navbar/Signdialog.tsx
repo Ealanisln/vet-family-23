@@ -48,9 +48,16 @@ export default function AuthButton() {
   };
 
   const getUserLink = () => {
+    // Si estamos en una ruta de admin, mantener al usuario en admin
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+      return '/admin';
+    }
+    
+    // Verificar si el usuario tiene rol de admin
     if (hasRole('Admin')) {
       return '/admin';
     } else {
+      // Solo redirigir a /cliente si no estamos ya en admin
       return '/cliente';
     }
   };

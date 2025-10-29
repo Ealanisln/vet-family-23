@@ -28,32 +28,23 @@ describe('Database Integration Tests', () => {
 
   const cleanupTestData = async () => {
     // Clean up in reverse order of dependencies
-    await prisma.movementHistory.deleteMany({
+    await prisma.inventoryMovement.deleteMany({
       where: { reason: { contains: 'TEST' } },
     })
-    await prisma.saleItem.deleteMany({
-      where: { sale: { notes: { contains: 'TEST' } } },
-    })
-    await prisma.sale.deleteMany({
-      where: { notes: { contains: 'TEST' } },
-    })
-    await prisma.medicalRecord.deleteMany({
+    await prisma.medicalHistory.deleteMany({
       where: { notes: { contains: 'TEST' } },
     })
     await prisma.appointment.deleteMany({
-      where: { notes: { contains: 'TEST' } },
+      where: { reason: { contains: 'TEST' } },
     })
     await prisma.pet.deleteMany({
-      where: { name: { contains: 'TEST' } },
-    })
-    await prisma.client.deleteMany({
       where: { name: { contains: 'TEST' } },
     })
     await prisma.inventoryItem.deleteMany({
       where: { name: { contains: 'TEST' } },
     })
     await prisma.userRole.deleteMany({
-      where: { user: { email: { contains: 'test@' } } },
+      where: { User: { email: { contains: 'test@' } } },
     })
     await prisma.user.deleteMany({
       where: { email: { contains: 'test@' } },
@@ -69,6 +60,7 @@ describe('Database Integration Tests', () => {
         name: 'Test User',
         firstName: 'Test',
         lastName: 'User',
+        updatedAt: new Date(),
       }
 
       const createdUser = await prisma.user.create({
@@ -97,6 +89,7 @@ describe('Database Integration Tests', () => {
           id: userId,
           kindeId: 'test_kinde_roles',
           email: 'test_roles@example.com',
+          updatedAt: new Date(),
         },
       })
 
@@ -112,6 +105,7 @@ describe('Database Integration Tests', () => {
       // Assign role to user
       await prisma.userRole.create({
         data: {
+          id: randomUUID(),
           userId: userId,
           roleId: roleId,
         },
@@ -121,28 +115,30 @@ describe('Database Integration Tests', () => {
       const userWithRoles = await prisma.user.findUnique({
         where: { id: userId },
         include: {
-          userRoles: {
+          UserRole: {
             include: {
-              role: true,
+              Role: true,
             },
           },
         },
       })
 
       expect(userWithRoles).not.toBeNull()
-      expect(userWithRoles?.userRoles).toHaveLength(1)
-      expect(userWithRoles?.userRoles[0].role.key).toBe('test_vet')
+      expect(userWithRoles?.UserRole).toHaveLength(1)
+      expect(userWithRoles?.UserRole[0].Role.key).toBe('test_vet')
     })
   })
 
-  describe('Client and Pet Management', () => {
-    it('should create client with pets', async () => {
-      const clientData = {
+  describe('User and Pet Management', () => {
+    it('should create user with pets', async () => {
+      const userData = {
         id: randomUUID(),
-        name: 'TEST Client John Doe',
-        email: 'test_client@example.com',
+        kindeId: 'test_pet_owner_' + randomUUID(),
+        name: 'TEST User John Doe',
+        email: 'test_pet_owner@example.com',
         phone: '123-456-7890',
         address: 'Test Address 123',
+        updatedAt: new Date(),
       }
 
       const petData = {
@@ -150,42 +146,42 @@ describe('Database Integration Tests', () => {
         name: 'TEST Pet Buddy',
         species: 'Dog',
         breed: 'Golden Retriever',
-        age: 3,
+        dateOfBirth: new Date('2020-01-01'),
+        gender: 'MALE',
         weight: 30.5,
-        clientId: clientData.id,
+        userId: userData.id,
       }
 
-      // Create client
-      const createdClient = await prisma.client.create({
-        data: clientData,
+      // Create user
+      const createdUser = await prisma.user.create({
+        data: userData,
       })
 
-      // Create pet for client
+      // Create pet for user
       const createdPet = await prisma.pet.create({
         data: petData,
       })
 
-      expect(createdClient.name).toBe(clientData.name)
+      expect(createdUser.name).toBe(userData.name)
       expect(createdPet.name).toBe(petData.name)
-      expect(createdPet.clientId).toBe(clientData.id)
+      expect(createdPet.userId).toBe(userData.id)
 
-      // Retrieve client with pets
-      const clientWithPets = await prisma.client.findUnique({
-        where: { id: clientData.id },
+      // Retrieve user with pets
+      const userWithPets = await prisma.user.findUnique({
+        where: { id: userData.id },
         include: {
-          pets: true,
+          Pet: true,
         },
       })
 
-      expect(clientWithPets).not.toBeNull()
-      expect(clientWithPets?.pets).toHaveLength(1)
-      expect(clientWithPets?.pets[0].name).toBe(petData.name)
+      expect(userWithPets).not.toBeNull()
+      expect(userWithPets?.Pet).toHaveLength(1)
+      expect(userWithPets?.Pet[0].name).toBe(petData.name)
     })
 
-    it('should handle pet medical records', async () => {
-      const clientId = randomUUID()
-      const petId = randomUUID()
+    it('should handle pet medical history', async () => {
       const userId = randomUUID()
+      const petId = randomUUID()
 
       // Create necessary entities
       await prisma.user.create({
@@ -193,14 +189,7 @@ describe('Database Integration Tests', () => {
           id: userId,
           kindeId: 'test_vet_user',
           email: 'test_vet@example.com',
-        },
-      })
-
-      await prisma.client.create({
-        data: {
-          id: clientId,
-          name: 'TEST Medical Client',
-          email: 'test_medical@example.com',
+          updatedAt: new Date(),
         },
       })
 
@@ -209,44 +198,43 @@ describe('Database Integration Tests', () => {
           id: petId,
           name: 'TEST Medical Pet',
           species: 'Dog',
-          clientId: clientId,
+          breed: 'Labrador',
+          dateOfBirth: new Date('2021-03-15'),
+          gender: 'MALE',
+          weight: 25.0,
+          userId: userId,
         },
       })
 
-      // Create medical record
-      const medicalRecordData = {
+      // Create medical history
+      const medicalHistoryData = {
         id: randomUUID(),
         petId: petId,
-        vetId: userId,
-        type: 'CONSULTATION',
-        diagnosis: 'Routine checkup',
+        visitDate: new Date(),
+        reasonForVisit: 'Routine checkup',
+        diagnosis: 'Healthy',
         treatment: 'Vaccination administered',
+        prescriptions: ['Vaccine A'],
         notes: 'TEST Pet is healthy',
-        date: new Date(),
       }
 
-      const createdRecord = await prisma.medicalRecord.create({
-        data: medicalRecordData,
+      const createdRecord = await prisma.medicalHistory.create({
+        data: medicalHistoryData,
       })
 
-      expect(createdRecord.diagnosis).toBe(medicalRecordData.diagnosis)
+      expect(createdRecord.diagnosis).toBe(medicalHistoryData.diagnosis)
       expect(createdRecord.petId).toBe(petId)
-      expect(createdRecord.vetId).toBe(userId)
 
-      // Retrieve pet with medical records
+      // Retrieve pet with medical history
       const petWithRecords = await prisma.pet.findUnique({
         where: { id: petId },
         include: {
-          medicalRecords: {
-            include: {
-              vet: true,
-            },
-          },
+          MedicalHistory: true,
         },
       })
 
-      expect(petWithRecords?.medicalRecords).toHaveLength(1)
-      expect(petWithRecords?.medicalRecords[0].diagnosis).toBe(medicalRecordData.diagnosis)
+      expect(petWithRecords?.MedicalHistory).toHaveLength(1)
+      expect(petWithRecords?.MedicalHistory[0].diagnosis).toBe(medicalHistoryData.diagnosis)
     })
   })
 
@@ -256,14 +244,13 @@ describe('Database Integration Tests', () => {
         id: randomUUID(),
         name: 'TEST Vaccination Serum',
         description: 'Test vaccination for dogs',
-        category: 'MEDICATION',
-        stock: 50,
+        category: 'VACCINE' as const,
+        quantity: 50,
         minStock: 10,
-        maxStock: 100,
         price: 25.99,
         cost: 15.00,
-        expiryDate: new Date('2025-12-31'),
-        supplier: 'Test Supplier Inc',
+        expirationDate: new Date('2025-12-31'),
+        updatedAt: new Date(),
       }
 
       const createdItem = await prisma.inventoryItem.create({
@@ -271,16 +258,16 @@ describe('Database Integration Tests', () => {
       })
 
       expect(createdItem.name).toBe(inventoryData.name)
-      expect(createdItem.stock).toBe(inventoryData.stock)
+      expect(createdItem.quantity).toBe(inventoryData.quantity)
       expect(createdItem.price).toBe(inventoryData.price)
 
-      // Update stock
+      // Update quantity
       const updatedItem = await prisma.inventoryItem.update({
         where: { id: inventoryData.id },
-        data: { stock: { decrement: 5 } },
+        data: { quantity: { decrement: 5 } },
       })
 
-      expect(updatedItem.stock).toBe(45)
+      expect(updatedItem.quantity).toBe(45)
     })
 
     it('should track inventory movement history', async () => {
@@ -293,6 +280,7 @@ describe('Database Integration Tests', () => {
           id: userId,
           kindeId: 'test_inventory_user',
           email: 'test_inventory@example.com',
+          updatedAt: new Date(),
         },
       })
 
@@ -300,167 +288,68 @@ describe('Database Integration Tests', () => {
         data: {
           id: itemId,
           name: 'TEST Movement Item',
-          category: 'EQUIPMENT',
-          stock: 20,
+          category: 'CONSUMABLE',
+          quantity: 20,
           price: 10.00,
+          updatedAt: new Date(),
         },
       })
 
-      // Create movement history
+      // Create inventory movement
       const movementData = {
         id: randomUUID(),
-        inventoryItemId: itemId,
-        type: 'SALE',
-        quantity: -3,
+        type: 'OUT' as const,
+        quantity: 3,
         reason: 'TEST Sale transaction',
-        userId: userId,
       }
 
-      const createdMovement = await prisma.movementHistory.create({
-        data: movementData,
+      const createdMovement = await prisma.inventoryMovement.create({
+        data: {
+          ...movementData,
+          InventoryItem: {
+            connect: { id: itemId },
+          },
+          User: {
+            connect: { id: userId },
+          },
+        },
       })
 
-      expect(createdMovement.quantity).toBe(-3)
-      expect(createdMovement.type).toBe('SALE')
+      expect(createdMovement.quantity).toBe(3)
+      expect(createdMovement.type).toBe('OUT')
 
       // Retrieve item with movement history
       const itemWithHistory = await prisma.inventoryItem.findUnique({
         where: { id: itemId },
         include: {
-          movementHistory: {
+          InventoryMovement: {
             include: {
-              user: true,
+              User: true,
             },
           },
         },
       })
 
-      expect(itemWithHistory?.movementHistory).toHaveLength(1)
-      expect(itemWithHistory?.movementHistory[0].reason).toBe(movementData.reason)
+      expect(itemWithHistory?.InventoryMovement).toHaveLength(1)
+      expect(itemWithHistory?.InventoryMovement[0].reason).toBe(movementData.reason)
     })
   })
 
-  describe('Sales and POS System', () => {
-    it('should create sales with items', async () => {
-      const clientId = randomUUID()
-      const saleId = randomUUID()
-      const itemId = randomUUID()
+  // NOTE: Sales and POS System tests removed - Sale and SaleItem models no longer exist in schema
+  // These have been replaced with MedicalOrder and related billing functionality
+
+  describe('Appointment System', () => {
+    it('should create and manage appointments', async () => {
       const userId = randomUUID()
+      const petId = randomUUID()
 
       // Create necessary entities
       await prisma.user.create({
         data: {
           id: userId,
-          kindeId: 'test_pos_user',
-          email: 'test_pos@example.com',
-        },
-      })
-
-      await prisma.client.create({
-        data: {
-          id: clientId,
-          name: 'TEST Sales Client',
-          email: 'test_sales@example.com',
-        },
-      })
-
-      await prisma.inventoryItem.create({
-        data: {
-          id: itemId,
-          name: 'TEST Sale Item',
-          category: 'SERVICE',
-          stock: 100,
-          price: 50.00,
-        },
-      })
-
-      // Create sale with transaction
-      const saleData = {
-        id: saleId,
-        clientId: clientId,
-        userId: userId,
-        total: 100.00,
-        status: 'COMPLETED',
-        paymentMethod: 'CASH',
-        notes: 'TEST Transaction',
-      }
-
-      const saleItemData = {
-        id: randomUUID(),
-        saleId: saleId,
-        inventoryItemId: itemId,
-        quantity: 2,
-        unitPrice: 50.00,
-        subtotal: 100.00,
-      }
-
-      await prisma.$transaction(async (tx) => {
-        // Create sale
-        const sale = await tx.sale.create({
-          data: saleData,
-        })
-
-        // Create sale items
-        await tx.saleItem.create({
-          data: saleItemData,
-        })
-
-        // Update inventory
-        await tx.inventoryItem.update({
-          where: { id: itemId },
-          data: { stock: { decrement: 2 } },
-        })
-
-        return sale
-      })
-
-      // Verify sale was created
-      const createdSale = await prisma.sale.findUnique({
-        where: { id: saleId },
-        include: {
-          items: {
-            include: {
-              inventoryItem: true,
-            },
-          },
-          client: true,
-        },
-      })
-
-      expect(createdSale).not.toBeNull()
-      expect(createdSale?.total).toBe(100.00)
-      expect(createdSale?.items).toHaveLength(1)
-      expect(createdSale?.items[0].quantity).toBe(2)
-
-      // Verify inventory was updated
-      const updatedItem = await prisma.inventoryItem.findUnique({
-        where: { id: itemId },
-      })
-
-      expect(updatedItem?.stock).toBe(98)
-    })
-  })
-
-  describe('Appointment System', () => {
-    it('should create and manage appointments', async () => {
-      const clientId = randomUUID()
-      const petId = randomUUID()
-      const vetId = randomUUID()
-
-      // Create necessary entities
-      await prisma.user.create({
-        data: {
-          id: vetId,
-          kindeId: 'test_appointment_vet',
-          email: 'test_appointment_vet@example.com',
-        },
-      })
-
-      await prisma.client.create({
-        data: {
-          id: clientId,
-          name: 'TEST Appointment Client',
+          kindeId: 'test_appointment_user',
           email: 'test_appointment@example.com',
+          updatedAt: new Date(),
         },
       })
 
@@ -469,27 +358,29 @@ describe('Database Integration Tests', () => {
           id: petId,
           name: 'TEST Appointment Pet',
           species: 'Cat',
-          clientId: clientId,
+          breed: 'Siamese',
+          dateOfBirth: new Date('2022-05-10'),
+          gender: 'FEMALE',
+          weight: 4.5,
+          userId: userId,
         },
       })
 
       // Create appointment
       const appointmentData = {
         id: randomUUID(),
-        clientId: clientId,
+        userId: userId,
         petId: petId,
-        vetId: vetId,
         dateTime: new Date('2024-06-15T10:00:00Z'),
-        service: 'Routine Checkup',
+        reason: 'TEST Routine Checkup',
         status: 'SCHEDULED',
-        notes: 'TEST Regular appointment',
       }
 
       const createdAppointment = await prisma.appointment.create({
         data: appointmentData,
       })
 
-      expect(createdAppointment.service).toBe(appointmentData.service)
+      expect(createdAppointment.reason).toBe(appointmentData.reason)
       expect(createdAppointment.status).toBe('SCHEDULED')
 
       // Update appointment status
@@ -504,28 +395,31 @@ describe('Database Integration Tests', () => {
       const fullAppointment = await prisma.appointment.findUnique({
         where: { id: appointmentData.id },
         include: {
-          client: true,
-          pet: true,
-          vet: true,
+          User: true,
+          Pet: true,
         },
       })
 
       expect(fullAppointment).not.toBeNull()
-      expect(fullAppointment?.client.name).toBe('TEST Appointment Client')
-      expect(fullAppointment?.pet.name).toBe('TEST Appointment Pet')
+      expect(fullAppointment?.Pet.name).toBe('TEST Appointment Pet')
+      expect(fullAppointment?.User.id).toBe(userId)
     })
   })
 
   describe('Database Constraints and Validation', () => {
     it('should enforce foreign key constraints', async () => {
-      // Try to create a pet with non-existent client
+      // Try to create a pet with non-existent user
       await expect(
         prisma.pet.create({
           data: {
             id: randomUUID(),
             name: 'TEST Orphan Pet',
             species: 'Dog',
-            clientId: 'non-existent-client-id',
+            breed: 'Unknown',
+            dateOfBirth: new Date('2020-01-01'),
+            gender: 'MALE',
+            weight: 10.0,
+            userId: 'non-existent-user-id',
           },
         })
       ).rejects.toThrow()
@@ -536,6 +430,7 @@ describe('Database Integration Tests', () => {
         id: randomUUID(),
         kindeId: 'unique_test_kinde',
         email: 'unique_test@example.com',
+        updatedAt: new Date(),
       }
 
       // Create first user
@@ -550,19 +445,21 @@ describe('Database Integration Tests', () => {
             id: randomUUID(),
             kindeId: 'another_kinde_id',
             email: userData.email, // Same email
+            updatedAt: new Date(),
           },
         })
       ).rejects.toThrow()
     })
 
     it('should handle transaction rollback on error', async () => {
-      const clientId = randomUUID()
+      const userId = randomUUID()
 
-      await prisma.client.create({
+      await prisma.user.create({
         data: {
-          id: clientId,
-          name: 'TEST Transaction Client',
+          id: userId,
+          kindeId: 'test_transaction_user',
           email: 'test_transaction@example.com',
+          updatedAt: new Date(),
         },
       })
 
@@ -575,17 +472,25 @@ describe('Database Integration Tests', () => {
               id: randomUUID(),
               name: 'TEST Transaction Pet',
               species: 'Dog',
-              clientId: clientId,
+              breed: 'Labrador',
+              dateOfBirth: new Date('2021-01-01'),
+              gender: 'MALE',
+              weight: 20.0,
+              userId: userId,
             },
           })
 
-          // This should fail (non-existent client)
+          // This should fail (non-existent user)
           await tx.pet.create({
             data: {
               id: randomUUID(),
               name: 'TEST Invalid Pet',
               species: 'Cat',
-              clientId: 'non-existent-client',
+              breed: 'Persian',
+              dateOfBirth: new Date('2021-01-01'),
+              gender: 'FEMALE',
+              weight: 5.0,
+              userId: 'non-existent-user',
             },
           })
         })
@@ -593,7 +498,7 @@ describe('Database Integration Tests', () => {
 
       // Verify no pets were created (rollback worked)
       const pets = await prisma.pet.findMany({
-        where: { clientId: clientId },
+        where: { userId: userId },
       })
 
       expect(pets).toHaveLength(0)
@@ -602,14 +507,15 @@ describe('Database Integration Tests', () => {
 
   describe('Performance and Optimization', () => {
     it('should efficiently query with includes', async () => {
-      const clientId = randomUUID()
+      const userId = randomUUID()
       const petId = randomUUID()
 
-      await prisma.client.create({
+      await prisma.user.create({
         data: {
-          id: clientId,
-          name: 'TEST Performance Client',
+          id: userId,
+          kindeId: 'test_performance_user',
           email: 'test_performance@example.com',
+          updatedAt: new Date(),
         },
       })
 
@@ -618,19 +524,23 @@ describe('Database Integration Tests', () => {
           id: petId,
           name: 'TEST Performance Pet',
           species: 'Dog',
-          clientId: clientId,
+          breed: 'Beagle',
+          dateOfBirth: new Date('2020-06-01'),
+          gender: 'MALE',
+          weight: 15.0,
+          userId: userId,
         },
       })
 
       const start = Date.now()
 
-      const result = await prisma.client.findUnique({
-        where: { id: clientId },
+      const result = await prisma.user.findUnique({
+        where: { id: userId },
         include: {
-          pets: {
+          Pet: {
             include: {
-              medicalRecords: true,
-              appointments: true,
+              MedicalHistory: true,
+              Appointment: true,
             },
           },
         },
@@ -639,34 +549,36 @@ describe('Database Integration Tests', () => {
       const duration = Date.now() - start
 
       expect(result).not.toBeNull()
-      expect(result?.pets).toHaveLength(1)
+      expect(result?.Pet).toHaveLength(1)
       expect(duration).toBeLessThan(1000) // Should complete within 1 second
     })
 
     it('should handle pagination correctly', async () => {
-      // Create multiple test clients
-      const clientIds = []
+      // Create multiple test users
+      const userIds = []
       for (let i = 0; i < 15; i++) {
-        const clientId = randomUUID()
-        clientIds.push(clientId)
-        await prisma.client.create({
+        const userId = randomUUID()
+        userIds.push(userId)
+        await prisma.user.create({
           data: {
-            id: clientId,
-            name: `TEST Pagination Client ${i}`,
+            id: userId,
+            kindeId: `test_pagination_${i}_${randomUUID()}`,
+            name: `TEST Pagination User ${i}`,
             email: `test_pagination_${i}@example.com`,
+            updatedAt: new Date(),
           },
         })
       }
 
       // Test pagination
-      const page1 = await prisma.client.findMany({
+      const page1 = await prisma.user.findMany({
         where: { name: { contains: 'TEST Pagination' } },
         take: 5,
         skip: 0,
         orderBy: { name: 'asc' },
       })
 
-      const page2 = await prisma.client.findMany({
+      const page2 = await prisma.user.findMany({
         where: { name: { contains: 'TEST Pagination' } },
         take: 5,
         skip: 5,

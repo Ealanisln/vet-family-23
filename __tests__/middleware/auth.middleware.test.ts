@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { middleware } from '@/middleware'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
+import { createMockKindeSession } from '../utils/test-helpers'
 
 // Mock the Kinde server session
 jest.mock('@kinde-oss/kinde-auth-nextjs/server')
@@ -9,17 +10,9 @@ const mockGetKindeServerSession = getKindeServerSession as jest.MockedFunction<t
 
 describe('Authentication Middleware', () => {
   let mockRequest: NextRequest
-  
+
   beforeEach(() => {
     jest.clearAllMocks()
-    // Reset the mock implementation
-    mockGetKindeServerSession.mockReturnValue({
-      getUser: jest.fn(),
-      isAuthenticated: jest.fn(),
-      getAccessToken: jest.fn(),
-      getPermissions: jest.fn(),
-      getOrganization: jest.fn(),
-    })
   })
 
   const createMockRequest = (pathname: string, headers: Record<string, string> = {}) => {
@@ -99,13 +92,9 @@ describe('Authentication Middleware', () => {
         family_name: 'User'
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(true),
-        getAccessToken: jest.fn().mockResolvedValue('mock-token'),
-        getPermissions: jest.fn().mockResolvedValue(['read:admin']),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockSession.getPermissions.mockResolvedValue({ permissions: ['read:admin'], orgCode: null })
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       mockRequest = createMockRequest('/admin/dashboard')
       const response = await middleware(mockRequest)
@@ -116,13 +105,8 @@ describe('Authentication Middleware', () => {
     })
 
     test('should redirect unauthenticated user to login', async () => {
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(null),
-        isAuthenticated: jest.fn().mockResolvedValue(false),
-        getAccessToken: jest.fn().mockResolvedValue(null),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(null, false)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       mockRequest = createMockRequest('/admin/dashboard')
       const response = await middleware(mockRequest)
@@ -136,13 +120,12 @@ describe('Authentication Middleware', () => {
     })
 
     test('should handle authentication errors gracefully', async () => {
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockRejectedValue(new Error('Authentication failed')),
-        isAuthenticated: jest.fn().mockRejectedValue(new Error('Authentication failed')),
-        getAccessToken: jest.fn().mockRejectedValue(new Error('Authentication failed')),
-        getPermissions: jest.fn().mockRejectedValue(new Error('Authentication failed')),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(null, false)
+      mockSession.getUser.mockRejectedValue(new Error('Authentication failed'))
+      mockSession.isAuthenticated.mockRejectedValue(new Error('Authentication failed'))
+      mockSession.getAccessToken.mockRejectedValue(new Error('Authentication failed'))
+      mockSession.getPermissions.mockRejectedValue(new Error('Authentication failed'))
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       mockRequest = createMockRequest('/admin/dashboard')
       const response = await middleware(mockRequest)
@@ -153,13 +136,8 @@ describe('Authentication Middleware', () => {
     })
 
     test('should prevent redirect loops', async () => {
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(null),
-        isAuthenticated: jest.fn().mockResolvedValue(false),
-        getAccessToken: jest.fn().mockResolvedValue(null),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(null, false)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       // Simulate a request that already has redirect parameters
       mockRequest = createMockRequest('/admin/dashboard?post_login_redirect_url=something')
@@ -210,13 +188,8 @@ describe('Authentication Middleware', () => {
         email: 'user@vetfamily.com'
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(true),
-        getAccessToken: jest.fn().mockResolvedValue('mock-token'),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       mockRequest = createMockRequest('/admin/clientes')
       const response = await middleware(mockRequest)
@@ -233,13 +206,9 @@ describe('Authentication Middleware', () => {
         email: 'user@vetfamily.com'
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(null),
-        getAccessToken: jest.fn().mockResolvedValue('mock-token'),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockSession.isAuthenticated.mockResolvedValue(null as any)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       mockRequest = createMockRequest('/admin/mascotas')
       const response = await middleware(mockRequest)

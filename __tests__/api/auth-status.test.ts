@@ -2,36 +2,25 @@ import { NextRequest } from 'next/server'
 import { GET } from '@/app/api/auth-status/route'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { prisma } from '@/lib/prismaDB'
+import { createMockKindeSession } from '../utils/test-helpers'
+import { mockDeep, mockReset, DeepMockProxy } from 'jest-mock-extended'
+import { PrismaClient } from '@prisma/client'
 
 // Mock dependencies
 jest.mock('@kinde-oss/kinde-auth-nextjs/server')
 jest.mock('@/lib/prismaDB', () => ({
-  prisma: {
-    user: {
-      findUnique: jest.fn(),
-      findFirst: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-    role: {
-      upsert: jest.fn(),
-    },
-    userRole: {
-      create: jest.fn(),
-      delete: jest.fn(),
-    },
-    $disconnect: jest.fn(),
-  },
+  prisma: mockDeep<PrismaClient>(),
 }))
 
 const mockGetKindeServerSession = getKindeServerSession as jest.MockedFunction<typeof getKindeServerSession>;
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = prisma as unknown as DeepMockProxy<PrismaClient>;
 
 describe('/api/auth-status', () => {
   let mockRequest: NextRequest
 
   beforeEach(() => {
     jest.clearAllMocks()
+    mockReset(mockPrisma)
     mockRequest = new NextRequest('http://localhost:3000/api/auth-status')
   })
 
@@ -70,15 +59,11 @@ describe('/api/auth-status', () => {
         ],
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(true),
-        getAccessToken: jest.fn().mockResolvedValue(mockAccessToken),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockSession.getAccessToken.mockResolvedValue(mockAccessToken)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
-      mockPrisma.user.findUnique.mockResolvedValue(mockDbUser)
+      mockPrisma.user.findUnique.mockResolvedValue(mockDbUser as any)
 
       const response = await GET(mockRequest)
       const data = await response.json()
@@ -107,17 +92,13 @@ describe('/api/auth-status', () => {
         userRoles: [],
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(true),
-        getAccessToken: jest.fn().mockResolvedValue({ roles: [] }),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockSession.getAccessToken.mockResolvedValue({ roles: [] })
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
-      mockPrisma.user.findUnique.mockResolvedValue(null)
-      mockPrisma.user.findFirst.mockResolvedValue(null)
-      mockPrisma.user.create.mockResolvedValue(mockCreatedUser)
+      mockPrisma.user.findUnique.mockResolvedValue(null as any)
+      mockPrisma.user.findFirst.mockResolvedValue(null as any)
+      mockPrisma.user.create.mockResolvedValue(mockCreatedUser as any)
 
       const response = await GET(mockRequest)
       const data = await response.json()
@@ -154,17 +135,13 @@ describe('/api/auth-status', () => {
         kindeId: 'kinde_user_updated',
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(true),
-        getAccessToken: jest.fn().mockResolvedValue({ roles: [] }),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockSession.getAccessToken.mockResolvedValue({ roles: [] })
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
-      mockPrisma.user.findUnique.mockResolvedValue(null)
-      mockPrisma.user.findFirst.mockResolvedValue(mockExistingUser)
-      mockPrisma.user.update.mockResolvedValue(mockUpdatedUser)
+      mockPrisma.user.findUnique.mockResolvedValue(null as any)
+      mockPrisma.user.findFirst.mockResolvedValue(mockExistingUser as any)
+      mockPrisma.user.update.mockResolvedValue(mockUpdatedUser as any)
 
       const response = await GET(mockRequest)
       const data = await response.json()
@@ -181,13 +158,8 @@ describe('/api/auth-status', () => {
 
   describe('Unauthenticated User', () => {
     it('should return unauthenticated status when no user', async () => {
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(null),
-        isAuthenticated: jest.fn().mockResolvedValue(false),
-        getAccessToken: jest.fn().mockResolvedValue(null),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(null, false)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       const response = await GET(mockRequest)
       const data = await response.json()
@@ -226,16 +198,12 @@ describe('/api/auth-status', () => {
         ],
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(true),
-        getAccessToken: jest.fn().mockResolvedValue(mockAccessToken),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockSession.getAccessToken.mockResolvedValue(mockAccessToken)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
-      mockPrisma.user.findUnique.mockResolvedValue(mockDbUser)
-      mockPrisma.role.upsert.mockResolvedValue({ id: 'role_1', key: 'admin', name: 'Administrator' })
+      mockPrisma.user.findUnique.mockResolvedValue(mockDbUser as any)
+      mockPrisma.role.upsert.mockResolvedValue({ id: 'role_1', key: 'admin', name: 'Administrator' } as any)
 
       const response = await GET(mockRequest)
       const data = await response.json()
@@ -249,13 +217,12 @@ describe('/api/auth-status', () => {
 
   describe('Error Handling', () => {
     it('should handle authentication errors gracefully', async () => {
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockRejectedValue(new Error('Kinde error')),
-        isAuthenticated: jest.fn().mockRejectedValue(new Error('Kinde error')),
-        getAccessToken: jest.fn().mockRejectedValue(new Error('Kinde error')),
-        getPermissions: jest.fn().mockRejectedValue(new Error('Kinde error')),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(null, false)
+      mockSession.getUser.mockRejectedValue(new Error('Kinde error'))
+      mockSession.isAuthenticated.mockRejectedValue(new Error('Kinde error'))
+      mockSession.getAccessToken.mockRejectedValue(new Error('Kinde error'))
+      mockSession.getPermissions.mockRejectedValue(new Error('Kinde error'))
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       const response = await GET(mockRequest)
       const data = await response.json()
@@ -271,13 +238,9 @@ describe('/api/auth-status', () => {
         email: 'error@vetfamily.com',
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(true),
-        getAccessToken: jest.fn().mockResolvedValue({ roles: [] }),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockSession.getAccessToken.mockResolvedValue({ roles: [] })
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       mockPrisma.user.findUnique.mockRejectedValue(new Error('Database connection failed'))
 
@@ -290,13 +253,8 @@ describe('/api/auth-status', () => {
     })
 
     it('should disconnect prisma client after each request', async () => {
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(null),
-        isAuthenticated: jest.fn().mockResolvedValue(false),
-        getAccessToken: jest.fn().mockResolvedValue(null),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(null, false)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       await GET(mockRequest)
 
@@ -311,20 +269,16 @@ describe('/api/auth-status', () => {
         email: 'invalid@vetfamily.com',
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(true),
-        getAccessToken: jest.fn().mockResolvedValue('invalid-token-string'),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockSession.getAccessToken.mockResolvedValue('invalid-token-string' as any)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       mockPrisma.user.findUnique.mockResolvedValue({
         id: 'db_user_invalid',
         kindeId: 'kinde_user_invalid_token',
         email: 'invalid@vetfamily.com',
         userRoles: [],
-      })
+      } as any)
 
       const response = await GET(mockRequest)
       const data = await response.json()
@@ -339,20 +293,16 @@ describe('/api/auth-status', () => {
         email: 'null@vetfamily.com',
       }
 
-      mockGetKindeServerSession.mockReturnValue({
-        getUser: jest.fn().mockResolvedValue(mockUser),
-        isAuthenticated: jest.fn().mockResolvedValue(true),
-        getAccessToken: jest.fn().mockResolvedValue(null),
-        getPermissions: jest.fn().mockResolvedValue([]),
-        getOrganization: jest.fn(),
-      })
+      const mockSession = createMockKindeSession(mockUser, true)
+      mockSession.getAccessToken.mockResolvedValue(null as any)
+      mockGetKindeServerSession.mockReturnValue(mockSession as any)
 
       mockPrisma.user.findUnique.mockResolvedValue({
         id: 'db_user_null',
         kindeId: 'kinde_user_null_token',
         email: 'null@vetfamily.com',
         userRoles: [],
-      })
+      } as any)
 
       const response = await GET(mockRequest)
       const data = await response.json()

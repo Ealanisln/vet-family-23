@@ -126,7 +126,7 @@ interface MedicineProps {
 export default function Medicine({ userId }: MedicineProps) {
   // Estados
   const [data, setData] = useState<InventoryFormItem[]>([]);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "name", desc: false }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [loading, setLoading] = useState(true);
@@ -146,7 +146,22 @@ export default function Medicine({ userId }: MedicineProps) {
   const columns: ColumnDef<InventoryFormItem>[] = [
     {
       accessorKey: "name",
-      header: "Nombre",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Nombre
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const isLowStock = ["LOW_STOCK", "OUT_OF_STOCK"].includes(
           row.original.status
@@ -191,14 +206,44 @@ export default function Medicine({ userId }: MedicineProps) {
     },
     {
       accessorKey: "quantity",
-      header: "Cantidad",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Cantidad
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => (
         <div className="text-right">{row.getValue("quantity")}</div>
       ),
     },
     {
       accessorKey: "status",
-      header: "Estado",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Estado
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const status = row.getValue("status") as typeof InventoryStatus[keyof typeof InventoryStatus];
         const statusMap: Record<string, string> = {
@@ -217,13 +262,43 @@ export default function Medicine({ userId }: MedicineProps) {
     },
     {
       accessorKey: "expirationDate",
-      header: "Fecha de Expiración",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Fecha de Expiración
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) =>
         formatDate(row.getValue("expirationDate") as string | null),
     },
     {
       accessorKey: "movements",
-      header: "Último Movimiento",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Último Movimiento
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const movements = row.original.movements;
         if (!movements?.length) return "-";
@@ -554,9 +629,8 @@ export default function Medicine({ userId }: MedicineProps) {
 
         {/* Contenedor de tabla con altura fija */}
         <div className="flex flex-col">
-          <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
-            <div className="min-w-[800px]">
-              <Table>
+          <div className="overflow-x-auto rounded-xl border border-[#47b3b6]/20 bg-white">
+            <Table className="min-w-full">
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow
@@ -566,7 +640,7 @@ export default function Medicine({ userId }: MedicineProps) {
                       {headerGroup.headers.map((header) => (
                         <TableHead
                           key={header.id}
-                          className="text-[#47b3b6] font-semibold whitespace-nowrap"
+                          className="text-[#47b3b6] font-semibold whitespace-nowrap px-6 py-3"
                         >
                           {header.isPlaceholder
                             ? null
@@ -601,7 +675,7 @@ export default function Medicine({ userId }: MedicineProps) {
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
                             key={cell.id}
-                            className="text-gray-700 whitespace-nowrap"
+                            className="text-gray-700 whitespace-nowrap px-6 py-4"
                           >
                             {flexRender(
                               cell.column.columnDef.cell,
@@ -623,7 +697,6 @@ export default function Medicine({ userId }: MedicineProps) {
                   )}
                 </TableBody>
               </Table>
-            </div>
           </div>
 
           {/* Paginación */}

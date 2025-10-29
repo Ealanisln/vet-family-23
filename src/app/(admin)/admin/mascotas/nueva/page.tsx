@@ -101,9 +101,7 @@ const NuevaMascotaPage = () => {
         try {
           const authResponse = await fetch('/api/admin-check');
           const authData = await authResponse.json();
-          
-          console.log('Auth check result:', authData);
-          
+
           if (authData.isAdmin) {
             setTimeout(() => {
               router.push('/admin/mascotas');

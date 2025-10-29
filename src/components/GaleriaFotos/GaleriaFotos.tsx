@@ -131,7 +131,6 @@ export default function App() {
             layout="masonry"
             targetRowHeight={250} // Reduced height for better mobile view
             onClick={({ index }) => {
-              console.log("Click en imagen:", index);
               setLightboxIndex(index);
             }}
             columns={(containerWidth) => {

@@ -229,16 +229,12 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
       }
 
       try {
-        console.log('Iniciando búsqueda para:', searchTerm);
         const results = await searchInventoryItems({
           searchTerm,
           limit: 10,
         });
-        
-        console.log('Resultados de búsqueda:', results);
-        
+
         if (!isSubscribed) {
-          console.log('Componente desmontado, ignorando resultados');
           return;
         }
 
@@ -250,8 +246,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
             price: typeof inventoryItem.price === 'number' ? inventoryItem.price : 0
           } as InventorySearchResultAdjusted;
         });
-        
-        console.log('Resultados procesados:', safeResults);
         
         if (isSubscribed) {
           setProductsSection(prev => ({
@@ -710,11 +704,10 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                           placeholder="Buscar medicamento..."
                           value={productsSection.searchValue}
                           onChange={(e) => {
-                            console.log('Search input changed:', e.target.value);
-                            setProductsSection(prev => ({ 
-                              ...prev, 
+                            setProductsSection(prev => ({
+                              ...prev,
                               searchValue: e.target.value,
-                              searchResults: e.target.value.length < 3 ? [] : prev.searchResults 
+                              searchResults: e.target.value.length < 3 ? [] : prev.searchResults
                             }));
                           }}
                           className="w-full pl-9"

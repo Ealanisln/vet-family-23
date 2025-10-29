@@ -134,10 +134,14 @@ const convertInventoryItemToFormData = (
   return formItem;
 };
 
-export default function Inventory() {
+interface InventoryProps {
+  userId?: string;
+}
+
+export default function Inventory({ userId }: InventoryProps) {
   // Estados
   const [data, setData] = useState<InventoryFormItem[]>([]);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "name", desc: false }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [loading, setLoading] = useState(true);
@@ -667,9 +671,8 @@ export default function Inventory() {
 
           {/* Contenedor de tabla con altura fija */}
           <div className="flex flex-col">
-            <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
-              <div className="min-w-[800px]">
-                <Table>
+            <div className="overflow-x-auto rounded-xl border border-[#47b3b6]/20 bg-white">
+              <Table className="min-w-full">
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow
@@ -679,7 +682,7 @@ export default function Inventory() {
                         {headerGroup.headers.map((header) => (
                           <TableHead
                             key={header.id}
-                            className="text-[#47b3b6] font-semibold whitespace-nowrap"
+                            className="text-[#47b3b6] font-semibold whitespace-nowrap px-6 py-3"
                           >
                             {header.isPlaceholder
                               ? null
@@ -723,7 +726,7 @@ export default function Inventory() {
                           {row.getVisibleCells().map((cell) => (
                             <TableCell
                               key={cell.id}
-                              className="text-gray-700 whitespace-nowrap"
+                              className="text-gray-700 whitespace-nowrap px-6 py-4"
                             >
                               {flexRender(
                                 cell.column.columnDef.cell,
@@ -745,7 +748,6 @@ export default function Inventory() {
                     )}
                   </TableBody>
                 </Table>
-              </div>
             </div>
 
             {/* Paginación */}
@@ -779,7 +781,14 @@ export default function Inventory() {
               Información detallada y movimientos del item seleccionado.
             </DialogDescription>
           </DialogHeader>
-          <ItemDetails selectedItem={selectedItem} />
+          <ItemDetails
+            selectedItem={selectedItem}
+            userId={userId}
+            onDeleteSuccess={() => {
+              setIsDialogOpen(false);
+              fetchInventory();
+            }}
+          />
           <DialogFooter>
             <Button
               variant="outline"

@@ -252,7 +252,6 @@ export function ClientSearch({
                         key={client.id}
                         value={`${getDisplayName(client)}-${client.id}`}
                         onSelect={() => {
-                          console.log(`ClientSearch: CommandItem clicked for ${getDisplayName(client)} (ID: ${client.id})`);
                           handleSelectClient(client);
                         }}
                         className="flex flex-col items-start cursor-pointer py-2 px-3"

@@ -52,6 +52,7 @@ interface MedicalHistory {
   petId: string;
   userId: string;
   visitDate: string;
+  weightInKg?: number;
   reasonForVisit: string;
   diagnosis: string;
   treatment: string;
@@ -116,6 +117,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
     petId: existingRecord?.petId || petId || "",
     userId: existingRecord?.userId || "",
     visitDate: existingRecord?.visitDate || "",
+    weightInKg: existingRecord?.weightInKg || undefined,
     reasonForVisit: existingRecord?.reasonForVisit || "",
     diagnosis: existingRecord?.diagnosis || "",
     treatment: existingRecord?.treatment || "",
@@ -133,6 +135,33 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
   // Usar el estado controlado si se proporcionan las props, de lo contrario usar el estado local
   const isOpen = open !== undefined ? open : localOpen;
   const setIsOpen = onOpenChange || setLocalOpen;
+
+  // Reset form state when dialog opens/closes or when existingRecord changes
+  useEffect(() => {
+    if (isOpen) {
+      // Initialize or reset the record state when dialog opens
+      setRecord({
+        id: existingRecord?.id || undefined,
+        petId: existingRecord?.petId || petId || "",
+        userId: existingRecord?.userId || "",
+        visitDate: existingRecord?.visitDate || "",
+        weightInKg: existingRecord?.weightInKg || undefined,
+        reasonForVisit: existingRecord?.reasonForVisit || "",
+        diagnosis: existingRecord?.diagnosis || "",
+        treatment: existingRecord?.treatment || "",
+        prescriptions: existingRecord?.prescriptions || [],
+        notes: existingRecord?.notes || "",
+      });
+
+      // Reset products section
+      setProductsSection({
+        isOpen: false,
+        selectedProducts: [],
+        searchValue: "",
+        searchResults: [],
+      });
+    }
+  }, [isOpen, existingRecord, petId]);
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -200,16 +229,12 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
       }
 
       try {
-        console.log('Iniciando búsqueda para:', searchTerm);
         const results = await searchInventoryItems({
           searchTerm,
           limit: 10,
         });
-        
-        console.log('Resultados de búsqueda:', results);
-        
+
         if (!isSubscribed) {
-          console.log('Componente desmontado, ignorando resultados');
           return;
         }
 
@@ -221,8 +246,6 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
             price: typeof inventoryItem.price === 'number' ? inventoryItem.price : 0
           } as InventorySearchResultAdjusted;
         });
-        
-        console.log('Resultados procesados:', safeResults);
         
         if (isSubscribed) {
           setProductsSection(prev => ({
@@ -290,8 +313,10 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target;
-    setRecord((prevState) => ({ ...prevState, [name]: value }));
+    const { name, value, type } = e.target;
+    // Convert number inputs to actual numbers
+    const parsedValue = type === 'number' ? (value === '' ? undefined : parseFloat(value)) : value;
+    setRecord((prevState) => ({ ...prevState, [name]: parsedValue }));
   };
 
   const handleSelectChange = (value: string) => {
@@ -398,6 +423,7 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
       const result = await action(record.petId, {
         id: record.id,
         visitDate: new Date(record.visitDate),
+        weightInKg: record.weightInKg,
         reasonForVisit: record.reasonForVisit,
         diagnosis: record.diagnosis,
         treatment: record.treatment,
@@ -467,9 +493,25 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                   : "Agregar Nuevo Historial Médico"}
               </DialogTitle>
               <DialogDescription className="text-gray-600">
-                {existingRecord
-                  ? "Modifique los detalles del historial médico. Haga clic en guardar cuando haya terminado."
-                  : "Ingrese los detalles del nuevo historial médico. Haga clic en guardar cuando haya terminado."}
+                {existingRecord ? (
+                  <span>
+                    Editando registro del{" "}
+                    <strong>
+                      {new Date(existingRecord.visitDate).toLocaleDateString("es-MX", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </strong>
+                    {existingRecord.id && (
+                      <span className="text-xs ml-2 text-gray-500">
+                        (ID: {existingRecord.id.substring(0, 8)})
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  "Ingrese los detalles del nuevo historial médico. Haga clic en guardar cuando haya terminado."
+                )}
               </DialogDescription>
             </div>
           </div>
@@ -571,6 +613,31 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
             </div>
             <div className="grid sm:grid-cols-4 items-center gap-4">
               <Label
+                htmlFor="weightInKg"
+                className="sm:text-right font-medium text-gray-700"
+              >
+                Peso (kg)
+              </Label>
+              {existingRecord ? (
+                <div className="sm:col-span-3 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700">
+                  {record.weightInKg ? `${record.weightInKg} kg` : 'No registrado'}
+                </div>
+              ) : (
+                <Input
+                  id="weightInKg"
+                  name="weightInKg"
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={record.weightInKg || ''}
+                  onChange={handleInputChange}
+                  placeholder="Ej: 5.5"
+                  className="sm:col-span-3 bg-white border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              )}
+            </div>
+            <div className="grid sm:grid-cols-4 items-center gap-4">
+              <Label
                 htmlFor="reasonForVisit"
                 className="sm:text-right font-medium text-gray-700"
               >
@@ -637,11 +704,10 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                           placeholder="Buscar medicamento..."
                           value={productsSection.searchValue}
                           onChange={(e) => {
-                            console.log('Search input changed:', e.target.value);
-                            setProductsSection(prev => ({ 
-                              ...prev, 
+                            setProductsSection(prev => ({
+                              ...prev,
                               searchValue: e.target.value,
-                              searchResults: e.target.value.length < 3 ? [] : prev.searchResults 
+                              searchResults: e.target.value.length < 3 ? [] : prev.searchResults
                             }));
                           }}
                           className="w-full pl-9"

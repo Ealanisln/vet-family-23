@@ -6,6 +6,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/Admin/Sidebar/app-sidebar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DatabaseIndicator } from "@/components/Admin/DatabaseIndicator";
+import { ChangelogBanner } from "@/components/Changelog/ChangelogBanner";
 
 interface UserData {
   name: string;
@@ -40,6 +41,7 @@ export default function AdminLayoutClient({
               </div>
             </header>
           )}
+          <ChangelogBanner />
           <main className={`${isHomePage ? "p-0" : "p-4 sm:p-6 lg:p-8"}`}>
             {children}
           </main>

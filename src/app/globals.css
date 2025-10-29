@@ -35,21 +35,28 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Brand Teal Colors (#47b3b6) - More subtle and user-friendly */
+    --sidebar-brand: 182 44% 49%;
+    --sidebar-brand-hover: 182 44% 40%;
+    --sidebar-brand-active: 182 44% 55%;
+    --sidebar-brand-light: 182 44% 96%;
+    --sidebar-brand-lighter: 182 44% 98%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 210 20% 98%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-foreground: 220 9% 46%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary: 182 44% 49%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-primary-foreground: 0 0% 100%;
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-accent: 182 35% 92%;
+
+    --sidebar-accent-foreground: 220 9% 46%;
 
     --sidebar-border: 220 13% 91%;
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 182 44% 49%;
   }
 
   .dark {
@@ -80,14 +87,22 @@
     --border: 12 6.5% 15.1%;
     --input: 12 6.5% 15.1%;
     --ring: 24 5.7% 82.9%;
+
+    /* Dark Mode - Brand Teal Colors */
+    --sidebar-brand: 182 44% 55%;
+    --sidebar-brand-hover: 182 44% 65%;
+    --sidebar-brand-active: 182 44% 70%;
+    --sidebar-brand-light: 182 44% 20%;
+    --sidebar-brand-lighter: 182 44% 15%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 182 44% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 182 44% 20%;
+    --sidebar-accent-foreground: 182 44% 95%;
+    --sidebar-border: 182 30% 25%;
+    --sidebar-ring: 182 44% 55%;
   }
 }
 
@@ -188,5 +203,13 @@ html:not([data-scroll="0"]) .ttty {
 
 .socialBg {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* Admin Sidebar Styles */
+@layer components {
+  /* Sidebar menu spacing */
+  .sidebar-menu {
+    @apply space-y-1;
+  }
 }
 

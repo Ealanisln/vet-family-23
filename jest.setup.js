@@ -117,11 +117,6 @@ jest.mock('@/lib/prismaDB', () => ({
   prisma: mockPrisma,
 }))
 
-// Mock utility functions
-jest.mock('@/utils/pos-helpers', () => ({
-  userHasPOSPermission: jest.fn(),
-}))
-
 // Suppress console warnings in tests
 const originalWarn = console.warn
 const originalError = console.error

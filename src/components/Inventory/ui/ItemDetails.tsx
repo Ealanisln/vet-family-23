@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/custom-badge";
 import type { BadgeProps } from "@/components/ui/custom-badge";
 import { InventoryFormItem } from "@/types/inventory";
+import { DeleteInventoryItemButton } from "../DeleteInventoryItemButton";
 // Manual type definitions due to Prisma client export issues
 const InventoryStatus = {
   ACTIVE: 'ACTIVE' as const,
@@ -15,6 +16,8 @@ const InventoryStatus = {
 
 interface ItemDetailsProps {
   selectedItem: InventoryFormItem | null;
+  userId?: string; // Optional: If provided, shows delete button
+  onDeleteSuccess?: () => void; // Callback to close dialog after deletion
 }
 
 const getStatusBadgeVariant = (status: string): BadgeProps["variant"] => {
@@ -60,7 +63,7 @@ const getCategoryText = (category: string): string => {
   return categoryMap[category];
 };
 
-export const ItemDetails: React.FC<ItemDetailsProps> = ({ selectedItem }) => {
+export const ItemDetails: React.FC<ItemDetailsProps> = ({ selectedItem, userId, onDeleteSuccess }) => {
   if (!selectedItem) return null;
 
   return (
@@ -163,6 +166,22 @@ export const ItemDetails: React.FC<ItemDetailsProps> = ({ selectedItem }) => {
           ))}
         </div>
       </Card>
+
+      {/* Zona de Acciones Peligrosas */}
+      {userId && (
+        <Card className="p-6 border-red-200 bg-red-50">
+          <h4 className="text-lg font-semibold text-gray-900 mb-2">Zona de Peligro</h4>
+          <p className="text-sm text-gray-600 mb-4">
+            Esta acción moverá el item a la papelera. Podrás restaurarlo más tarde si es necesario.
+          </p>
+          <DeleteInventoryItemButton
+            itemId={selectedItem.id}
+            itemName={selectedItem.name}
+            userId={userId}
+            onDeleteSuccess={onDeleteSuccess}
+          />
+        </Card>
+      )}
     </div>
   );
 };

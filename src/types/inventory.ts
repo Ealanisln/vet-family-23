@@ -96,6 +96,9 @@ export interface InventoryItemBase {
   batchNumber: string | null;
   specialNotes: string | null;
   status: typeof InventoryStatus[keyof typeof InventoryStatus];
+  deletedAt: string | null;
+  deletedBy: string | null;
+  deletionReason: string | null;
 }
 
 // Item del servidor (con fechas como string)

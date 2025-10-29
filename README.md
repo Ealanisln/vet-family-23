@@ -1,26 +1,42 @@
 # Vet Family
 
-**Vet Family** is a comprehensive management system for veterinary clinics. Built with **Next.js** using the App Router, **MongoDB**, **Prisma ORM**, and **TypeScript**, it helps clinics manage user profiles, pets, medical history, appointments, billing, and reminders efficiently.
+**Version 1.2.0**
+
+**Vet Family** is a comprehensive management system for veterinary clinics. Built with **Next.js 15** using the App Router, **PostgreSQL**, **Prisma ORM**, and **TypeScript**, it helps clinics manage user profiles, pets, medical history, appointments, billing, inventory, and reminders efficiently.
 
 ## Features
 
-- **User Management**: Track user details, including contact information, visit history, and reminders.
-- **Pet Management**: Store detailed records of pets, including species, breed, vaccinations, medical history, and more.
-- **Appointments**: Schedule and manage vet appointments, ensuring all visits are logged.
-- **Billing System**: Keep track of payments, services, and payment statuses.
-- **Reminders**: Set up and manage reminders for vaccinations, appointments, and follow-ups.
-- **Multi-role Support**: Support for multiple user roles, such as clients and staff.
+### Core Features
+- **User Management**: Track user details, including contact information, visit history, and reminders
+- **Pet Management**: Store detailed records of pets, including species, breed, vaccinations, medical history, and weight tracking
+- **Appointments**: Schedule and manage vet appointments, ensuring all visits are logged
+- **Billing System**: Keep track of payments, services, and payment statuses
+- **Reminders**: Set up and manage reminders for vaccinations, appointments, and follow-ups
+- **Multi-role Support**: Support for multiple user roles, such as clients, staff, and administrators
+
+### Advanced Features (v1.2.0)
+- **Changelog System**: In-app notification banner and changelog page to keep users informed of new features and updates
+- **Soft Delete**: Archive inventory items and medical records instead of permanent deletion, with restore functionality
+- **Weight Tracking**: Automatic weight recording in medical history with latest weight display in pet profiles
+- **Enhanced Admin Interface**: Redesigned sidebar with collapsible sections and improved navigation
+- **Inventory Management**: Comprehensive inventory system with 36+ categories for medicines, vaccines, food, and accessories
+- **Vaccination & Deworming Schedules**: Automated scheduling and tracking for preventive care
 
 ## Tech Stack
 
-- **Next.js (App Router)** - React framework for building web applications.
-- **MongoDB** - NoSQL database for storing app data.
-- **Prisma ORM** - Provides an abstraction layer for the database.
-- **TypeScript** - Typed JavaScript for better code maintainability and readability.
+- **Next.js 15** (App Router) - React 19 framework for building web applications
+- **PostgreSQL** - Relational database for storing app data
+- **Prisma ORM** - Type-safe database client and migration tool
+- **TypeScript** - Typed JavaScript for better code maintainability and readability
+- **Kinde Auth** - Authentication and authorization platform
+- **TailwindCSS** + **Radix UI** - Styling and component library
+- **Sanity CMS** - Content management for blog posts
+- **Cloudinary** - Image storage and optimization
+- **pnpm** - Fast, disk space efficient package manager
 
 ## Database Schema
 
-The database is designed with **MongoDB** using **Prisma ORM** to handle complex relationships between users, pets, and their records.
+The database is designed with **PostgreSQL** using **Prisma ORM** to handle complex relationships between users, pets, and their records with full ACID compliance and referential integrity.
 
 ### Models
 
@@ -44,7 +60,8 @@ The database is designed with **MongoDB** using **Prisma ORM** to handle complex
 
 #### `MedicalHistory`
 
-- Tracks each visit's details, including reasons, diagnosis, treatment, prescriptions, and notes.
+- Tracks each visit's details, including reasons, diagnosis, treatment, prescriptions, and notes
+- **New in v1.2.0**: Weight tracking (weightInKg), soft delete support (deletedAt), and automatic timestamps (createdAt, updatedAt)
 
 #### `Vaccination`
 
@@ -62,70 +79,77 @@ The database is designed with **MongoDB** using **Prisma ORM** to handle complex
 
 - Allows setting reminders for key events, like vaccinations and appointments.
 
+#### `InventoryItem`
+
+- Manages clinic inventory including medicines, vaccines, food, and accessories
+- Supports 36+ categories for comprehensive inventory tracking
+- **New in v1.2.0**: Soft delete functionality (deletedAt, deletedBy, deletionReason) for data preservation
+
 #### `Staff`
 
-- Tracks staff details such as name, position, and contact information.
+- Tracks staff details such as name, position, and contact information
 
 ## Getting Started
 
 ### Prerequisites
 
-- **Node.js** v16+
-- **MongoDB** instance
-- Environment variables set up for **MongoDB URL** and other secrets.
+- **Node.js** v18+
+- **pnpm** v8+ (package manager)
+- **PostgreSQL** v14+ database instance
+- Environment variables for database, authentication, and external services
 
 ### Installation
 
 1. Clone the repository:
 
-   ```
-   bash
-   
-   
-   Copy code
-   git clone https://github.com/your-username/vet-family.git
+   ```bash
+   git clone https://github.com/Ealanisln/vet-family-23.git
+   cd vet-family-23
    ```
 
 2. Install dependencies:
 
-   ```
-   bash
-   
-   
-   Copy code
-   cd vet-family
-   npm install
+   ```bash
+   pnpm install
    ```
 
-3. Set up environment variables in a `.env` file:
+3. Set up environment variables (see `.env.example` for required variables):
 
+   ```bash
+   cp .env.example .env.local
    ```
-   perl
-   
-   
-   Copy code
-   DATABASE_URL=mongodb+srv://<username>:<password>@cluster0.mongodb.net/mydatabase
+
+   Update the `.env.local` file with your configuration:
+   ```env
+   DATABASE_URL=postgresql://user:password@localhost:5432/vetfamily
+   KINDE_CLIENT_ID=your_kinde_client_id
+   KINDE_CLIENT_SECRET=your_kinde_client_secret
+   # ... and other required variables
    ```
 
 4. Apply Prisma migrations:
 
-   ```
-   bash
-   
-   
-   Copy code
-   npx prisma migrate dev
+   ```bash
+   pnpm db:push        # For development
+   # or
+   pnpm db:migrate     # For production migrations
    ```
 
-5. Start the development server:
+5. Generate Prisma Client:
 
+   ```bash
+   pnpm db:generate
    ```
-   bash
-   
-   
-   Copy code
-   npm run dev
+
+6. Start the development server:
+
+   ```bash
+   pnpm dev            # Uses .env.local
+   # or
+   pnpm dev:staging    # Uses .env.development
    ```
+
+For more detailed development commands and workflows, see [CLAUDE.md](./CLAUDE.md).
 
 ## Contributing
 

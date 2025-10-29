@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, Baby, Dog, Shield, PawPrint } from 'lucide-react';
+import { Heart, Baby, Dog, PawPrint } from 'lucide-react';
 
 const VetPlans = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);

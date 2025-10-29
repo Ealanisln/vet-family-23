@@ -34,11 +34,14 @@ type MedicalHistory = {
   id: string;
   petId: string;
   visitDate: Date;
+  weightInKg: number | null;
   reasonForVisit: string;
   diagnosis: string;
   treatment: string;
   prescriptions: string[];
   notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 type GetPetsForMedicalRecordResult =
@@ -107,6 +110,7 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
 interface MedicalHistoryInput {
   id?: string;
   visitDate: Date;
+  weightInKg?: number;
   reasonForVisit: string;
   diagnosis: string;
   treatment: string;
@@ -118,11 +122,26 @@ type MedicalHistoryResult =
   | { success: true; record: MedicalHistory }
   | { success: false; error: string };
 
+type SuccessOnlyResult =
+  | { success: true }
+  | { success: false; error: string };
+
+type MedicalHistoriesResult =
+  | { success: true; histories: MedicalHistory[] }
+  | { success: false; error: string };
+
 export async function addMedicalHistory(
   petId: string,
   recordData: MedicalHistoryInput
 ): Promise<MedicalHistoryResult> {
   try {
+    // Validate weightInKg if provided
+    if (recordData.weightInKg !== undefined && recordData.weightInKg !== null) {
+      if (recordData.weightInKg <= 0) {
+        return { success: false, error: "Weight must be a positive number" };
+      }
+    }
+
     // First verify that the pet exists
     const pet = await prisma.pet.findUnique({
       where: { id: petId },
@@ -140,12 +159,13 @@ export async function addMedicalHistory(
     // Start a transaction
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const data = recordData;
-      
+
       const newRecord = await tx.medicalHistory.create({
         data: {
           id: uuidv4(),
           petId,
           visitDate: data.visitDate,
+          weightInKg: data.weightInKg || null,
           reasonForVisit: data.reasonForVisit,
           diagnosis: data.diagnosis,
           treatment: data.treatment,
@@ -203,10 +223,11 @@ export async function updateMedicalHistory(
       return { success: false, error: "Medical history record not found or unauthorized" };
     }
 
-    const { id, ...data } = recordData;
-    
+    // Explicitly exclude weightInKg from updates - it's immutable after creation
+    const { id, weightInKg, ...data } = recordData;
+
     const updatedRecord = await prisma.medicalHistory.update({
-      where: { 
+      where: {
         id: id,
         petId: petId, // Additional safety check
       },
@@ -217,6 +238,7 @@ export async function updateMedicalHistory(
         treatment: data.treatment,
         prescriptions: data.prescriptions,
         notes: data.notes || null,
+        // Note: weightInKg is intentionally excluded - immutable field
       },
     });
 
@@ -249,6 +271,7 @@ export async function getMedicalHistoryRecord(
       where: {
         id: recordId,
         petId: petId,
+        deletedAt: null, // Exclude soft-deleted records
       },
     });
 
@@ -260,5 +283,105 @@ export async function getMedicalHistoryRecord(
   } catch (error) {
     console.error("Failed to fetch medical history record:", error);
     return { success: false, error: "Failed to fetch medical history record" };
+  }
+}
+
+// Soft delete a medical history record
+export async function softDeleteMedicalHistory(
+  recordId: string
+): Promise<SuccessOnlyResult> {
+  try {
+    // Verify record exists and is not already deleted
+    const existingRecord = await prisma.medicalHistory.findUnique({
+      where: { id: recordId },
+    });
+
+    if (!existingRecord) {
+      return { success: false, error: "Medical history record not found" };
+    }
+
+    if (existingRecord.deletedAt) {
+      return { success: false, error: "Record is already deleted" };
+    }
+
+    // Soft delete by setting deletedAt timestamp
+    await prisma.medicalHistory.update({
+      where: { id: recordId },
+      data: { deletedAt: new Date() },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to soft delete medical history:", error);
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
+        case 'P2025':
+          return { success: false, error: "Record not found" };
+        default:
+          return { success: false, error: `Database error: ${prismaError.code}` };
+      }
+    }
+    return { success: false, error: "Failed to delete medical history" };
+  }
+}
+
+// Restore a soft-deleted medical history record
+export async function restoreMedicalHistory(
+  recordId: string
+): Promise<SuccessOnlyResult> {
+  try {
+    // Verify record exists and is deleted
+    const existingRecord = await prisma.medicalHistory.findUnique({
+      where: { id: recordId },
+    });
+
+    if (!existingRecord) {
+      return { success: false, error: "Medical history record not found" };
+    }
+
+    if (!existingRecord.deletedAt) {
+      return { success: false, error: "Record is not deleted" };
+    }
+
+    // Restore by clearing deletedAt timestamp
+    await prisma.medicalHistory.update({
+      where: { id: recordId },
+      data: { deletedAt: null },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to restore medical history:", error);
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
+        case 'P2025':
+          return { success: false, error: "Record not found" };
+        default:
+          return { success: false, error: `Database error: ${prismaError.code}` };
+      }
+    }
+    return { success: false, error: "Failed to restore medical history" };
+  }
+}
+
+// Get deleted medical history records for a pet
+export async function getDeletedMedicalHistories(
+  petId: string
+): Promise<MedicalHistoriesResult> {
+  try {
+    const deletedRecords = await prisma.medicalHistory.findMany({
+      where: {
+        petId,
+        deletedAt: { not: null }, // Only get deleted records
+      },
+      orderBy: { deletedAt: 'desc' }, // Most recently deleted first
+    });
+
+    return { success: true, histories: deletedRecords };
+  } catch (error) {
+    console.error("Failed to fetch deleted medical histories:", error);
+    return { success: false, error: "Failed to fetch deleted medical histories" };
   }
 }

@@ -14,18 +14,25 @@ interface CategoryFilterProps {
   onChange: (value: InventoryCategory | "all_categories") => void;
 }
 
-export const CategoryFilter = ({ value, onChange }: CategoryFilterProps) => (
-  <Select value={value} onValueChange={onChange}>
-    <SelectTrigger className="min-w-[200px] w-full max-w-[220px] h-10">
-      <SelectValue placeholder="Categoría" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="all_categories">Todas las categorías</SelectItem>
-      {Object.entries(CATEGORY_TRANSLATIONS).map(([key, value]) => (
-        <SelectItem key={key} value={key}>
-          {value}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-);
+export const CategoryFilter = ({ value, onChange }: CategoryFilterProps) => {
+  // Sort categories alphabetically by their Spanish translation
+  const sortedCategories = Object.entries(CATEGORY_TRANSLATIONS).sort(
+    ([, a], [, b]) => a.localeCompare(b, 'es')
+  );
+
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="min-w-[200px] w-full max-w-[220px] h-10">
+        <SelectValue placeholder="Categoría" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all_categories">Todas las categorías</SelectItem>
+        {sortedCategories.map(([key, value]) => (
+          <SelectItem key={key} value={key}>
+            {value}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};

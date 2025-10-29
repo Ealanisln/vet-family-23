@@ -59,15 +59,17 @@ const InventoryStatus = {
 import { getInventory } from "@/app/actions/inventory";
 
 import ItemDetails from "./ui/ItemDetails";
+import TablePagination from "../ui/table-pagination";
 
 interface VaccineTableProps {
   onRowClick?: (item: InventoryFormItem) => void;
+  userId?: string;
 }
 
-const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
+const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick, userId }) => {
   // States with proper typing
   const [data, setData] = useState<InventoryFormItem[]>([]);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "name", desc: false }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [loading, setLoading] = useState<boolean>(true);
@@ -108,7 +110,22 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
   const columns: ColumnDef<InventoryFormItem>[] = [
     {
       accessorKey: "name",
-      header: "Nombre de Vacuna",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Nombre de Vacuna
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const isLowStock = ["LOW_STOCK", "OUT_OF_STOCK"].includes(
           row.original.status
@@ -146,19 +163,64 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
     },
     {
       accessorKey: "batchNumber",
-      header: "Número de Lote",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Número de Lote
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => row.original.batchNumber || "-",
     },
     {
       accessorKey: "quantity",
-      header: "Dosis Disponibles",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Dosis Disponibles
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => (
         <div className="text-right">{row.getValue("quantity")}</div>
       ),
     },
     {
       accessorKey: "status",
-      header: "Estado",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Estado
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const status = row.getValue("status") as typeof InventoryStatus[keyof typeof InventoryStatus];
         const statusMap: Record<typeof InventoryStatus[keyof typeof InventoryStatus], string> = {
@@ -178,12 +240,42 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
     },
     {
       accessorKey: "expirationDate",
-      header: "Fecha de Expiración",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Fecha de Expiración
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => formatDate(row.getValue("expirationDate") as string),
     },
     {
       accessorKey: "specialNotes",
-      header: "Notas Especiales",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:text-[#47b3b6] transition-colors"
+          >
+            Notas Especiales
+            {column.getIsSorted() === "asc"
+              ? " ↑"
+              : column.getIsSorted() === "desc"
+                ? " ↓"
+                : ""}
+          </Button>
+        );
+      },
       cell: ({ row }) => row.original.specialNotes || "-",
     },
   ];
@@ -305,9 +397,8 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
           </div>
 
           {/* Table */}
-          <div className="overflow-auto rounded-xl border border-[#47b3b6]/20 bg-white">
-            <div className="min-w-[800px]">
-              <Table>
+          <div className="overflow-x-auto rounded-xl border border-[#47b3b6]/20 bg-white">
+            <Table className="min-w-full">
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow
@@ -317,7 +408,7 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
                       {headerGroup.headers.map((header) => (
                         <TableHead
                           key={header.id}
-                          className="text-[#47b3b6] font-semibold whitespace-nowrap"
+                          className="text-[#47b3b6] font-semibold whitespace-nowrap px-6 py-3"
                         >
                           {header.isPlaceholder
                             ? null
@@ -354,7 +445,7 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
                             key={cell.id}
-                            className="text-gray-700 whitespace-nowrap"
+                            className="text-gray-700 whitespace-nowrap px-6 py-4"
                           >
                             {flexRender(
                               cell.column.columnDef.cell,
@@ -376,34 +467,17 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
                   )}
                 </TableBody>
               </Table>
-            </div>
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between gap-2 mt-4">
-            <div className="text-sm text-gray-500">
-              {table.getFilteredRowModel().rows.length} vacunas encontradas
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-              >
-                Anterior
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                className="border-[#47b3b6]/20 hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] disabled:opacity-50"
-              >
-                Siguiente
-              </Button>
-            </div>
+          <div className="mt-4">
+            <TablePagination
+              currentPage={table.getState().pagination.pageIndex + 1}
+              pageSize={table.getState().pagination.pageSize}
+              totalItems={table.getFilteredRowModel().rows.length}
+              onPageChange={(page) => table.setPageIndex(page - 1)}
+              onPageSizeChange={(size) => table.setPageSize(size)}
+            />
           </div>
         </div>
       </Card>
@@ -417,7 +491,14 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
               Información detallada y movimientos de la vacuna seleccionada.
             </DialogDescription>
           </DialogHeader>
-          <ItemDetails selectedItem={selectedItem} />
+          <ItemDetails
+            selectedItem={selectedItem}
+            userId={userId}
+            onDeleteSuccess={() => {
+              setIsDetailsOpen(false);
+              fetchVaccines();
+            }}
+          />
           <DialogFooter>
             <Button
               variant="outline"

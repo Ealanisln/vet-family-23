@@ -22,8 +22,7 @@ export async function getFallbackUser() {
       console.error("[getFallbackUser] No se encontru00f3 ningu00fan usuario en la base de datos");
       return null;
     }
-    
-    console.log(`[getFallbackUser] Usando usuario fallback: ${user.id}`);
+
     return user;
   } catch (error) {
     console.error("[getFallbackUser] Error al buscar usuario fallback:", error);
@@ -51,7 +50,6 @@ export async function getAuthenticatedUser(
         const authResult = await isAuthenticated();
         // El resultado puede ser boolean o null, aseguramos que sea boolean
         authenticated = authResult === true;
-        console.log(`[getAuthenticatedUser] isAuthenticated check: ${authenticated}`);
       } catch (error) {
         console.warn("[getAuthenticatedUser] Error al verificar autenticaciu00f3n:", error);
         // Continuamos con el flujo aunque falle la verificaciu00f3n
@@ -59,13 +57,9 @@ export async function getAuthenticatedUser(
     } else {
       console.warn("[getAuthenticatedUser] isAuthenticated es null, omitiendo verificaciu00f3n");
     }
-    
+
     // Intentar obtener usuario de la sesiu00f3n
     const user = await getUser();
-    console.log("[getAuthenticatedUser] User from session:", {
-      id: user?.id,
-      email: user?.email,
-    });
     
     // Si tenemos un usuario vu00e1lido, buscar en la base de datos
     if (user && user.id) {
@@ -73,15 +67,13 @@ export async function getAuthenticatedUser(
         where: { kindeId: user.id },
         select: { id: true, firstName: true, lastName: true, email: true },
       });
-      
+
       if (dbUser) {
-        console.log(`[getAuthenticatedUser] Usuario encontrado en DB: ${dbUser.id}`);
         return dbUser;
       }
     }
-    
+
     // Si no se pudo obtener el usuario, usar fallback
-    console.log("[getAuthenticatedUser] No se pudo obtener usuario de sesiu00f3n, usando fallback");
     return await getFallbackUser();
   } catch (error) {
     console.error("[getAuthenticatedUser] Error:", error);

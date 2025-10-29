@@ -119,7 +119,10 @@ export async function addPet(
           }
         },
         include: {
-          MedicalHistory: true,
+          MedicalHistory: {
+            where: { deletedAt: null }, // Exclude soft-deleted records
+            orderBy: { visitDate: 'desc' }
+          },
         },
       });
 

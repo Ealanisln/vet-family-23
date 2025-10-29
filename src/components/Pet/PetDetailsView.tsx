@@ -176,6 +176,24 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
     }
   };
 
+  // Get the latest weight from medical history
+  const getLatestWeight = () => {
+    if (!pet.MedicalHistory || pet.MedicalHistory.length === 0) {
+      return pet.weight;
+    }
+
+    // Find the most recent medical history record with a weight
+    const recordsWithWeight = pet.MedicalHistory
+      .filter(record => record.weightInKg !== null)
+      .sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime());
+
+    if (recordsWithWeight.length > 0) {
+      return recordsWithWeight[0].weightInKg;
+    }
+
+    return pet.weight;
+  };
+
   const infoItems = [
     { 
       label: "Especie", 
@@ -217,9 +235,9 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
       iconBg: "bg-pink-200",
       textColor: "text-pink-700"
     },
-    { 
-      label: "Peso", 
-      value: `${pet.weight} kg`, 
+    {
+      label: "Peso",
+      value: `${getLatestWeight()} kg`,
       icon: ScaleIcon,
       gradient: "from-indigo-50 to-indigo-100/50",
       iconBg: "bg-indigo-200",

@@ -115,7 +115,7 @@ model InventoryMovement {
 }
 
 model MedicalHistory {
-  id             String   @id
+  id             String    @id
   petId          String
   visitDate      DateTime
   weightInKg     Float?
@@ -124,9 +124,10 @@ model MedicalHistory {
   treatment      String
   prescriptions  String[]
   notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now()) @updatedAt
-  Pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+  deletedAt      DateTime?
+  Pet            Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
 }
 
 model MedicalOrder {

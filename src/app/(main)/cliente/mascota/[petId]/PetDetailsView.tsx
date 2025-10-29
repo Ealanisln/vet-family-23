@@ -66,6 +66,24 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
     };
   };
 
+  // Get the latest weight from medical history
+  const getLatestWeight = () => {
+    if (!pet.MedicalHistory || pet.MedicalHistory.length === 0) {
+      return pet.weight;
+    }
+
+    // Find the most recent medical history record with a weight
+    const recordsWithWeight = pet.MedicalHistory
+      .filter(record => record.weightInKg !== null)
+      .sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime());
+
+    if (recordsWithWeight.length > 0) {
+      return recordsWithWeight[0].weightInKg;
+    }
+
+    return pet.weight;
+  };
+
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -102,7 +120,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                 value: pet.dateOfBirth.toLocaleDateString(),
               },
               { label: "Género", value: pet.gender },
-              { label: "Peso", value: `${pet.weight} kg` },
+              { label: "Peso", value: `${getLatestWeight()} kg` },
               {
                 label: "Número de Microchip",
                 value: pet.microchipNumber || "N/A",

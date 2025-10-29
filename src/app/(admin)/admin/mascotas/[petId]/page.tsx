@@ -21,6 +21,8 @@ import PetForm from "@/components/Admin/ui/PetForm";
 import { MedicalRecordDialog } from "@/app/(admin)/admin/AddMedicalRecordDialog";
 import { VaccinationContainer } from "@/components/Vaccination/VaccinationContainer";
 import { DewormingContainer } from "@/components/Deworming/DewormingContainer";
+import { DeleteMedicalRecordButton } from "@/components/MedicalHistory/DeleteMedicalRecordButton";
+import { DeletedMedicalHistoriesView } from "@/components/MedicalHistory/DeletedMedicalHistoriesView";
 
 export default async function PetDetailsPage({
   params,
@@ -35,6 +37,7 @@ export default async function PetDetailsPage({
       Vaccination: true,
       Deworming: true,
       MedicalHistory: {
+        where: { deletedAt: null }, // Exclude soft-deleted records
         orderBy: {
           visitDate: 'desc'
         }
@@ -51,18 +54,38 @@ export default async function PetDetailsPage({
     const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDifference = today.getMonth() - birthDate.getMonth();
-  
+
     if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-  
+
     if (age === 0) {
       const months = today.getMonth() - birthDate.getMonth() + (12 * (today.getFullYear() - birthDate.getFullYear()));
       return months <= 1 ? "Menos de 1 mes" : `${months} meses`;
     }
-  
+
     return `${age} año${age !== 1 ? 's' : ''}`;
   };
+
+  // Get the latest weight from medical history
+  const getLatestWeight = (): number => {
+    if (!pet.MedicalHistory || pet.MedicalHistory.length === 0) {
+      return pet.weight;
+    }
+
+    // Find the most recent medical history record with a weight
+    const recordsWithWeight = pet.MedicalHistory
+      .filter(record => record.weightInKg !== null)
+      .sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime());
+
+    if (recordsWithWeight.length > 0 && recordsWithWeight[0].weightInKg !== null) {
+      return recordsWithWeight[0].weightInKg;
+    }
+
+    return pet.weight;
+  };
+
+  const latestWeight = getLatestWeight();
 
   const formattedPet = {
     id: pet.id,
@@ -192,7 +215,7 @@ export default async function PetDetailsPage({
                 </div>
                 <div>
                   <p className="text-sm font-medium text-indigo-700">Peso</p>
-                  <p className="text-lg font-semibold text-gray-900">{pet.weight} kg</p>
+                  <p className="text-lg font-semibold text-gray-900">{latestWeight} kg</p>
                 </div>
               </div>
 
@@ -353,20 +376,26 @@ export default async function PetDetailsPage({
                         </TableCell>
                         <TableCell>{record.notes || "N/A"}</TableCell>
                         <TableCell>
-                          <MedicalRecordDialog
-                            existingRecord={{
-                              id: record.id,
-                              petId: record.petId,
-                              userId: pet.userId,
-                              visitDate: new Date(record.visitDate).toISOString().split("T")[0],
-                              weightInKg: record.weightInKg || undefined,
-                              reasonForVisit: record.reasonForVisit,
-                              diagnosis: record.diagnosis,
-                              treatment: record.treatment,
-                              prescriptions: record.prescriptions,
-                              notes: record.notes || undefined,
-                            }}
-                          />
+                          <div className="flex items-center gap-2">
+                            <MedicalRecordDialog
+                              existingRecord={{
+                                id: record.id,
+                                petId: record.petId,
+                                userId: pet.userId,
+                                visitDate: new Date(record.visitDate).toISOString().split("T")[0],
+                                weightInKg: record.weightInKg || undefined,
+                                reasonForVisit: record.reasonForVisit,
+                                diagnosis: record.diagnosis,
+                                treatment: record.treatment,
+                                prescriptions: record.prescriptions,
+                                notes: record.notes || undefined,
+                              }}
+                            />
+                            <DeleteMedicalRecordButton
+                              recordId={record.id}
+                              recordDate={format(new Date(record.visitDate), "dd/MM/yyyy")}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -386,6 +415,9 @@ export default async function PetDetailsPage({
             )}
           </CardContent>
         </Card>
+
+        {/* Deleted Medical Histories */}
+        <DeletedMedicalHistoriesView petId={pet.id} />
 
         {/* Vacunas y Desparasitación */}
         <div className="space-y-8">

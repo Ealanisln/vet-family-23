@@ -26,7 +26,10 @@ export async function getPetDetails(userId: string, petId: string) {
         microchipNumber: true,
         isNeutered: true,
         isDeceased: true,
-        MedicalHistory: true,
+        MedicalHistory: {
+          where: { deletedAt: null }, // Exclude soft-deleted records
+          orderBy: { visitDate: 'desc' }
+        },
         Vaccination: true,
         Deworming: true,
       },

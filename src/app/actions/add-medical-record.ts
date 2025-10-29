@@ -122,6 +122,14 @@ type MedicalHistoryResult =
   | { success: true; record: MedicalHistory }
   | { success: false; error: string };
 
+type SuccessOnlyResult =
+  | { success: true }
+  | { success: false; error: string };
+
+type MedicalHistoriesResult =
+  | { success: true; histories: MedicalHistory[] }
+  | { success: false; error: string };
+
 export async function addMedicalHistory(
   petId: string,
   recordData: MedicalHistoryInput
@@ -263,6 +271,7 @@ export async function getMedicalHistoryRecord(
       where: {
         id: recordId,
         petId: petId,
+        deletedAt: null, // Exclude soft-deleted records
       },
     });
 
@@ -274,5 +283,105 @@ export async function getMedicalHistoryRecord(
   } catch (error) {
     console.error("Failed to fetch medical history record:", error);
     return { success: false, error: "Failed to fetch medical history record" };
+  }
+}
+
+// Soft delete a medical history record
+export async function softDeleteMedicalHistory(
+  recordId: string
+): Promise<SuccessOnlyResult> {
+  try {
+    // Verify record exists and is not already deleted
+    const existingRecord = await prisma.medicalHistory.findUnique({
+      where: { id: recordId },
+    });
+
+    if (!existingRecord) {
+      return { success: false, error: "Medical history record not found" };
+    }
+
+    if (existingRecord.deletedAt) {
+      return { success: false, error: "Record is already deleted" };
+    }
+
+    // Soft delete by setting deletedAt timestamp
+    await prisma.medicalHistory.update({
+      where: { id: recordId },
+      data: { deletedAt: new Date() },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to soft delete medical history:", error);
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
+        case 'P2025':
+          return { success: false, error: "Record not found" };
+        default:
+          return { success: false, error: `Database error: ${prismaError.code}` };
+      }
+    }
+    return { success: false, error: "Failed to delete medical history" };
+  }
+}
+
+// Restore a soft-deleted medical history record
+export async function restoreMedicalHistory(
+  recordId: string
+): Promise<SuccessOnlyResult> {
+  try {
+    // Verify record exists and is deleted
+    const existingRecord = await prisma.medicalHistory.findUnique({
+      where: { id: recordId },
+    });
+
+    if (!existingRecord) {
+      return { success: false, error: "Medical history record not found" };
+    }
+
+    if (!existingRecord.deletedAt) {
+      return { success: false, error: "Record is not deleted" };
+    }
+
+    // Restore by clearing deletedAt timestamp
+    await prisma.medicalHistory.update({
+      where: { id: recordId },
+      data: { deletedAt: null },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to restore medical history:", error);
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
+        case 'P2025':
+          return { success: false, error: "Record not found" };
+        default:
+          return { success: false, error: `Database error: ${prismaError.code}` };
+      }
+    }
+    return { success: false, error: "Failed to restore medical history" };
+  }
+}
+
+// Get deleted medical history records for a pet
+export async function getDeletedMedicalHistories(
+  petId: string
+): Promise<MedicalHistoriesResult> {
+  try {
+    const deletedRecords = await prisma.medicalHistory.findMany({
+      where: {
+        petId,
+        deletedAt: { not: null }, // Only get deleted records
+      },
+      orderBy: { deletedAt: 'desc' }, // Most recently deleted first
+    });
+
+    return { success: true, histories: deletedRecords };
+  } catch (error) {
+    console.error("Failed to fetch deleted medical histories:", error);
+    return { success: false, error: "Failed to fetch deleted medical histories" };
   }
 }

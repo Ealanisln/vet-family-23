@@ -136,6 +136,33 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
   const isOpen = open !== undefined ? open : localOpen;
   const setIsOpen = onOpenChange || setLocalOpen;
 
+  // Reset form state when dialog opens/closes or when existingRecord changes
+  useEffect(() => {
+    if (isOpen) {
+      // Initialize or reset the record state when dialog opens
+      setRecord({
+        id: existingRecord?.id || undefined,
+        petId: existingRecord?.petId || petId || "",
+        userId: existingRecord?.userId || "",
+        visitDate: existingRecord?.visitDate || "",
+        weightInKg: existingRecord?.weightInKg || undefined,
+        reasonForVisit: existingRecord?.reasonForVisit || "",
+        diagnosis: existingRecord?.diagnosis || "",
+        treatment: existingRecord?.treatment || "",
+        prescriptions: existingRecord?.prescriptions || [],
+        notes: existingRecord?.notes || "",
+      });
+
+      // Reset products section
+      setProductsSection({
+        isOpen: false,
+        selectedProducts: [],
+        searchValue: "",
+        searchResults: [],
+      });
+    }
+  }, [isOpen, existingRecord, petId]);
+
   useEffect(() => {
     const fetchPets = async () => {
       // Solo hacer la llamada si el diálogo está abierto
@@ -472,9 +499,25 @@ export const MedicalRecordDialog: React.FC<MedicalRecordDialogProps> = ({
                   : "Agregar Nuevo Historial Médico"}
               </DialogTitle>
               <DialogDescription className="text-gray-600">
-                {existingRecord
-                  ? "Modifique los detalles del historial médico. Haga clic en guardar cuando haya terminado."
-                  : "Ingrese los detalles del nuevo historial médico. Haga clic en guardar cuando haya terminado."}
+                {existingRecord ? (
+                  <span>
+                    Editando registro del{" "}
+                    <strong>
+                      {new Date(existingRecord.visitDate).toLocaleDateString("es-MX", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </strong>
+                    {existingRecord.id && (
+                      <span className="text-xs ml-2 text-gray-500">
+                        (ID: {existingRecord.id.substring(0, 8)})
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  "Ingrese los detalles del nuevo historial médico. Haga clic en guardar cuando haya terminado."
+                )}
               </DialogDescription>
             </div>
           </div>

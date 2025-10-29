@@ -206,7 +206,7 @@ describe('/api/auth-status', () => {
       mockPrisma.role.upsert.mockResolvedValue({ id: 'role_1', key: 'admin', name: 'Administrator' } as any)
 
       const response = await GET(mockRequest)
-      const data = await response.json()
+      await response.json()
 
       expect(response.status).toBe(200)
       expect(mockPrisma.role.upsert).toHaveBeenCalledTimes(2) // For admin and vet roles

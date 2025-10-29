@@ -62,9 +62,10 @@ import ItemDetails from "./ui/ItemDetails";
 
 interface VaccineTableProps {
   onRowClick?: (item: InventoryFormItem) => void;
+  userId?: string;
 }
 
-const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
+const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick, userId }) => {
   // States with proper typing
   const [data, setData] = useState<InventoryFormItem[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -417,7 +418,14 @@ const VaccineTable: React.FC<VaccineTableProps> = ({ onRowClick }) => {
               Información detallada y movimientos de la vacuna seleccionada.
             </DialogDescription>
           </DialogHeader>
-          <ItemDetails selectedItem={selectedItem} />
+          <ItemDetails
+            selectedItem={selectedItem}
+            userId={userId}
+            onDeleteSuccess={() => {
+              setIsDetailsOpen(false);
+              fetchVaccines();
+            }}
+          />
           <DialogFooter>
             <Button
               variant="outline"

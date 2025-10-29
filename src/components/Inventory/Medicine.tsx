@@ -119,7 +119,11 @@ const convertInventoryItemToFormData = (
   return formItem;
 };
 
-export default function Medicine() {
+interface MedicineProps {
+  userId?: string;
+}
+
+export default function Medicine({ userId }: MedicineProps) {
   // Estados
   const [data, setData] = useState<InventoryFormItem[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -645,7 +649,14 @@ export default function Medicine() {
             Información detallada y movimientos del medicamento seleccionado.
           </DialogDescription>
         </DialogHeader>
-        <ItemDetails selectedItem={selectedItem} />
+        <ItemDetails
+          selectedItem={selectedItem}
+          userId={userId}
+          onDeleteSuccess={() => {
+            setIsDialogOpen(false);
+            fetchInventory();
+          }}
+        />
         <DialogFooter>
           <Button
             variant="outline"

@@ -134,7 +134,11 @@ const convertInventoryItemToFormData = (
   return formItem;
 };
 
-export default function Inventory() {
+interface InventoryProps {
+  userId?: string;
+}
+
+export default function Inventory({ userId }: InventoryProps) {
   // Estados
   const [data, setData] = useState<InventoryFormItem[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -779,7 +783,14 @@ export default function Inventory() {
               Información detallada y movimientos del item seleccionado.
             </DialogDescription>
           </DialogHeader>
-          <ItemDetails selectedItem={selectedItem} />
+          <ItemDetails
+            selectedItem={selectedItem}
+            userId={userId}
+            onDeleteSuccess={() => {
+              setIsDialogOpen(false);
+              fetchInventory();
+            }}
+          />
           <DialogFooter>
             <Button
               variant="outline"

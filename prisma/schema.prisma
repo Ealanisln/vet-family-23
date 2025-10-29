@@ -85,6 +85,9 @@ model InventoryItem {
   updatedAt           DateTime
   cost                Float?
   price               Float?
+  deletedAt           DateTime?
+  deletedBy           String?
+  deletionReason      String?
   InventoryMovement   InventoryMovement[]
   MedicalOrderProduct MedicalOrderProduct[]
 
@@ -105,7 +108,7 @@ model InventoryMovement {
   userId          String?
   relatedRecordId String?
   notes           String?
-  InventoryItem   InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  InventoryItem   InventoryItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
   User            User?         @relation(fields: [userId], references: [id])
 
   @@index([itemId, date])

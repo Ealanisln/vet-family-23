@@ -38,6 +38,7 @@ export async function searchInventoryItems({
     const items = await prisma.inventoryItem.findMany({
       where: {
         AND: [
+          { deletedAt: null }, // Filter out soft-deleted items
           {
             OR: [
               { name: { contains: searchTerm, mode: "insensitive" } },
@@ -72,6 +73,7 @@ export async function searchInventoryItems({
     return items.map((item) => ({
       ...item,
       expirationDate: item.expirationDate?.toISOString() || null,
+      deletedAt: item.deletedAt?.toISOString() || null,
       createdAt: item.createdAt.toISOString(),
       updatedAt: item.updatedAt.toISOString(),
       movements: item.InventoryMovement.map((movement) => ({
@@ -89,6 +91,9 @@ export async function searchInventoryItems({
 export async function getInventory(): Promise<GetInventoryResponse> {
   try {
     const items = await prisma.inventoryItem.findMany({
+      where: {
+        deletedAt: null, // Filter out soft-deleted items
+      },
       orderBy: {
         updatedAt: "desc",
       },
@@ -112,6 +117,7 @@ export async function getInventory(): Promise<GetInventoryResponse> {
     const serializedItems = items.map((item) => ({
       ...item,
       expirationDate: item.expirationDate?.toISOString() || null,
+      deletedAt: item.deletedAt?.toISOString() || null,
       movements: item.InventoryMovement.map((movement) => ({
         ...movement,
         date: movement.date.toISOString(),
@@ -194,6 +200,7 @@ export async function updateInventoryItem(
       item: {
         ...updatedItem,
         expirationDate: updatedItem.expirationDate?.toISOString() || null,
+        deletedAt: updatedItem.deletedAt?.toISOString() || null,
         createdAt: updatedItem.createdAt.toISOString(),
         updatedAt: updatedItem.updatedAt.toISOString(),
         movements: [],
@@ -279,6 +286,7 @@ export async function createInventoryItem(
       item: {
         ...newItem,
         expirationDate: newItem.expirationDate?.toISOString() || null,
+        deletedAt: newItem.deletedAt?.toISOString() || null,
         createdAt: newItem.createdAt.toISOString(),
         updatedAt: newItem.updatedAt.toISOString(),
         movements: [],
@@ -297,5 +305,164 @@ export async function createInventoryItem(
           ? error.message
           : "Failed to create inventory item",
     };
+  }
+}
+
+// Soft delete an inventory item
+export async function softDeleteInventoryItem(
+  itemId: string,
+  deletedBy: string,
+  deletionReason?: string
+): Promise<{ success: boolean; error?: string; warning?: string }> {
+  try {
+    // Verify item exists and is not already deleted
+    const existingItem = await prisma.inventoryItem.findUnique({
+      where: { id: itemId },
+      include: {
+        MedicalOrderProduct: true,
+      },
+    });
+
+    if (!existingItem) {
+      return { success: false, error: "Inventory item not found" };
+    }
+
+    if (existingItem.deletedAt) {
+      return { success: false, error: "Item is already deleted" };
+    }
+
+    // Check for linked medical orders (warn but allow)
+    const hasOrders = existingItem.MedicalOrderProduct.length > 0;
+    const warning = hasOrders
+      ? `This item is linked to ${existingItem.MedicalOrderProduct.length} medical order(s). Historical records will be preserved.`
+      : undefined;
+
+    // Soft delete by setting deletedAt timestamp and metadata
+    await prisma.inventoryItem.update({
+      where: { id: itemId },
+      data: {
+        deletedAt: new Date(),
+        deletedBy,
+        deletionReason: deletionReason || null,
+      },
+    });
+
+    revalidatePath("/admin/inventario");
+    revalidatePath("/admin/inventario/eliminados");
+
+    return { success: true, warning };
+  } catch (error) {
+    console.error("Failed to soft delete inventory item:", error);
+    if (error && typeof error === "object" && "code" in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
+        case "P2025":
+          return { success: false, error: "Item not found" };
+        default:
+          return {
+            success: false,
+            error: `Database error: ${prismaError.code}`,
+          };
+      }
+    }
+    return { success: false, error: "Failed to delete inventory item" };
+  }
+}
+
+// Restore a soft-deleted inventory item
+export async function restoreInventoryItem(
+  itemId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Verify item exists and is deleted
+    const existingItem = await prisma.inventoryItem.findUnique({
+      where: { id: itemId },
+    });
+
+    if (!existingItem) {
+      return { success: false, error: "Inventory item not found" };
+    }
+
+    if (!existingItem.deletedAt) {
+      return { success: false, error: "Item is not deleted" };
+    }
+
+    // Restore by clearing deletedAt timestamp and metadata
+    await prisma.inventoryItem.update({
+      where: { id: itemId },
+      data: {
+        deletedAt: null,
+        deletedBy: null,
+        deletionReason: null,
+      },
+    });
+
+    revalidatePath("/admin/inventario");
+    revalidatePath("/admin/inventario/eliminados");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to restore inventory item:", error);
+    if (error && typeof error === "object" && "code" in error) {
+      const prismaError = error as { code: string };
+      switch (prismaError.code) {
+        case "P2025":
+          return { success: false, error: "Item not found" };
+        default:
+          return {
+            success: false,
+            error: `Database error: ${prismaError.code}`,
+          };
+      }
+    }
+    return { success: false, error: "Failed to restore inventory item" };
+  }
+}
+
+// Get deleted inventory items with optional category filter
+export async function getDeletedInventoryItems(
+  category?: InventoryCategory
+): Promise<GetInventoryResponse> {
+  try {
+    const deletedItems = await prisma.inventoryItem.findMany({
+      where: {
+        deletedAt: { not: null }, // Only get deleted items
+        ...(category ? { category } : {}),
+      },
+      orderBy: { deletedAt: "desc" }, // Most recently deleted first
+      include: {
+        InventoryMovement: {
+          orderBy: {
+            date: "desc",
+          },
+          take: 1,
+          include: {
+            User: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const serializedItems = deletedItems.map((item) => ({
+      ...item,
+      expirationDate: item.expirationDate?.toISOString() || null,
+      deletedAt: item.deletedAt?.toISOString() || null,
+      movements: item.InventoryMovement.map((movement) => ({
+        ...movement,
+        date: movement.date.toISOString(),
+        user: movement.User,
+      })),
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+    }));
+
+    return { success: true, items: serializedItems };
+  } catch (error) {
+    console.error("Failed to fetch deleted inventory items:", error);
+    return { success: false, error: "Failed to fetch deleted inventory items" };
   }
 }

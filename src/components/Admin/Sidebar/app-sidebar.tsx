@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   ShieldCheck,
   UserPlus,
+  Archive,
 } from "lucide-react";
 
 import { NavMain } from "@/components/Admin/Sidebar/nav-main";
@@ -92,6 +93,11 @@ const data = {
           url: "/admin/inventario/vacunas",
           icon: Syringe,
         },
+        {
+          title: "Items Eliminados",
+          url: "/admin/inventario/eliminados",
+          icon: Archive,
+        },
       ],
     },
     {
@@ -116,7 +122,7 @@ const AddMedicalRecordButton = React.forwardRef<
   <SidebarMenuButton
     ref={ref}
     tooltip="Agregar Historial Médico"
-    className="group-data-[collapsible=icon]:justify-center hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200"
+    className="group-data-[collapsible=icon]:justify-center bg-slate-100 hover:!bg-slate-200 text-slate-700 hover:!text-slate-800 font-medium transition-all duration-200"
     {...props}
   >
     <PlusCircle className="h-4 w-4" />
@@ -135,7 +141,7 @@ const NewClientButton = React.forwardRef<
     ref={ref}
     asChild
     tooltip="Nuevo Cliente"
-    className="group-data-[collapsible=icon]:justify-center bg-[#47b3b6]/10 hover:bg-[#47b3b6]/20 text-[#47b3b6] hover:text-[#3a9296] font-medium transition-colors duration-200"
+    className="group-data-[collapsible=icon]:justify-center bg-slate-100 hover:!bg-slate-200 text-slate-700 hover:!text-slate-800 font-medium transition-all duration-200"
   >
     <Link href="/admin/clientes/nuevo-cliente">
       <UserPlus className="h-4 w-4" />
@@ -155,7 +161,7 @@ const NewPetButton = React.forwardRef<
     ref={ref}
     asChild
     tooltip="Nueva Mascota"
-    className="group-data-[collapsible=icon]:justify-center bg-[#47b3b6]/10 hover:bg-[#47b3b6]/20 text-[#47b3b6] hover:text-[#3a9296] font-medium transition-colors duration-200"
+    className="group-data-[collapsible=icon]:justify-center bg-slate-100 hover:!bg-slate-200 text-slate-700 hover:!text-slate-800 font-medium transition-all duration-200"
   >
     <Link href="/admin/mascotas/nueva">
       <PawPrint className="h-4 w-4" />
@@ -178,29 +184,16 @@ export function AppSidebar({
   };
 }) {
   return (
-    <Sidebar 
-      collapsible="icon" 
-      className="border-r bg-gradient-to-b from-white to-blue-50 border-r-[#47b3b6]/20" 
+    <Sidebar
+      collapsible="icon"
+      className="border-r bg-sidebar-background border-sidebar-border"
       {...props}
     >
-      <SidebarHeader className="border-b border-[#47b3b6]/20">
+      <SidebarHeader className="border-b border-sidebar-border">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent className="py-4">
-        {/* Removemos las props que causaban el error */}
         <NavMain items={data.navMain} />
-        <style jsx global>{`
-          /* Estilos globales para los elementos del NavMain */
-          .sidebar-menu-button {
-            @apply hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200;
-          }
-          .sidebar-menu-button[data-active="true"] {
-            @apply bg-[#47b3b6]/15 text-[#47b3b6] font-medium;
-          }
-          .sidebar-menu {
-            @apply space-y-1;
-          }
-        `}</style>
         <SidebarMenu className="mt-6 px-2">
           <SidebarMenuItem>
             <NewClientButton />
@@ -211,20 +204,20 @@ export function AppSidebar({
           <SidebarMenuItem>
             <MedicalRecordDialog
               triggerButton={
-                <AddMedicalRecordButton className="hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200" />
+                <AddMedicalRecordButton />
               }
             />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t border-[#47b3b6]/20">
+      <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu className="px-2">
 
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               tooltip="Reportar un problema"
-              className="group-data-[collapsible=icon]:justify-center hover:bg-[#47b3b6]/10 hover:text-[#47b3b6] transition-colors duration-200"
+              className="group-data-[collapsible=icon]:justify-center hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-all duration-200"
             >
               <Link href="mailto:emmanuel@alanis.dev">
                 <AlertCircle className="h-4 w-4" />
@@ -241,11 +234,11 @@ export function AppSidebar({
         {/* Usamos datos reales del usuario o fallback */}
         <NavUser user={user || {
           name: "Admin",
-          email: "admin@example.com", 
+          email: "admin@example.com",
           avatar: "/avatars/admin.jpg"
         }} />
       </SidebarFooter>
-      <SidebarRail className="bg-[#47b3b6]/5" />
+      <SidebarRail className="hidden" />
     </Sidebar>
   );
 }

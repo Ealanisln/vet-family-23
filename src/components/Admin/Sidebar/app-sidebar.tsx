@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   UserPlus,
   Archive,
+  Sparkles,
 } from "lucide-react";
 
 import { NavMain } from "@/components/Admin/Sidebar/nav-main";
@@ -109,6 +110,19 @@ const data = {
           title: "Gestión de Usuarios",
           url: "/admin/usuarios",
           icon: Users,
+        },
+      ],
+    },
+    {
+      title: "Novedades",
+      url: "/admin/changelog",
+      icon: Sparkles,
+      badge: true,
+      items: [
+        {
+          title: "Registro de Cambios",
+          url: "/admin/changelog",
+          icon: Sparkles,
         },
       ],
     },

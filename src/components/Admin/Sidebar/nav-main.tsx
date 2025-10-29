@@ -26,6 +26,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useState, useEffect, useMemo } from "react"
+import { ChangelogBadge } from "@/components/Changelog/ChangelogBadge"
+import packageJson from "../../../../package.json"
 
 export function NavMain({
   items,
@@ -34,6 +36,7 @@ export function NavMain({
     title: string
     url: string
     icon?: LucideIcon
+    badge?: boolean
     items?: {
       title: string
       url: string
@@ -109,7 +112,7 @@ export function NavMain({
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Versión 1.0</SidebarGroupLabel>
+      <SidebarGroupLabel>Versión {packageJson.version}</SidebarGroupLabel>
       <SidebarMenu className="space-y-2">
         {items.map((item) => {
           const isCollapsed = state === "collapsed"
@@ -123,11 +126,16 @@ export function NavMain({
                     <SidebarMenuButton
                       tooltip={item.title}
                       isActive={isItemActive(item.url)}
-                      className="py-3 data-[active=true]:text-sidebar-primary"
+                      className="py-3 data-[active=true]:text-sidebar-primary relative"
                     >
                       {item.icon && (
-                        <div>
+                        <div className="relative">
                           <item.icon className="h-6 w-6" />
+                          {item.badge && (
+                            <div className="absolute -top-1 -right-1">
+                              <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                            </div>
+                          )}
                         </div>
                       )}
                       <span>{item.title}</span>
@@ -181,7 +189,10 @@ export function NavMain({
                         <item.icon className="h-6 w-6" />
                       </div>
                     )}
-                    <span>{item.title}</span>
+                    <span className="flex items-center gap-2">
+                      {item.title}
+                      {item.badge && <ChangelogBadge className="ml-1" />}
+                    </span>
                     <ChevronRight className="ml-auto h-5 w-5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>

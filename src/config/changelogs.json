@@ -1,0 +1,56 @@
+[
+  {
+    "id": "2025-10-001",
+    "version": "1.2.0",
+    "date": "2025-10-28",
+    "title": "Rediseño Completo del Menú Lateral",
+    "description": "Renovación completa del menú lateral administrativo con navegación mejorada, secciones colapsables y experiencia de usuario optimizada. Ahora incluye acciones rápidas y mejor jerarquía visual.",
+    "type": "feature",
+    "priority": "high"
+  },
+  {
+    "id": "2025-10-002",
+    "version": "1.1.5",
+    "date": "2025-10-25",
+    "title": "Mejoras en Tablas de Inventario",
+    "description": "Tablas de inventario mejoradas con búsqueda, filtrado y ordenamiento optimizados. Se agregaron acciones en lote y mejor respuesta en dispositivos móviles.",
+    "type": "improvement",
+    "priority": "medium"
+  },
+  {
+    "id": "2025-10-003",
+    "version": "1.1.4",
+    "date": "2025-10-22",
+    "title": "Sistema de Eliminación para Inventario",
+    "description": "Implementación de sistema completo de eliminación suave para artículos del inventario. Los artículos ahora se archivan en lugar de eliminarse permanentemente, permitiendo recuperación y seguimiento de auditoría.",
+    "type": "feature",
+    "priority": "medium"
+  },
+  {
+    "id": "2025-10-004",
+    "version": "1.1.3",
+    "date": "2025-10-18",
+    "title": "Seguimiento de Peso en Historial Médico",
+    "description": "Campo de peso agregado a los registros del historial médico con visualización automática del peso más reciente en perfiles de mascotas. Ayuda a dar seguimiento a la salud de las mascotas a lo largo del tiempo.",
+    "type": "feature",
+    "priority": "medium"
+  },
+  {
+    "id": "2025-10-005",
+    "version": "1.1.0",
+    "date": "2025-10-15",
+    "title": "Sistema de Autenticación Mejorado",
+    "description": "Flujo de autenticación mejorado con mejor manejo de errores y mecanismos de respaldo para usuarios administradores. Experiencia de inicio de sesión más estable.",
+    "type": "improvement",
+    "priority": "high"
+  },
+  {
+    "id": "2025-10-006",
+    "version": "1.0.8",
+    "date": "2025-10-12",
+    "title": "Corrección de Errores en Calendario de Vacunación",
+    "description": "Se resolvieron problemas con los cálculos del calendario de vacunación y las notificaciones. Las actualizaciones de estado ahora funcionan correctamente para todos los tipos de vacunas.",
+    "type": "bugfix",
+    "priority": "high"
+  }
+]

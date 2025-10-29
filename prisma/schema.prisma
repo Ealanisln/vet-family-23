@@ -118,11 +118,14 @@ model MedicalHistory {
   id             String   @id
   petId          String
   visitDate      DateTime
+  weightInKg     Float?
   reasonForVisit String
   diagnosis      String
   treatment      String
   prescriptions  String[]
   notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
   Pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
 }
 

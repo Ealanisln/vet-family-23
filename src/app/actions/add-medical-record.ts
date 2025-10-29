@@ -34,11 +34,14 @@ type MedicalHistory = {
   id: string;
   petId: string;
   visitDate: Date;
+  weightInKg: number | null;
   reasonForVisit: string;
   diagnosis: string;
   treatment: string;
   prescriptions: string[];
   notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 type GetPetsForMedicalRecordResult =
@@ -107,6 +110,7 @@ export async function getPetsForMedicalRecord(): Promise<GetPetsForMedicalRecord
 interface MedicalHistoryInput {
   id?: string;
   visitDate: Date;
+  weightInKg?: number;
   reasonForVisit: string;
   diagnosis: string;
   treatment: string;
@@ -123,6 +127,13 @@ export async function addMedicalHistory(
   recordData: MedicalHistoryInput
 ): Promise<MedicalHistoryResult> {
   try {
+    // Validate weightInKg if provided
+    if (recordData.weightInKg !== undefined && recordData.weightInKg !== null) {
+      if (recordData.weightInKg <= 0) {
+        return { success: false, error: "Weight must be a positive number" };
+      }
+    }
+
     // First verify that the pet exists
     const pet = await prisma.pet.findUnique({
       where: { id: petId },
@@ -140,12 +151,13 @@ export async function addMedicalHistory(
     // Start a transaction
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const data = recordData;
-      
+
       const newRecord = await tx.medicalHistory.create({
         data: {
           id: uuidv4(),
           petId,
           visitDate: data.visitDate,
+          weightInKg: data.weightInKg || null,
           reasonForVisit: data.reasonForVisit,
           diagnosis: data.diagnosis,
           treatment: data.treatment,
@@ -203,10 +215,11 @@ export async function updateMedicalHistory(
       return { success: false, error: "Medical history record not found or unauthorized" };
     }
 
-    const { id, ...data } = recordData;
-    
+    // Explicitly exclude weightInKg from updates - it's immutable after creation
+    const { id, weightInKg, ...data } = recordData;
+
     const updatedRecord = await prisma.medicalHistory.update({
-      where: { 
+      where: {
         id: id,
         petId: petId, // Additional safety check
       },
@@ -217,6 +230,7 @@ export async function updateMedicalHistory(
         treatment: data.treatment,
         prescriptions: data.prescriptions,
         notes: data.notes || null,
+        // Note: weightInKg is intentionally excluded - immutable field
       },
     });
 

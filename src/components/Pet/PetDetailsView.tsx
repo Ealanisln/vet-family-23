@@ -42,11 +42,14 @@ interface MedicalHistory {
   id: string;
   petId: string;
   visitDate: Date;
+  weightInKg: number | null;
   reasonForVisit: string;
   diagnosis: string;
   treatment: string;
   prescriptions: string[];
   notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface Vaccination {
@@ -405,6 +408,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                   <TableHeader>
                     <TableRow className="border-gray-200">
                       <TableHead className="font-semibold text-gray-700">Fecha</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Peso (kg)</TableHead>
                       <TableHead className="font-semibold text-gray-700">Razón</TableHead>
                       <TableHead className="font-semibold text-gray-700">Diagnóstico</TableHead>
                       <TableHead className="font-semibold text-gray-700">Tratamiento</TableHead>
@@ -417,6 +421,9 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                       <TableRow key={record.id} className={index % 2 === 0 ? "bg-gray-50/50" : ""}>
                         <TableCell className="font-medium">
                           {record.visitDate.toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {record.weightInKg ? `${record.weightInKg} kg` : "N/A"}
                         </TableCell>
                         <TableCell>{record.reasonForVisit}</TableCell>
                         <TableCell>{record.diagnosis}</TableCell>
@@ -433,6 +440,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                               visitDate: record.visitDate
                                 .toISOString()
                                 .split("T")[0],
+                              weightInKg: record.weightInKg || undefined,
                               reasonForVisit: record.reasonForVisit,
                               diagnosis: record.diagnosis,
                               treatment: record.treatment,

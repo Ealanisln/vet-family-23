@@ -4,11 +4,14 @@ interface MedicalHistory {
   id: string;
   petId: string;
   visitDate: Date;
+  weightInKg: number | null;
   reasonForVisit: string;
   diagnosis: string;
   treatment: string;
   prescriptions: string[];
   notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Esta interfaz coincide con la estructura exacta que devuelve Prisma

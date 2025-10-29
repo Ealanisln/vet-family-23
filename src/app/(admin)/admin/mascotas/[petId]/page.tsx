@@ -319,6 +319,7 @@ export default async function PetDetailsPage({
                   <TableHeader>
                     <TableRow className="border-gray-200">
                       <TableHead className="font-semibold text-gray-700">Fecha</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Peso (kg)</TableHead>
                       <TableHead className="font-semibold text-gray-700">Razón</TableHead>
                       <TableHead className="font-semibold text-gray-700">Diagnóstico</TableHead>
                       <TableHead className="font-semibold text-gray-700">Tratamiento</TableHead>
@@ -332,6 +333,9 @@ export default async function PetDetailsPage({
                       <TableRow key={record.id} className={index % 2 === 0 ? "bg-gray-50/50" : ""}>
                         <TableCell className="font-medium">
                           {format(new Date(record.visitDate), "dd/MM/yyyy")}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {record.weightInKg ? `${record.weightInKg} kg` : "N/A"}
                         </TableCell>
                         <TableCell>{record.reasonForVisit}</TableCell>
                         <TableCell>{record.diagnosis}</TableCell>
@@ -355,6 +359,7 @@ export default async function PetDetailsPage({
                               petId: record.petId,
                               userId: pet.userId,
                               visitDate: new Date(record.visitDate).toISOString().split("T")[0],
+                              weightInKg: record.weightInKg || undefined,
                               reasonForVisit: record.reasonForVisit,
                               diagnosis: record.diagnosis,
                               treatment: record.treatment,

@@ -20,6 +20,7 @@ interface MedicalHistory {
   id: string;
   petId: string;
   visitDate: Date;
+  weightInKg: number | null;
   reasonForVisit: string;
   diagnosis: string;
   treatment: string;
@@ -135,6 +136,7 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[100px]">Fecha</TableHead>
+                      <TableHead className="w-[100px]">Peso (kg)</TableHead>
                       <TableHead>Razón</TableHead>
                       <TableHead>Diagnóstico</TableHead>
                       <TableHead>Tratamiento</TableHead>
@@ -146,6 +148,9 @@ export default function PetDetailsView({ pet }: { pet: Pet }) {
                       <TableRow key={record.id}>
                         <TableCell className="font-medium">
                           {record.visitDate.toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {record.weightInKg ? `${record.weightInKg} kg` : "N/A"}
                         </TableCell>
                         <TableCell>{record.reasonForVisit}</TableCell>
                         <TableCell>{record.diagnosis}</TableCell>
